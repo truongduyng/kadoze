@@ -36,12 +36,6 @@ export default function HomeScreen() {
   const today = useMemo(() => getTodayInLocalTimezone(), []);
   const todayKey = getLocalDateString(today);
   const todayName = DAY_NAMES[today.getDay()];
-  const tomorrow = useMemo(() => {
-    const next = new Date(today);
-    next.setDate(next.getDate() + 1);
-    return next;
-  }, [today]);
-  const tomorrowKey = getLocalDateString(tomorrow);
 
   const dateLabel = formatDateInLocalTimezone(today, {
     month: "long",
@@ -56,9 +50,6 @@ export default function HomeScreen() {
   );
   const { data: todayTodos } = useLiveQuery(
     db.select().from(todos).where(eq(todos.date, todayKey))
-  );
-  const { data: tomorrowTodos } = useLiveQuery(
-    db.select().from(todos).where(eq(todos.date, tomorrowKey))
   );
 
   const todayFocus = useMemo(
@@ -110,8 +101,6 @@ export default function HomeScreen() {
   // Todos
   const [inputText, setInputText] = useState("");
   const inputRef = useRef<TextInput>(null);
-  const [tomorrowInputText, setTomorrowInputText] = useState("");
-  const tomorrowInputRef = useRef<TextInput>(null);
 
   const addTodo = async () => {
     const title = inputText.trim();
@@ -140,23 +129,6 @@ export default function HomeScreen() {
       return (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0);
     });
   }, [todayTodos]);
-
-  const addTomorrowTodo = async () => {
-    const title = tomorrowInputText.trim();
-    if (!title) return;
-    setTomorrowInputText("");
-    Keyboard.dismiss();
-    await todoOps.add(tomorrowKey, title);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const sortedTomorrowTodos = useMemo(() => {
-    const list = [...(tomorrowTodos ?? [])];
-    return list.sort((a, b) => {
-      if (a.done !== b.done) return a.done ? 1 : -1;
-      return (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0);
-    });
-  }, [tomorrowTodos]);
 
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
   const goalText = (todayFocus?.goal ?? "").trim();
@@ -328,57 +300,6 @@ export default function HomeScreen() {
               />
               {inputText.trim().length > 0 && (
                 <Pressable style={styles.addBtn} onPress={addTodo}>
-                  <Text style={styles.addBtnText}>Add</Text>
-                </Pressable>
-              )}
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{"TOMORROW'S TO-DO"}</Text>
-          <View style={styles.card}>
-            {sortedTomorrowTodos.map((todo, i) => (
-              <View key={todo.id}>
-                {i > 0 && <View style={styles.divider} />}
-                <View style={styles.row}>
-                  <Pressable
-                    style={[styles.checkbox, todo.done && styles.checkboxDone]}
-                    onPress={() => toggleTodo(todo.id, todo.done)}
-                  >
-                    {todo.done && <Text style={styles.checkmark}>✓</Text>}
-                  </Pressable>
-                  <Text
-                    style={[styles.rowTitle, styles.todoTitle, todo.done && styles.rowTitleDone]}
-                    onPress={() => toggleTodo(todo.id, todo.done)}
-                  >
-                    {todo.title}
-                  </Text>
-                  <Pressable
-                    style={styles.deleteBtn}
-                    onPress={() => deleteTodo(todo.id)}
-                    hitSlop={8}
-                  >
-                    <Text style={styles.deleteBtnText}>×</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
-            {sortedTomorrowTodos.length > 0 && <View style={styles.divider} />}
-            <View style={styles.inputRow}>
-              <TextInput
-                ref={tomorrowInputRef}
-                style={styles.input}
-                placeholder="Add a task for tomorrow..."
-                placeholderTextColor={palette.white25}
-                value={tomorrowInputText}
-                onChangeText={setTomorrowInputText}
-                onSubmitEditing={addTomorrowTodo}
-                returnKeyType="done"
-                submitBehavior="submit"
-              />
-              {tomorrowInputText.trim().length > 0 && (
-                <Pressable style={styles.addBtn} onPress={addTomorrowTodo}>
                   <Text style={styles.addBtnText}>Add</Text>
                 </Pressable>
               )}
