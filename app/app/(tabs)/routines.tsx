@@ -181,8 +181,6 @@ export default function RoutinesScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Routines</Text>
-
         {/* Active habits */}
         {todayHabits.length > 0 && (
           <View style={styles.section}>

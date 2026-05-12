@@ -1,13 +1,13 @@
 import GradientBackground from "@/components/GradientBackground";
 import { palette } from "@/constants/theme";
-import { db, dailyFocus } from "@/lib/db";
+import { dailyFocus, dailyFocusOps, db } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq } from "drizzle-orm";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
@@ -27,6 +27,8 @@ export default function FocusScreen() {
   const todayKey = getLocalDateString(new Date());
   const [remainingSeconds, setRemainingSeconds] = useState(FOCUS_DURATION_SECONDS);
   const [isRunning, setIsRunning] = useState(true);
+  const unsavedElapsedSecondsRef = useRef(0);
+  const didCompleteSessionRef = useRef(false);
   const { data: focusRows } = useLiveQuery(
     db.select().from(dailyFocus).where(eq(dailyFocus.date, todayKey)).limit(1)
   );
@@ -43,14 +45,57 @@ export default function FocusScreen() {
       setRemainingSeconds((current) => {
         if (current <= 1) {
           clearInterval(interval);
+          unsavedElapsedSecondsRef.current += current;
           return 0;
         }
+        unsavedElapsedSecondsRef.current += 1;
         return current - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
   }, [isRunning, remainingSeconds]);
+
+  const persistElapsedFocusTime = async (roundUpPartialMinute = false) => {
+    const elapsedSeconds = unsavedElapsedSecondsRef.current;
+    const minutesToPersist = roundUpPartialMinute
+      ? Math.ceil(elapsedSeconds / 60)
+      : Math.floor(elapsedSeconds / 60);
+
+    if (minutesToPersist <= 0) return;
+
+    unsavedElapsedSecondsRef.current = roundUpPartialMinute
+      ? 0
+      : elapsedSeconds - minutesToPersist * 60;
+    await dailyFocusOps.addFocusMinutes(minutesToPersist);
+  };
+
+  useEffect(() => {
+    if (remainingSeconds <= 0 && !didCompleteSessionRef.current) {
+      didCompleteSessionRef.current = true;
+      void persistElapsedFocusTime(true);
+      void dailyFocusOps.markComplete();
+    }
+  }, [remainingSeconds]);
+
+  useEffect(() => {
+    if (!isRunning) {
+      void persistElapsedFocusTime(true);
+    }
+  }, [isRunning]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") {
+        void persistElapsedFocusTime(true);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+      void persistElapsedFocusTime(true);
+    };
+  }, []);
 
   const progress = remainingSeconds / FOCUS_DURATION_SECONDS;
   const countdownText = formatCountdown(remainingSeconds);
@@ -61,7 +106,14 @@ export default function FocusScreen() {
       <GradientBackground />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.closeButton}>
+          <Pressable
+            onPress={() => {
+              void persistElapsedFocusTime(true);
+              router.back();
+            }}
+            hitSlop={10}
+            style={styles.closeButton}
+          >
             <Ionicons name="close" size={24} color={palette.white70} />
           </Pressable>
           <View style={styles.titleWrap}>
@@ -101,7 +153,6 @@ export default function FocusScreen() {
 
             <View style={styles.ringCenter}>
               <Text style={styles.timer}>{countdownText}</Text>
-              <Text style={styles.timerLabel}>{remainingSeconds > 0 ? "Focus" : "Complete"}</Text>
             </View>
           </View>
 
@@ -109,9 +160,14 @@ export default function FocusScreen() {
             style={styles.pauseButton}
             onPress={() => {
               if (remainingSeconds === 0) {
+                didCompleteSessionRef.current = false;
+                void dailyFocusOps.markIncomplete();
                 setRemainingSeconds(FOCUS_DURATION_SECONDS);
                 setIsRunning(true);
                 return;
+              }
+              if (isRunning) {
+                void persistElapsedFocusTime();
               }
               setIsRunning((current) => !current);
             }}

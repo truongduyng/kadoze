@@ -181,6 +181,36 @@ export const dailyFocusOps = {
     );
   },
 
+  async addFocusMinutes(minutes: number) {
+    const key = getLocalDateString(new Date());
+    const normalizedMinutes = Math.max(0, Math.round(minutes));
+    if (normalizedMinutes === 0) return [];
+
+    const existing = await withInitializedDb(() =>
+      db.select().from(dailyFocus).where(eq(dailyFocus.date, key)).limit(1)
+    );
+    const current = existing[0];
+    const nextFocusMinutes = (current?.focusMinutes ?? 0) + normalizedMinutes;
+
+    return await withInitializedDb(() =>
+      db.insert(dailyFocus)
+        .values({
+          date: key,
+          goal: current?.goal ?? "",
+          focusMinutes: normalizedMinutes,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [dailyFocus.date],
+          set: {
+            focusMinutes: nextFocusMinutes,
+            updatedAt: new Date(),
+          },
+        })
+        .returning()
+    );
+  },
+
   async markComplete() {
     const key = getLocalDateString(new Date());
     return await withInitializedDb(() =>

@@ -125,13 +125,7 @@ export default function HomeScreen() {
     await todoOps.delete(id);
   };
 
-  const sortedTodos = useMemo(() => {
-    const list = [...(todayTodos ?? [])];
-    return list.sort((a, b) => {
-      if (a.done !== b.done) return a.done ? 1 : -1;
-      return (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0);
-    });
-  }, [todayTodos]);
+  const sortedTodos = todayTodos ?? [];
 
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
   const goalText = (todayFocus?.goal ?? "").trim();

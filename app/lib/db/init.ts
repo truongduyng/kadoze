@@ -70,11 +70,25 @@ export async function initializeDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         date TEXT NOT NULL UNIQUE,
         goal TEXT NOT NULL DEFAULT '',
+        focus_minutes INTEGER NOT NULL DEFAULT 0,
         completed_at INTEGER,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
       );
     `);
+
+    const dailyFocusColumns = expoDb.getAllSync<{ name: string }>(
+      `PRAGMA table_info(daily_focus);`
+    );
+    const hasFocusMinutes = dailyFocusColumns.some(
+      (column) => column.name === 'focus_minutes'
+    );
+    if (!hasFocusMinutes) {
+      expoDb.execSync(`
+        ALTER TABLE daily_focus
+        ADD COLUMN focus_minutes INTEGER NOT NULL DEFAULT 0;
+      `);
+    }
 
     expoDb.execSync(`
       CREATE TABLE IF NOT EXISTS todos (

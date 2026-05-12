@@ -50,6 +50,7 @@ export const dailyFocus = sqliteTable('daily_focus', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   date: text('date').notNull().unique(),         // 'YYYY-MM-DD'
   goal: text('goal').notNull().default(''),
+  focusMinutes: integer('focus_minutes').notNull().default(0),
   completedAt: integer('completed_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),

@@ -277,11 +277,6 @@ export default function NotesScreen() {
             styles.content,
             { paddingTop: 16, paddingBottom: insets.bottom + 96 },
           ]}
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <Text style={styles.heading}>Notes</Text>
-            </View>
-          }
           ListEmptyComponent={
             <AdaptiveBlurView style={styles.emptyCard}>
               <Text style={styles.emptyTitle}>No notes yet</Text>
