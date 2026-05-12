@@ -56,10 +56,6 @@ export default function HomeScreen() {
     () => focusRows?.find((f) => f.date === todayKey) ?? null,
     [focusRows, todayKey]
   );
-  const lastGoal = useMemo(() => {
-    const past = focusRows?.find((f) => f.date < todayKey && f.goal.trim());
-    return past?.goal ?? "";
-  }, [focusRows, todayKey]);
 
   // Goal editing
   const [editingGoal, setEditingGoal] = useState(false);
@@ -67,17 +63,15 @@ export default function HomeScreen() {
   const goalInputRef = useRef<TextInput>(null);
 
   const openGoalEditor = () => {
-    setGoalDraft(todayFocus?.goal || lastGoal);
+    setGoalDraft(todayFocus?.goal ?? "");
     setEditingGoal(true);
     setTimeout(() => goalInputRef.current?.focus(), 50);
   };
 
   const saveGoal = async () => {
-    const goal = goalDraft.trim();
-    if (!goal) return;
     setEditingGoal(false);
     Keyboard.dismiss();
-    await dailyFocusOps.upsertGoal(goal);
+    await dailyFocusOps.upsertGoal(goalDraft);
   };
 
   // Habits
@@ -137,7 +131,7 @@ export default function HomeScreen() {
   }, [todayTodos]);
 
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
-  const goalText = todayFocus?.goal.trim();
+  const goalText = (todayFocus?.goal ?? "").trim();
 
   return (
     <KeyboardAvoidingView
@@ -184,7 +178,7 @@ export default function HomeScreen() {
                     value={goalDraft}
                     onChangeText={setGoalDraft}
                     onBlur={saveGoal}
-                    placeholder="What's your main goal today?"
+                    placeholder="What's your main goal these days?"
                     placeholderTextColor={palette.white25}
                     multiline
                   />
@@ -194,41 +188,29 @@ export default function HomeScreen() {
                   {goalText ? (
                     <Text style={styles.goalText}>{goalText}</Text>
                   ) : (
-                    <Text style={styles.goalPlaceholder}>
-                      {lastGoal
-                        ? `Use last: "${lastGoal.length > 40 ? lastGoal.slice(0, 40) + "…" : lastGoal}"`
-                        : "Tap to set your main goal for today"}
-                    </Text>
+                    <View style={styles.goalPlaceholderCard}>
+                      <Text style={styles.goalPlaceholderTitle}>Set one clear target</Text>
+                      <Text style={styles.goalPlaceholderBody}>
+                        Choose the main outcome you want this day to revolve around.
+                      </Text>
+                    </View>
                   )}
-                </Pressable>
-              )}
-
-              {!editingGoal && lastGoal && !goalText && (
-                <Pressable
-                  style={styles.useLastBtn}
-                  onPress={async () => {
-                    await dailyFocusOps.upsertGoal(lastGoal);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                >
-                  <Text style={styles.useLastBtnText}>Use last goal</Text>
-                </Pressable>
-              )}
-
-              {!editingGoal && goalText && (
-                <Pressable
-                  style={styles.focusButton}
-                  onPress={() => router.push("/chat" as any)}
-                >
-                  <Text style={styles.focusButtonIcon}>▶</Text>
-                  <Text style={styles.focusButtonLabel}>Start Focus</Text>
                 </Pressable>
               )}
             </View>
             {!editingGoal && (
               <View style={styles.goalRing}>
                 <View style={styles.ringOuter}>
-                  <View style={styles.ringInner} />
+                  {goalText ? (
+                    <Pressable
+                      style={styles.focusRingButton}
+                      onPress={() => router.push("/chat" as any)}
+                    >
+                      <Text style={styles.focusRingIcon}>▶</Text>
+                    </Pressable>
+                  ) : (
+                    <View style={styles.ringInner} />
+                  )}
                 </View>
               </View>
             )}
@@ -393,35 +375,37 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     minHeight: 52,
   },
-  goalPlaceholder: {
-    fontSize: 15,
-    color: palette.white35,
-    lineHeight: 22,
+  goalPlaceholderCard: {
     marginBottom: 14,
+    gap: 8,
   },
-useLastBtn: {
+  goalPlaceholderBadge: {
     alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(251,146,60,0.12)",
     borderWidth: 1,
     borderColor: palette.orange25,
-    marginBottom: 0,
   },
-  useLastBtnText: { fontSize: 13, fontWeight: "600", color: palette.orange },
-  focusButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: palette.orange,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    alignSelf: "flex-start",
+  goalPlaceholderBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: palette.orange,
   },
-  focusButtonIcon: { fontSize: 11, color: palette.white, fontWeight: "700" },
-  focusButtonLabel: { fontSize: 15, fontWeight: "700", color: palette.white },
-
+  goalPlaceholderTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: palette.white70,
+    lineHeight: 23,
+  },
+  goalPlaceholderBody: {
+    fontSize: 14,
+    color: palette.white40,
+    lineHeight: 21,
+    maxWidth: 240,
+  },
   goalRing: { alignItems: "center", justifyContent: "center" },
   ringOuter: {
     width: 64,
@@ -439,6 +423,20 @@ useLastBtn: {
     height: 44,
     borderRadius: 22,
     backgroundColor: "rgba(251,146,60,0.08)",
+  },
+  focusRingButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.orange,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  focusRingIcon: {
+    fontSize: 14,
+    color: palette.white,
+    fontWeight: "800",
+    marginLeft: 2,
   },
 
   card: {

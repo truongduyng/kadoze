@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { profileOps, initializeDatabase } from "@/lib/db";
+import { profileOps, ensureDatabaseInitialized } from "@/lib/db";
 
 interface ProfileInitializerProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export default function ProfileInitializer({
   useEffect(() => {
     const initializeProfile = async () => {
       try {
-        await initializeDatabase();
+        await ensureDatabaseInitialized();
 
         const existingProfile = await profileOps.getFirst();
 
