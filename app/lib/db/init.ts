@@ -24,12 +24,24 @@ export async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS profiles (
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         name TEXT,
+        avatar TEXT,
         timezone TEXT,
         onboarding_completed INTEGER NOT NULL DEFAULT 0,
         push_token TEXT,
         created_at INTEGER NOT NULL DEFAULT (unixepoch())
       );
     `);
+
+    const profileColumns = expoDb.getAllSync<{ name: string }>(
+      `PRAGMA table_info(profiles);`
+    );
+    const hasAvatar = profileColumns.some((column) => column.name === 'avatar');
+    if (!hasAvatar) {
+      expoDb.execSync(`
+        ALTER TABLE profiles
+        ADD COLUMN avatar TEXT;
+      `);
+    }
 
     expoDb.execSync(`
       CREATE TABLE IF NOT EXISTS notes (

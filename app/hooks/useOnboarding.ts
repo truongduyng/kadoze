@@ -7,7 +7,7 @@ import { profileOps, habitOps } from "@/lib/db";
 // Step definitions
 // ---------------------------------------------------------------------------
 
-export type StepType = "hook" | "empathy" | "promise" | "goal" | "keystone";
+export type StepType = "hook" | "empathy" | "identity" | "promise" | "goal" | "keystone";
 
 export interface StepConfig {
   type: StepType;
@@ -16,6 +16,7 @@ export interface StepConfig {
 export const STEPS: StepConfig[] = [
   { type: "hook" },
   { type: "empathy" },
+  { type: "identity" },
   { type: "promise" },
   { type: "goal" },
   { type: "keystone" },
@@ -238,6 +239,8 @@ export function useOnboarding() {
   const [coreProblem, setCoreProblem] = useState<string | null>(null);
   const [mainGoal, setMainGoal] = useState("");
   const [keystoneHabit, setKeystoneHabit] = useState<string>("walk");
+  const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState("🙂");
 
   const goToStep = useCallback(
     (next: number) => {
@@ -273,7 +276,8 @@ export function useOnboarding() {
       const profile = await profileOps.getFirst();
       if (profile) {
         await profileOps.update(profile.id, {
-          name: "User",
+          name: name.trim() || "User",
+          avatar,
           onboardingCompleted: true,
         });
       }
@@ -293,7 +297,7 @@ export function useOnboarding() {
       console.error("Error completing onboarding:", e);
     }
     router.replace("/(tabs)");
-  }, [keystoneHabit]);
+  }, [avatar, keystoneHabit, name]);
 
   const showBack = currentStep > 0;
 
@@ -306,6 +310,10 @@ export function useOnboarding() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
+    name,
+    setName,
+    avatar,
+    setAvatar,
     goNext,
     goBack,
     goToStep,

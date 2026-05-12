@@ -7,6 +7,7 @@ import GradientBackground from "@/components/GradientBackground";
 import ProgressBar from "@/components/onboarding/ProgressBar";
 import HookStep from "@/components/onboarding/HookStep";
 import EmpathyStep from "@/components/onboarding/EmpathyStep";
+import IdentityStep from "@/components/onboarding/IdentityStep";
 import PromiseStep from "@/components/onboarding/PromiseStep";
 import GoalStep from "@/components/onboarding/GoalStep";
 import KeystoneStep from "@/components/onboarding/KeystoneStep";
@@ -22,6 +23,10 @@ export default function OnboardingScreen() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
+    name,
+    setName,
+    avatar,
+    setAvatar,
     goNext,
     goBack,
     showBack,
@@ -48,6 +53,17 @@ export default function OnboardingScreen() {
 
       case "empathy":
         return <EmpathyStep onNext={goNext} />;
+
+      case "identity":
+        return (
+          <IdentityStep
+            name={name}
+            avatar={avatar}
+            onChangeName={setName}
+            onChangeAvatar={setAvatar}
+            onNext={goNext}
+          />
+        );
 
       case "promise":
         return <PromiseStep onNext={goNext} />;

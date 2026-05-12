@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 export const profiles = sqliteTable('profiles', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name'),
+  avatar: text('avatar'),
   timezone: text('timezone'),
   onboardingCompleted: integer('onboarding_completed', { mode: 'boolean' }).notNull().default(false),
   pushToken: text('push_token'),

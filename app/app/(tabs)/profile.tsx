@@ -95,6 +95,8 @@ export default function ProfileScreen() {
   const { data: allFocusRows } = useLiveQuery(db.select().from(dailyFocus));
 
   const profile = profileData?.[0];
+  const displayName = profile?.name?.trim() || "User";
+  const savedAvatar = profile?.avatar?.trim();
 
   const analytics = useMemo(() => {
     const completions = allCompletions ?? [];
@@ -286,14 +288,15 @@ export default function ProfileScreen() {
   }, [allCompletions, allFocusRows, allHabits, allNotes, today]);
 
   const initials = useMemo(() => {
-    const name = profile?.name?.trim();
-    if (!name) return "U";
-    return name
+    if (!displayName || displayName === "User") return "U";
+    return displayName
       .split(/\s+/)
       .slice(0, 2)
       .map((part) => part.charAt(0).toUpperCase())
       .join("");
-  }, [profile?.name]);
+  }, [displayName]);
+
+  const displayAvatar = savedAvatar || initials;
 
   const trendChart = useMemo(
     () =>
@@ -329,12 +332,12 @@ export default function ProfileScreen() {
             <View style={styles.identityPrimary}>
               <View style={styles.avatar}>
                 <Text selectable style={styles.avatarText}>
-                  {initials}
+                  {displayAvatar}
                 </Text>
               </View>
               <View style={styles.identityMeta}>
                 <Text selectable style={styles.name}>
-                  {profile?.name?.trim() || "User"}
+                  {displayName}
                 </Text>
                 <Text selectable style={styles.identityTitle}>
                   {analytics.identityTitle}
@@ -580,6 +583,7 @@ const styles = StyleSheet.create({
     borderColor: palette.white08,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: -46,
   },
   section: {
     gap: 14,
