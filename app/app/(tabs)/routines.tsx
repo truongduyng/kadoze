@@ -203,10 +203,12 @@ export default function RoutinesScreen() {
                     <View style={styles.habitInfo}>
                       <Text style={styles.habitTitle} numberOfLines={1}>
                         {habit.title}
-                        {habit.subtitle ? (
-                          <Text style={styles.habitDuration}> ({habit.subtitle})</Text>
-                        ) : null}
                       </Text>
+                      {habit.subtitle ? (
+                        <Text style={styles.habitDuration} numberOfLines={1}>
+                          {habit.subtitle}
+                        </Text>
+                      ) : null}
                       <View style={styles.streakDotsRow}>
                         {Array.from({ length: 10 }).map((_, index) => (
                           <View
@@ -403,7 +405,12 @@ const styles = StyleSheet.create({
   habitIcon: { fontSize: 22, textAlign: "center" },
   habitInfo: { flex: 1 },
   habitTitle: { fontSize: 15, fontWeight: "600", color: palette.white },
-  habitDuration: { fontSize: 14, fontWeight: "500", color: palette.white42 },
+  habitDuration: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: palette.white42,
+    marginTop: 3,
+  },
   streakDotsRow: {
     flexDirection: "row",
     alignItems: "center",

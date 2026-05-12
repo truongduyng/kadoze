@@ -61,7 +61,7 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
           onPress={handleDeletePress}
           activeOpacity={0.8}
         >
-          <Ionicons name="trash-outline" size={20} color="#ffffff" />
+          <Ionicons name="close" size={24} color="#ff4444" />
         </TouchableOpacity>
       </Animated.View>
       <GestureDetector gesture={gesture}>
@@ -82,7 +82,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 60,
-    backgroundColor: "#ff4444",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 12,

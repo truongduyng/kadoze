@@ -24,6 +24,7 @@ import { DAY_NAMES } from "@/lib/performance";
 import { palette } from "@/constants/theme";
 import { SymbolView } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { SwipeableRow } from "@/components/todo/SwipeableRow";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -264,27 +265,23 @@ export default function HomeScreen() {
             {sortedTodos.map((todo, i) => (
               <View key={todo.id}>
                 {i > 0 && <View style={styles.divider} />}
-                <View style={styles.row}>
-                  <Pressable
-                    style={[styles.checkbox, todo.done && styles.checkboxDone]}
-                    onPress={() => toggleTodo(todo.id, todo.done)}
-                  >
-                    {todo.done && <Text style={styles.checkmark}>✓</Text>}
-                  </Pressable>
-                  <Text
-                    style={[styles.rowTitle, styles.todoTitle, todo.done && styles.rowTitleDone]}
-                    onPress={() => toggleTodo(todo.id, todo.done)}
-                  >
-                    {todo.title}
-                  </Text>
-                  <Pressable
-                    style={styles.deleteBtn}
-                    onPress={() => deleteTodo(todo.id)}
-                    hitSlop={8}
-                  >
-                    <Text style={styles.deleteBtnText}>×</Text>
-                  </Pressable>
-                </View>
+                <SwipeableRow onDelete={() => deleteTodo(todo.id)}>
+                  <View style={styles.row}>
+                    <Pressable
+                      style={[styles.checkbox, styles.todoCheckbox, todo.done && styles.checkboxDone]}
+                      onPress={() => toggleTodo(todo.id, todo.done)}
+                    >
+                      {todo.done && <Text style={styles.checkmark}>✓</Text>}
+                    </Pressable>
+                    <Text
+                      style={[styles.rowTitle, styles.todoTitle, todo.done && styles.rowTitleDone]}
+                      onPress={() => toggleTodo(todo.id, todo.done)}
+                      numberOfLines={3}
+                    >
+                      {todo.title}
+                    </Text>
+                  </View>
+                </SwipeableRow>
               </View>
             ))}
             {sortedTodos.length > 0 && <View style={styles.divider} />}
@@ -296,13 +293,14 @@ export default function HomeScreen() {
                 placeholderTextColor={palette.white25}
                 value={inputText}
                 onChangeText={setInputText}
-                onSubmitEditing={addTodo}
-                returnKeyType="done"
-                submitBehavior="submit"
+                multiline
+                numberOfLines={3}
+                maxLength={240}
+                textAlignVertical="top"
               />
               {inputText.trim().length > 0 && (
                 <Pressable style={styles.addBtn} onPress={addTodo}>
-                  <Text style={styles.addBtnText}>Add</Text>
+                  <Text style={styles.addBtnText}>+</Text>
                 </Pressable>
               )}
             </View>
@@ -492,26 +490,25 @@ const styles = StyleSheet.create({
   rowTitleDone: { color: palette.white45, textDecorationLine: "line-through" },
   rowSubtitle: { fontSize: 12, color: palette.white40, marginTop: 2 },
   checkbox: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
     borderColor: palette.white30,
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxDone: { backgroundColor: palette.orange, borderColor: palette.orange },
-  checkmark: { fontSize: 13, color: palette.white, fontWeight: "700" },
+  checkmark: { fontSize: 11, color: palette.white, fontWeight: "700" },
   emptyRow: { paddingVertical: 20, paddingHorizontal: 16 },
   emptyText: { fontSize: 14, color: palette.white40, textAlign: "center" },
 
-  todoTitle: { flex: 1 },
-  deleteBtn: { paddingHorizontal: 4 },
-  deleteBtnText: { fontSize: 22, color: palette.white30, lineHeight: 26 },
+  todoCheckbox: { alignSelf: "flex-start", marginTop: 2 },
+  todoTitle: { flex: 1, lineHeight: 21 },
 
   inputRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 10,
@@ -520,7 +517,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: palette.white,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    minHeight: 34,
+    maxHeight: 78,
   },
   addBtn: {
     paddingHorizontal: 14,
@@ -528,7 +527,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.orange,
     borderRadius: 8,
   },
-  addBtnText: { fontSize: 13, fontWeight: "700", color: palette.white },
+  addBtnText: { fontSize: 18, fontWeight: "800", color: palette.white },
   resetCard: {
     backgroundColor: "#0d1015",
     borderRadius: 22,
@@ -552,7 +551,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   resetDecorOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,7,10,0.34)",
   },
   resetBadge: {
