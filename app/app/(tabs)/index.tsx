@@ -74,9 +74,10 @@ export default function HomeScreen() {
 
   const saveGoal = async () => {
     const goal = goalDraft.trim();
+    if (!goal) return;
     setEditingGoal(false);
     Keyboard.dismiss();
-    if (goal) await dailyFocusOps.upsertGoal(goal);
+    await dailyFocusOps.upsertGoal(goal);
   };
 
   // Habits
@@ -182,13 +183,11 @@ export default function HomeScreen() {
                     style={styles.goalInput}
                     value={goalDraft}
                     onChangeText={setGoalDraft}
+                    onBlur={saveGoal}
                     placeholder="What's your main goal today?"
                     placeholderTextColor={palette.white25}
                     multiline
                   />
-                  <Pressable style={styles.saveGoalBtn} onPress={saveGoal}>
-                    <Text style={styles.saveGoalBtnText}>Save</Text>
-                  </Pressable>
                 </>
               ) : (
                 <Pressable onPress={openGoalEditor}>
@@ -226,11 +225,13 @@ export default function HomeScreen() {
                 </Pressable>
               )}
             </View>
-            <View style={styles.goalRing}>
-              <View style={styles.ringOuter}>
-                <View style={styles.ringInner} />
+            {!editingGoal && (
+              <View style={styles.goalRing}>
+                <View style={styles.ringOuter}>
+                  <View style={styles.ringInner} />
+                </View>
               </View>
-            </View>
+            )}
           </View>
         </View>
 
@@ -398,16 +399,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 14,
   },
-  saveGoalBtn: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: palette.orange,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  saveGoalBtnText: { fontSize: 14, fontWeight: "700", color: palette.white },
-  useLastBtn: {
+useLastBtn: {
     alignSelf: "flex-start",
     paddingHorizontal: 12,
     paddingVertical: 6,
