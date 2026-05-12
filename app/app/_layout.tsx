@@ -62,6 +62,10 @@ function AppLayout() {
                 options={{ headerShown: false, presentation: "card" }}
               />
               <Stack.Screen
+                name="evening-reset"
+                options={{ headerShown: false, presentation: "card" }}
+              />
+              <Stack.Screen
                 name="settings"
                 options={{ title: "Settings"}}
               />

@@ -8,6 +8,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useState, useRef } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -22,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAY_NAMES } from "@/lib/performance";
 import { palette } from "@/constants/theme";
 import { SymbolView } from "expo-symbols";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -219,7 +221,7 @@ export default function HomeScreen() {
 
         {/* Today's Habits */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{"TODAY'S HABITS"}</Text>
+          <Text style={styles.sectionLabel}>{"HABITS"}</Text>
           <View style={styles.card}>
             {todayHabits.length === 0 ? (
               <View style={styles.emptyRow}>
@@ -257,7 +259,7 @@ export default function HomeScreen() {
 
         {/* Today's To-Do */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{"TODAY'S TO-DO"}</Text>
+          <Text style={styles.sectionLabel}>{"TO-DO"}</Text>
           <View style={styles.card}>
             {sortedTodos.map((todo, i) => (
               <View key={todo.id}>
@@ -305,6 +307,32 @@ export default function HomeScreen() {
               )}
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>EVENING RESET</Text>
+          <Pressable style={styles.resetCard} onPress={() => router.push("/evening-reset" as any)}>
+            <View style={styles.resetDecor}>
+              <Image
+                source={require("../../assets/evening.jpeg")}
+                style={styles.resetDecorImage}
+                resizeMode="cover"
+              />
+              <View style={styles.resetDecorOverlay} />
+              <View style={styles.resetCopy}>
+                <View style={styles.resetBadge}>
+                  <Text style={styles.resetBadgeText}>10 MIN RESET</Text>
+                </View>
+                <Text style={styles.resetTitle}>Declutter before tomorrow</Text>
+                <Text style={styles.resetBody}>
+                  Clear your space, close the loop on today, and set up tomorrow.
+                </Text>
+              </View>
+              <View style={styles.resetAction}>
+                <Ionicons name="chevron-forward" size={18} color={palette.white} />
+              </View>
+            </View>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -501,4 +529,70 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   addBtnText: { fontSize: 13, fontWeight: "700", color: palette.white },
+  resetCard: {
+    backgroundColor: "#0d1015",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(251,146,60,0.14)",
+    overflow: "hidden",
+  },
+  resetCopy: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    bottom: 18,
+  },
+  resetDecor: {
+    height: 190,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  resetDecorImage: {
+    width: "100%",
+    height: "100%",
+  },
+  resetDecorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(5,7,10,0.34)",
+  },
+  resetBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(8,10,14,0.5)",
+    borderWidth: 1,
+    borderColor: "rgba(251,146,60,0.26)",
+    marginBottom: 12,
+  },
+  resetBadgeText: {
+    color: palette.orange,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  resetTitle: {
+    color: palette.white,
+    fontSize: 24,
+    fontWeight: "800",
+    lineHeight: 30,
+    marginBottom: 10,
+  },
+  resetBody: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 14,
+    lineHeight: 21,
+    maxWidth: 260,
+  },
+  resetAction: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: palette.orange,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
