@@ -69,6 +69,7 @@ export default function OnboardingScreen() {
       case "keystone":
         return (
           <KeystoneStep
+            focus={mainGoal}
             selected={keystoneHabit}
             onSelect={setKeystoneHabit}
             onNext={goNext}

@@ -39,15 +39,59 @@ export interface KeystoneHabit {
   icon: string;
   title: string;
   subtitle: string;
-  locked: boolean;
 }
 
+export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
+  health: [
+    { id: "walk",      icon: "🚶", title: "10-minute walk",       subtitle: "Move your body every day" },
+    { id: "water",     icon: "💧", title: "Drink 2L of water",    subtitle: "Stay consistently hydrated" },
+    { id: "sleep",     icon: "😴", title: "7–8 hours of sleep",   subtitle: "Sleep with intention" },
+    { id: "stretch",   icon: "🧘", title: "5-min morning stretch", subtitle: "Wake up your body gently" },
+  ],
+  mindset: [
+    { id: "journal",   icon: "📓", title: "5-min journaling",     subtitle: "Reflect on your thoughts" },
+    { id: "quiet",     icon: "🧘", title: "5 minutes of quiet",   subtitle: "Meditate or breathe deeply" },
+    { id: "gratitude", icon: "🙏", title: "Gratitude practice",   subtitle: "3 things you're grateful for" },
+    { id: "read",      icon: "📖", title: "Read 10 pages",        subtitle: "Feed your mind daily" },
+  ],
+  work: [
+    { id: "mit",       icon: "🎯", title: "Pick your MIT",        subtitle: "One task that moves the needle" },
+    { id: "nophone",   icon: "📵", title: "No phone first hour",  subtitle: "Start deep, not reactive" },
+    { id: "plan",      icon: "📋", title: "Plan tomorrow tonight", subtitle: "Wake up with clarity" },
+    { id: "pomodoro",  icon: "⏱️", title: "One focused sprint",   subtitle: "25 min of pure deep work" },
+  ],
+  relations: [
+    { id: "connect",   icon: "💬", title: "Reach out to someone", subtitle: "One genuine message a day" },
+    { id: "listen",    icon: "👂", title: "Practice listening",   subtitle: "Be fully present in conversations" },
+    { id: "gratitude", icon: "🙏", title: "Express gratitude",    subtitle: "Tell someone you appreciate them" },
+    { id: "offline",   icon: "📵", title: "Phone-free meals",     subtitle: "Be present with people around you" },
+  ],
+  creative: [
+    { id: "create",    icon: "✏️", title: "Create something",     subtitle: "Even 10 min of making" },
+    { id: "capture",   icon: "📸", title: "Capture one idea",     subtitle: "Write, draw, or record it" },
+    { id: "explore",   icon: "🌍", title: "Learn something new",  subtitle: "Fuel curiosity daily" },
+    { id: "noscreen",  icon: "🌿", title: "Nature break",         subtitle: "Step outside for fresh air" },
+  ],
+  finance: [
+    { id: "review",    icon: "📊", title: "Review your spending",  subtitle: "Know where your money goes" },
+    { id: "save",      icon: "💰", title: "Save before spending",  subtitle: "Pay yourself first" },
+    { id: "learn",     icon: "📖", title: "Read about money",      subtitle: "10 min of financial learning" },
+    { id: "track",     icon: "🎯", title: "Track one financial goal", subtitle: "Progress compounds daily" },
+  ],
+};
+
+// Fallback for unknown focus
+export const DEFAULT_KEYSTONE_HABITS: KeystoneHabit[] = [
+  { id: "walk",      icon: "🚶", title: "10-minute walk",       subtitle: "Move your body every day" },
+  { id: "quiet",     icon: "🧘", title: "5 minutes of quiet",   subtitle: "Meditate or reflect" },
+  { id: "gratitude", icon: "🙏", title: "Gratitude practice",   subtitle: "3 things you're grateful for" },
+  { id: "journal",   icon: "📓", title: "5-min journaling",     subtitle: "Reflect on your thoughts" },
+];
+
+// Keep for backward compat with completeOnboarding
 export const KEYSTONE_HABITS: KeystoneHabit[] = [
-  { id: "walk", icon: "🚶", title: "10-minute walk", subtitle: "Move your body", locked: false },
-  { id: "water", icon: "💧", title: "Drink 2L of water", subtitle: "Stay hydrated", locked: true },
-  { id: "quiet", icon: "🧘", title: "5 minutes of quiet", subtitle: "Meditate or reflect", locked: true },
-  { id: "sleep", icon: "😴", title: "7–8 hours of sleep", subtitle: "Sleep with intention", locked: true },
-  { id: "gratitude", icon: "🙏", title: "Gratitude practice", subtitle: "3 things you're grateful for", locked: true },
+  ...DEFAULT_KEYSTONE_HABITS,
+  ...Object.values(KEYSTONE_HABITS_BY_FOCUS).flat(),
 ];
 
 // ---------------------------------------------------------------------------

@@ -1,12 +1,6 @@
-import React, { useRef } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { palette } from "@/constants/theme";
 
 interface GoalStepProps {
@@ -15,57 +9,60 @@ interface GoalStepProps {
   onNext: () => void;
 }
 
-const MAX = 80;
+const GOALS: {
+  id: string;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+}[] = [
+  { id: "health",    label: "Health\n& Vitality",      icon: "star-outline" },
+  { id: "mindset",   label: "Mindset\n& Growth",       icon: "person-outline" },
+  { id: "work",      label: "Work &\nBusiness",         icon: "briefcase-outline" },
+  { id: "relations", label: "Relationships",            icon: "heart-outline" },
+  { id: "creative",  label: "Creativity",               icon: "sparkles-outline" },
+  { id: "finance",   label: "Financial\nFreedom",       icon: "cash-outline" },
+];
 
 export default function GoalStep({ value, onChange, onNext }: GoalStepProps) {
-  const inputRef = useRef<TextInput>(null);
-
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={0}>
+    <View style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.iconWrap}>
-          <View style={styles.iconRing}>
-            <View style={styles.iconDot} />
-          </View>
+        <Text style={styles.question}>What is your{"\n"}primary life focus?</Text>
+        <Text style={styles.subtitle}>Choose the area you want to grow first.</Text>
+
+        <View style={styles.grid}>
+          {GOALS.map((goal) => {
+            const isSelected = value === goal.id;
+            return (
+              <TouchableOpacity
+                key={goal.id}
+                style={[styles.cell, isSelected && styles.cellSelected]}
+                onPress={() => onChange(goal.id)}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.iconWrap, isSelected && styles.iconWrapSelected]}>
+                  <Ionicons
+                    name={goal.icon}
+                    size={24}
+                    color={isSelected ? palette.orange : "rgba(255,255,255,0.55)"}
+                  />
+                </View>
+                <Text style={[styles.cellLabel, isSelected && styles.cellLabelSelected]}>
+                  {goal.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-
-        <Text style={styles.question}>
-          What is the single most{"\n"}important thing you need{"\n"}to accomplish today?
-        </Text>
-        <Text style={styles.subtitle}>Ignore the noise. Just pick one.</Text>
-
-        <TouchableOpacity
-          style={styles.inputWrap}
-          onPress={() => inputRef.current?.focus()}
-          activeOpacity={1}
-        >
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            value={value}
-            onChangeText={(t) => onChange(t.slice(0, MAX))}
-            placeholder="e.g. Finish investor pitch deck"
-            placeholderTextColor="rgba(255,255,255,0.25)"
-            multiline
-            maxLength={MAX}
-            returnKeyType="done"
-            blurOnSubmit
-            onSubmitEditing={() => value.trim() && onNext()}
-          />
-          <Text style={styles.counter}>{value.length}/{MAX}</Text>
-        </TouchableOpacity>
       </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.btn, !value.trim() && styles.btnDisabled]}
-          onPress={value.trim() ? onNext : undefined}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.btnText}>Next</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      <TouchableOpacity
+        style={[styles.btn, !value && styles.btnDisabled]}
+        onPress={value ? onNext : undefined}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.btnText}>Continue</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -79,61 +76,62 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: "center",
-    gap: 16,
-  },
-  iconWrap: {
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  iconRing: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: palette.orange,
+    gap: 20,
   },
   question: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: "800",
     color: "#fff",
-    lineHeight: 34,
-    textAlign: "center",
+    lineHeight: 38,
   },
   subtitle: {
     fontSize: 14,
     color: "rgba(255,255,255,0.45)",
-    textAlign: "center",
-    marginBottom: 8,
+    marginTop: -8,
   },
-  inputWrap: {
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  cell: {
+    width: "30%",
+    flexGrow: 1,
+    aspectRatio: 1,
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.15)",
-    borderRadius: 14,
-    padding: 16,
-    minHeight: 100,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 8,
   },
-  input: {
-    fontSize: 15,
+  cellSelected: {
+    borderColor: palette.orange,
+    backgroundColor: "rgba(251,146,60,0.12)",
+  },
+  iconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconWrapSelected: {
+    backgroundColor: "rgba(251,146,60,0.18)",
+  },
+  cellLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.6)",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  cellLabelSelected: {
     color: "#fff",
-    lineHeight: 22,
-    flex: 1,
   },
-  counter: {
-    alignSelf: "flex-end",
-    fontSize: 11,
-    color: "rgba(255,255,255,0.25)",
-    marginTop: 8,
-  },
-  footer: {},
   btn: {
     backgroundColor: palette.orange,
     borderRadius: 14,
