@@ -27,37 +27,38 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger name="index" disableScrollToTop>
           <NativeTabs.Trigger.Icon
-            sf={{ default: "doc.text", selected: "doc.text" }}
+            sf={{ default: "house", selected: "house.fill" }}
+            md="home"
           />
           <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="chat">
           <NativeTabs.Trigger.Icon
             sf={{
-              default: "bubble.left.and.bubble.right",
-              selected: "bubble.left.and.bubble.right",
+              default: "note.text",
+              selected: "note.text",
             }}
-            md="chat"
+            md="edit_note"
           />
           <NativeTabs.Trigger.Label>Note</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="todo">
+        <NativeTabs.Trigger name="routines">
           <NativeTabs.Trigger.Icon
             sf={{
-              default: "checkmark.circle",
-              selected: "checkmark.circle",
+              default: "checklist",
+              selected: "checklist",
             }}
-            md="check_circle"
+            md="checklist"
           />
-          <NativeTabs.Trigger.Label>Plan</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>Habits</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="profile">
           <NativeTabs.Trigger.Icon
             sf={{
-              default: "person.crop.circle",
-              selected: "person.crop.circle",
+              default: "person",
+              selected: "person.fill",
             }}
-            md="account_circle"
+            md="person"
           />
           <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
