@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { router } from "expo-router";
-import { profileOps, habitOps, dailyFocusOps } from "@/lib/db";
+import { profileOps, habitOps } from "@/lib/db";
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -289,15 +289,11 @@ export function useOnboarding() {
         sortOrder: 0,
       });
 
-      // Save today's main goal
-      if (mainGoal.trim()) {
-        await dailyFocusOps.upsertGoal(mainGoal.trim());
-      }
     } catch (e) {
       console.error("Error completing onboarding:", e);
     }
     router.replace("/(tabs)");
-  }, [mainGoal, keystoneHabit]);
+  }, [keystoneHabit]);
 
   const showBack = currentStep > 0;
 

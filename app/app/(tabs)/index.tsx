@@ -1,9 +1,9 @@
 import GradientBackground from "@/components/GradientBackground";
-import { db, habits, habitCompletions, dailyFocus, todos, completionOps, todoOps } from "@/lib/db";
+import { db, habits, habitCompletions, dailyFocus, todos, completionOps, todoOps, dailyFocusOps } from "@/lib/db";
 import { getTodayInLocalTimezone, getLocalDateString, formatDateInLocalTimezone } from "@/lib/timezone";
 import { useProfile } from "@/hooks/useProfile";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useState, useRef } from "react";
@@ -45,13 +45,41 @@ export default function HomeScreen() {
 
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
-  const { data: focusRows } = useLiveQuery(db.select().from(dailyFocus).limit(1));
+  const { data: focusRows } = useLiveQuery(
+    db.select().from(dailyFocus).orderBy(desc(dailyFocus.date)).limit(5)
+  );
   const { data: todayTodos } = useLiveQuery(
     db.select().from(todos).where(eq(todos.date, todayKey))
   );
 
-  const todayFocus = focusRows?.find((f) => f.date === todayKey) ?? null;
+  const todayFocus = useMemo(
+    () => focusRows?.find((f) => f.date === todayKey) ?? null,
+    [focusRows, todayKey]
+  );
+  const lastGoal = useMemo(() => {
+    const past = focusRows?.find((f) => f.date < todayKey && f.goal.trim());
+    return past?.goal ?? "";
+  }, [focusRows, todayKey]);
 
+  // Goal editing
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState("");
+  const goalInputRef = useRef<TextInput>(null);
+
+  const openGoalEditor = () => {
+    setGoalDraft(todayFocus?.goal || lastGoal);
+    setEditingGoal(true);
+    setTimeout(() => goalInputRef.current?.focus(), 50);
+  };
+
+  const saveGoal = async () => {
+    const goal = goalDraft.trim();
+    setEditingGoal(false);
+    Keyboard.dismiss();
+    if (goal) await dailyFocusOps.upsertGoal(goal);
+  };
+
+  // Habits
   const todayHabits = useMemo(() => {
     const list = allHabits ?? [];
     return list.filter((h) => (h.daysOfWeek as string[]).includes(todayName));
@@ -75,7 +103,7 @@ export default function HomeScreen() {
     }
   };
 
-  // Todo input state
+  // Todos
   const [inputText, setInputText] = useState("");
   const inputRef = useRef<TextInput>(null);
 
@@ -108,6 +136,7 @@ export default function HomeScreen() {
   }, [todayTodos]);
 
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
+  const goalText = todayFocus?.goal.trim();
 
   return (
     <KeyboardAvoidingView
@@ -146,16 +175,56 @@ export default function HomeScreen() {
           <Text style={styles.sectionLabel}>ONE MAIN GOAL</Text>
           <View style={styles.goalCard}>
             <View style={styles.goalContent}>
-              <Text style={styles.goalText} numberOfLines={3}>
-                {todayFocus?.goal || "Set your main goal for today"}
-              </Text>
-              <Pressable
-                style={styles.focusButton}
-                onPress={() => router.push("/chat" as any)}
-              >
-                <Text style={styles.focusButtonIcon}>▶</Text>
-                <Text style={styles.focusButtonLabel}>Start Focus</Text>
-              </Pressable>
+              {editingGoal ? (
+                <>
+                  <TextInput
+                    ref={goalInputRef}
+                    style={styles.goalInput}
+                    value={goalDraft}
+                    onChangeText={setGoalDraft}
+                    placeholder="What's your main goal today?"
+                    placeholderTextColor={palette.white25}
+                    multiline
+                  />
+                  <Pressable style={styles.saveGoalBtn} onPress={saveGoal}>
+                    <Text style={styles.saveGoalBtnText}>Save</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <Pressable onPress={openGoalEditor}>
+                  {goalText ? (
+                    <Text style={styles.goalText}>{goalText}</Text>
+                  ) : (
+                    <Text style={styles.goalPlaceholder}>
+                      {lastGoal
+                        ? `Use last: "${lastGoal.length > 40 ? lastGoal.slice(0, 40) + "…" : lastGoal}"`
+                        : "Tap to set your main goal for today"}
+                    </Text>
+                  )}
+                </Pressable>
+              )}
+
+              {!editingGoal && lastGoal && !goalText && (
+                <Pressable
+                  style={styles.useLastBtn}
+                  onPress={async () => {
+                    await dailyFocusOps.upsertGoal(lastGoal);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                >
+                  <Text style={styles.useLastBtnText}>Use last goal</Text>
+                </Pressable>
+              )}
+
+              {!editingGoal && goalText && (
+                <Pressable
+                  style={styles.focusButton}
+                  onPress={() => router.push("/chat" as any)}
+                >
+                  <Text style={styles.focusButtonIcon}>▶</Text>
+                  <Text style={styles.focusButtonLabel}>Start Focus</Text>
+                </Pressable>
+              )}
             </View>
             <View style={styles.goalRing}>
               <View style={styles.ringOuter}>
@@ -233,8 +302,6 @@ export default function HomeScreen() {
                 </View>
               </View>
             ))}
-
-            {/* Add input */}
             {sortedTodos.length > 0 && <View style={styles.divider} />}
             <View style={styles.inputRow}>
               <TextInput
@@ -265,7 +332,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20 },
 
-  // Header
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -291,7 +357,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // Sections
   section: { marginBottom: 24 },
   sectionLabel: {
     fontSize: 11,
@@ -300,19 +365,7 @@ const styles = StyleSheet.create({
     color: palette.white35,
     marginBottom: 10,
   },
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  editLink: {
-    fontSize: 13,
-    color: palette.orange,
-    fontWeight: "600",
-  },
 
-  // Goal card
   goalCard: {
     backgroundColor: palette.white06,
     borderRadius: 16,
@@ -320,7 +373,7 @@ const styles = StyleSheet.create({
     borderColor: palette.white08,
     padding: 20,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 16,
   },
   goalContent: { flex: 1 },
@@ -328,9 +381,42 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: palette.white,
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: 26,
+    marginBottom: 14,
   },
+  goalInput: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: palette.white,
+    lineHeight: 26,
+    marginBottom: 14,
+    minHeight: 52,
+  },
+  goalPlaceholder: {
+    fontSize: 15,
+    color: palette.white35,
+    lineHeight: 22,
+    marginBottom: 14,
+  },
+  saveGoalBtn: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: palette.orange,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  saveGoalBtnText: { fontSize: 14, fontWeight: "700", color: palette.white },
+  useLastBtn: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.orange25,
+    marginBottom: 0,
+  },
+  useLastBtnText: { fontSize: 13, fontWeight: "600", color: palette.orange },
   focusButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -344,7 +430,6 @@ const styles = StyleSheet.create({
   focusButtonIcon: { fontSize: 11, color: palette.white, fontWeight: "700" },
   focusButtonLabel: { fontSize: 15, fontWeight: "700", color: palette.white },
 
-  // Ring indicator
   goalRing: { alignItems: "center", justifyContent: "center" },
   ringOuter: {
     width: 64,
@@ -364,7 +449,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(251,146,60,0.08)",
   },
 
-  // Shared card
   card: {
     backgroundColor: palette.white06,
     borderRadius: 16,
@@ -403,12 +487,10 @@ const styles = StyleSheet.create({
   emptyRow: { paddingVertical: 20, paddingHorizontal: 16 },
   emptyText: { fontSize: 14, color: palette.white40, textAlign: "center" },
 
-  // Todo-specific
   todoTitle: { flex: 1 },
   deleteBtn: { paddingHorizontal: 4 },
   deleteBtnText: { fontSize: 22, color: palette.white30, lineHeight: 26 },
 
-  // Add input
   inputRow: {
     flexDirection: "row",
     alignItems: "center",

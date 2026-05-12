@@ -28,9 +28,8 @@ export default function TabLayout() {
         <NativeTabs.Trigger name="index" disableScrollToTop>
           <NativeTabs.Trigger.Icon
             sf={{ default: "doc.text", selected: "doc.text" }}
-            md="menu_book"
           />
-          <NativeTabs.Trigger.Label>Journal</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="chat">
           <NativeTabs.Trigger.Icon
