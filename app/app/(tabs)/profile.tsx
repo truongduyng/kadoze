@@ -1,119 +1,242 @@
 import React, { useMemo } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import GradientBackground from "@/components/GradientBackground";
-import { db, profiles, habitCompletions, habits } from "@/lib/db";
-import { resetDatabase } from "@/lib/db";
-import { getLocalDateString, getTodayInLocalTimezone } from "@/lib/timezone";
+import { db, habitCompletions, habits, notes, profiles } from "@/lib/db";
 import { DAY_NAMES } from "@/lib/performance";
-import { countTodosByDate, computeStreaks } from "@/lib/performance";
+import { getTodayInLocalTimezone } from "@/lib/timezone";
+import { palette } from "@/constants/theme";
 
-const ORANGE = "#FB923C";
+const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
-export default function AccountScreen() {
+function formatDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const today = useMemo(() => getTodayInLocalTimezone(), []);
 
   const { data: profileData } = useLiveQuery(db.select().from(profiles).limit(1));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
+  const { data: allNotes } = useLiveQuery(db.select().from(notes));
 
   const profile = profileData?.[0];
 
-  const { currentStreak, totalDone } = useMemo(() => {
+  const analytics = useMemo(() => {
     const completions = allCompletions ?? [];
-    const todoCounts: Record<string, number> = {};
-    for (const c of completions) {
-      if (c.status === "done") {
-        todoCounts[c.date] = (todoCounts[c.date] ?? 0) + 1;
-      }
-    }
-    const { currentStreak } = computeStreaks(todoCounts);
-    const totalDone = completions.filter((c) => c.status === "done").length;
-    return { currentStreak, totalDone };
-  }, [allCompletions]);
+    const habitsData = allHabits ?? [];
+    const notesData = allNotes ?? [];
 
-  const activeHabitCount = useMemo(() => {
-    const todayName = DAY_NAMES[today.getDay()];
-    return (allHabits ?? []).filter((h) => (h.daysOfWeek as string[]).includes(todayName)).length;
-  }, [allHabits, today]);
-
-  const handleReset = () => {
-    Alert.alert(
-      "Reset all data",
-      "This will permanently delete everything. Are you sure?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Reset",
-          style: "destructive",
-          onPress: async () => {
-            await resetDatabase();
-            router.replace("/onboarding");
-          },
-        },
-      ],
+    const doneCompletions = completions.filter((item) => item.status === "done");
+    const trackedCompletions = completions.filter(
+      (item) => item.status === "done" || item.status === "skipped",
     );
-  };
+
+    const doneByDate = new Map<string, number>();
+    for (const item of doneCompletions) {
+      doneByDate.set(item.date, (doneByDate.get(item.date) ?? 0) + 1);
+    }
+
+    let currentStreak = 0;
+    const cursor = new Date(today);
+    while ((doneByDate.get(formatDateKey(cursor)) ?? 0) > 0) {
+      currentStreak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    const todayName = DAY_NAMES[today.getDay()];
+    const activeToday = habitsData.filter((habit) =>
+      (habit.daysOfWeek as string[]).includes(todayName),
+    ).length;
+
+    const completionRate = trackedCompletions.length
+      ? Math.round((doneCompletions.length / trackedCompletions.length) * 100)
+      : 0;
+
+    const weekActivity = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - index));
+      const dateKey = formatDateKey(date);
+      return {
+        label: WEEKDAY_LABELS[date.getDay()],
+        count: doneByDate.get(dateKey) ?? 0,
+      };
+    });
+
+    const bestDayCount = Math.max(...weekActivity.map((item) => item.count), 1);
+
+    return {
+      currentStreak,
+      totalDone: doneCompletions.length,
+      activeToday,
+      completionRate,
+      notesCount: notesData.length,
+      habitsCount: habitsData.length,
+      weekActivity,
+      bestDayCount,
+    };
+  }, [allCompletions, allHabits, allNotes, today]);
+
+  const initials = useMemo(() => {
+    const name = profile?.name?.trim();
+    if (!name) return "U";
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("");
+  }, [profile?.name]);
+
+  const memberSince = useMemo(() => {
+    if (!profile?.createdAt) return "Just joined";
+    return new Date(profile.createdAt).toLocaleDateString([], {
+      month: "short",
+      year: "numeric",
+    });
+  }, [profile?.createdAt]);
 
   return (
     <View style={styles.container}>
       <GradientBackground />
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 96 },
-        ]}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{
+          paddingTop: 16,
+          paddingBottom: insets.bottom + 96,
+          paddingHorizontal: 20,
+          gap: 18,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Account</Text>
+        <Text selectable style={styles.eyebrow}>
+          PROFILE
+        </Text>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNum}>{currentStreak}</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
+        <View style={styles.heroCard}>
+          <View style={styles.heroTopRow}>
+            <View style={styles.avatar}>
+              <Text selectable style={styles.avatarText}>
+                {initials}
+              </Text>
+            </View>
+            <Pressable style={styles.settingsChip} onPress={() => router.push("/settings")}>
+              <Ionicons name="settings-outline" size={18} color={palette.white80} />
+            </Pressable>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNum}>{totalDone}</Text>
-            <Text style={styles.statLabel}>Total Done</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNum}>{activeHabitCount}</Text>
-            <Text style={styles.statLabel}>Active Habits</Text>
+
+          <Text selectable style={styles.name}>
+            {profile?.name?.trim() || "User"}
+          </Text>
+          <Text selectable style={styles.subhead}>
+            Building consistency one day at a time.
+          </Text>
+
+          <View style={styles.metaRow}>
+            <View style={styles.metaPill}>
+              <Text selectable style={styles.metaLabel}>
+                Member since {memberSince}
+              </Text>
+            </View>
+            <View style={styles.metaPill}>
+              <Text selectable style={styles.metaLabel}>
+                {profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>SETTINGS</Text>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.row}
-              onPress={() => router.push("/settings" as any)}
-            >
-              <Text style={styles.rowLabel}>App Settings</Text>
-              <Text style={styles.rowChevron}>›</Text>
-            </TouchableOpacity>
+          <Text selectable style={styles.sectionLabel}>
+            Analytics
+          </Text>
+          <View style={styles.metricsGrid}>
+            <View style={styles.metricCard}>
+              <Text selectable style={styles.metricValue}>
+                {analytics.currentStreak}
+              </Text>
+              <Text selectable style={styles.metricTitle}>
+                Current streak
+              </Text>
+            </View>
+            <View style={styles.metricCard}>
+              <Text selectable style={styles.metricValue}>
+                {analytics.totalDone}
+              </Text>
+              <Text selectable style={styles.metricTitle}>
+                Total check-ins
+              </Text>
+            </View>
+            <View style={styles.metricCard}>
+              <Text selectable style={styles.metricValue}>
+                {analytics.completionRate}%
+              </Text>
+              <Text selectable style={styles.metricTitle}>
+                Completion rate
+              </Text>
+            </View>
+            <View style={styles.metricCard}>
+              <Text selectable style={styles.metricValue}>
+                {analytics.activeToday}
+              </Text>
+              <Text selectable style={styles.metricTitle}>
+                Habits today
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Danger zone */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DANGER ZONE</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.row} onPress={handleReset}>
-              <Text style={[styles.rowLabel, styles.danger]}>Reset all data</Text>
-            </TouchableOpacity>
+          <Text selectable style={styles.sectionLabel}>
+            Weekly rhythm
+          </Text>
+          <View style={styles.activityCard}>
+            <View style={styles.activityHeader}>
+              <View>
+                <Text selectable style={styles.activityTitle}>
+                  Last 7 days
+                </Text>
+                <Text selectable style={styles.activityCaption}>
+                  Done habits per day
+                </Text>
+              </View>
+              <Text selectable style={styles.activitySummary}>
+                {analytics.notesCount} notes
+              </Text>
+            </View>
+
+            <View style={styles.chartRow}>
+              {analytics.weekActivity.map((item, index) => (
+                <View key={`${index}-${item.label}`} style={styles.chartColumn}>
+                  <Text selectable style={styles.chartCount}>
+                    {item.count}
+                  </Text>
+                  <View style={styles.chartTrack}>
+                    <View
+                      style={[
+                        styles.chartFill,
+                        {
+                          height: `${Math.max(
+                            12,
+                            (item.count / analytics.bestDayCount) * 100,
+                          )}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text selectable style={styles.chartLabel}>
+                    {item.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -123,70 +246,231 @@ export default function AccountScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: 20 },
-  heading: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#fff",
-    marginBottom: 24,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 28,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  statNum: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: ORANGE,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.4)",
-    marginTop: 4,
-    textAlign: "center",
-  },
-  section: { marginBottom: 20 },
-  sectionLabel: {
-    fontSize: 11,
+  eyebrow: {
+    color: palette.white40,
+    fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.35)",
-    marginBottom: 8,
+    letterSpacing: 1.8,
   },
-  card: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderRadius: 14,
+  heroCard: {
+    backgroundColor: "rgba(12,14,18,0.62)",
+    borderRadius: 28,
+    borderCurve: "continuous",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    overflow: "hidden",
+    borderColor: palette.white08,
+    padding: 20,
+    gap: 14,
+    boxShadow: "0 20px 40px rgba(0,0,0,0.18)",
   },
-  row: {
+  heroTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
   },
-  rowLabel: {
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    borderCurve: "continuous",
+    backgroundColor: palette.orange15,
+    borderWidth: 1,
+    borderColor: palette.orange35,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    color: palette.orange,
+    fontSize: 24,
+    fontWeight: "800",
+  },
+  settingsChip: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: palette.white08,
+    borderWidth: 1,
+    borderColor: palette.white10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  name: {
+    color: palette.white,
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  subhead: {
+    color: palette.white60,
     fontSize: 15,
-    color: "rgba(255,255,255,0.85)",
+    lineHeight: 22,
+  },
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  metaPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: palette.white06,
+    borderWidth: 1,
+    borderColor: palette.white08,
+  },
+  metaLabel: {
+    color: palette.white70,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  section: {
+    gap: 10,
+  },
+  sectionLabel: {
+    color: palette.white40,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  metricsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  metricCard: {
+    width: "47%",
+    minHeight: 116,
+    borderRadius: 24,
+    borderCurve: "continuous",
+    backgroundColor: palette.white06,
+    borderWidth: 1,
+    borderColor: palette.white08,
+    padding: 16,
+    justifyContent: "space-between",
+  },
+  metricValue: {
+    color: palette.white,
+    fontSize: 32,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+  },
+  metricTitle: {
+    color: palette.white60,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+  activityCard: {
+    borderRadius: 28,
+    borderCurve: "continuous",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: palette.white08,
+    padding: 18,
+    gap: 20,
+  },
+  activityHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  activityTitle: {
+    color: palette.white,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  activityCaption: {
+    color: palette.white50,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  activitySummary: {
+    color: palette.orange,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  chartRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  chartColumn: {
+    flex: 1,
+    alignItems: "center",
+    gap: 8,
+  },
+  chartCount: {
+    color: palette.white60,
+    fontSize: 11,
+    fontVariant: ["tabular-nums"],
+  },
+  chartTrack: {
+    width: "100%",
+    height: 128,
+    borderRadius: 20,
+    borderCurve: "continuous",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+    padding: 6,
+  },
+  chartFill: {
+    width: "100%",
+    borderRadius: 14,
+    borderCurve: "continuous",
+    backgroundColor: palette.orange,
+    minHeight: 10,
+  },
+  chartLabel: {
+    color: palette.white50,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  summaryCard: {
+    borderRadius: 24,
+    borderCurve: "continuous",
+    backgroundColor: palette.white06,
+    borderWidth: 1,
+    borderColor: palette.white08,
+    overflow: "hidden",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  summaryLabel: {
+    color: palette.white75,
+    fontSize: 15,
     fontWeight: "500",
   },
-  rowChevron: {
-    fontSize: 20,
-    color: "rgba(255,255,255,0.3)",
+  summaryValue: {
+    color: palette.white,
+    fontSize: 15,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
   },
-  danger: {
-    color: "#FF6B6B",
+  summaryDivider: {
+    height: 1,
+    backgroundColor: palette.white08,
+  },
+  summaryAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  summaryActionText: {
+    color: palette.orange,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  summaryChevron: {
+    color: palette.white40,
+    fontSize: 22,
   },
 });

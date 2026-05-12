@@ -60,7 +60,7 @@ export default function TabLayout() {
             }}
             md="person"
           />
-          <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       </NativeTabs>
     </ThemeProvider>
