@@ -1,0 +1,244 @@
+import GradientBackground from "@/components/GradientBackground";
+import { palette } from "@/constants/theme";
+import { db, dailyFocus } from "@/lib/db";
+import { getLocalDateString } from "@/lib/timezone";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { eq } from "drizzle-orm";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle } from "react-native-svg";
+
+const RING_SIZE = 220;
+const STROKE_WIDTH = 10;
+const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const FOCUS_DURATION_SECONDS = 25 * 60;
+
+function formatCountdown(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+export default function FocusScreen() {
+  const todayKey = getLocalDateString(new Date());
+  const [remainingSeconds, setRemainingSeconds] = useState(FOCUS_DURATION_SECONDS);
+  const [isRunning, setIsRunning] = useState(true);
+  const { data: focusRows } = useLiveQuery(
+    db.select().from(dailyFocus).where(eq(dailyFocus.date, todayKey)).limit(1)
+  );
+
+  const goalText = useMemo(() => {
+    const goal = focusRows?.[0]?.goal?.trim();
+    return goal || "Set your main goal first";
+  }, [focusRows]);
+
+  useEffect(() => {
+    if (!isRunning || remainingSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setRemainingSeconds((current) => {
+        if (current <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRunning, remainingSeconds]);
+
+  const progress = remainingSeconds / FOCUS_DURATION_SECONDS;
+  const countdownText = formatCountdown(remainingSeconds);
+  const progressOffset = -CIRCUMFERENCE * (1 - progress);
+
+  return (
+    <View style={styles.container}>
+      <GradientBackground />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color={palette.white70} />
+          </Pressable>
+          <View style={styles.titleWrap}>
+            <View style={styles.liveDot} />
+            <Text style={styles.title}>Focus Room</Text>
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.content}>
+          <Text style={styles.goal}>{goalText}</Text>
+          <Text style={styles.subtitle}>Stay focused. Do one thing.</Text>
+
+          <View style={styles.ringWrap}>
+            <Svg width={RING_SIZE} height={RING_SIZE} style={styles.ringSvg}>
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RADIUS}
+                stroke="rgba(255,255,255,0.12)"
+                strokeWidth={STROKE_WIDTH}
+                fill="none"
+              />
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RADIUS}
+                stroke={palette.orange}
+                strokeWidth={STROKE_WIDTH}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+                strokeDashoffset={progressOffset}
+                transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+              />
+            </Svg>
+
+            <View style={styles.ringCenter}>
+              <Text style={styles.timer}>{countdownText}</Text>
+              <Text style={styles.timerLabel}>{remainingSeconds > 0 ? "Focus" : "Complete"}</Text>
+            </View>
+          </View>
+
+          <Pressable
+            style={styles.pauseButton}
+            onPress={() => {
+              if (remainingSeconds === 0) {
+                setRemainingSeconds(FOCUS_DURATION_SECONDS);
+                setIsRunning(true);
+                return;
+              }
+              setIsRunning((current) => !current);
+            }}
+          >
+            <Ionicons
+              name={remainingSeconds === 0 ? "refresh" : isRunning ? "pause" : "play"}
+              size={18}
+              color={palette.white}
+            />
+            <Text style={styles.pauseText}>
+              {remainingSeconds === 0 ? "Restart" : isRunning ? "Pause" : "Resume"}
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#070b10",
+  },
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 8,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: palette.orange,
+  },
+  title: {
+    color: palette.white70,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  headerSpacer: {
+    width: 36,
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 24,
+  },
+  goal: {
+    color: palette.white,
+    fontSize: 18,
+    fontWeight: "700",
+    lineHeight: 28,
+    textAlign: "center",
+    maxWidth: 260,
+  },
+  subtitle: {
+    color: palette.white40,
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 14,
+    textAlign: "center",
+  },
+  ringWrap: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    marginTop: 42,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ringSvg: {
+    position: "absolute",
+  },
+  ringCenter: {
+    width: 170,
+    height: 170,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(5,9,14,0.55)",
+  },
+  timer: {
+    color: palette.white,
+    fontSize: 56,
+    fontWeight: "300",
+    letterSpacing: -2,
+  },
+  timerLabel: {
+    marginTop: 6,
+    color: palette.white45,
+    fontSize: 24,
+    fontWeight: "500",
+  },
+  pauseButton: {
+    marginTop: 38,
+    minWidth: 140,
+    paddingHorizontal: 24,
+    paddingVertical: 15,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  pauseText: {
+    color: palette.white80,
+    fontSize: 20,
+    fontWeight: "600",
+  },
+});

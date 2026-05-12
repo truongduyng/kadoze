@@ -204,7 +204,7 @@ export default function HomeScreen() {
                   {goalText ? (
                     <Pressable
                       style={styles.focusRingButton}
-                      onPress={() => router.push("/chat" as any)}
+                      onPress={() => router.push("/focus" as any)}
                     >
                       <Text style={styles.focusRingIcon}>▶</Text>
                     </Pressable>
