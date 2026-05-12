@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.1)",
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     gap: 14,
   },
   rowSelected: {

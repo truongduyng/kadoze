@@ -14,12 +14,12 @@ const GOALS: {
   label: string;
   icon: React.ComponentProps<typeof Ionicons>["name"];
 }[] = [
-  { id: "health",    label: "Health\n& Vitality",      icon: "star-outline" },
-  { id: "mindset",   label: "Mindset\n& Growth",       icon: "person-outline" },
-  { id: "work",      label: "Work &\nBusiness",         icon: "briefcase-outline" },
-  { id: "relations", label: "Relationships",            icon: "heart-outline" },
-  { id: "creative",  label: "Creativity",               icon: "sparkles-outline" },
-  { id: "finance",   label: "Financial\nFreedom",       icon: "cash-outline" },
+  { id: "health",    label: "Health & Vitality",   icon: "star-outline" },
+  { id: "mindset",   label: "Mindset & Growth",    icon: "person-outline" },
+  { id: "work",      label: "Work & Business",     icon: "briefcase-outline" },
+  { id: "relations", label: "Relationships",       icon: "heart-outline" },
+  { id: "creative",  label: "Creativity",          icon: "sparkles-outline" },
+  { id: "finance",   label: "Financial Freedom",   icon: "cash-outline" },
 ];
 
 export default function GoalStep({ value, onChange, onNext }: GoalStepProps) {
@@ -42,7 +42,7 @@ export default function GoalStep({ value, onChange, onNext }: GoalStepProps) {
                 <View style={[styles.iconWrap, isSelected && styles.iconWrapSelected]}>
                   <Ionicons
                     name={goal.icon}
-                    size={24}
+                    size={28}
                     color={isSelected ? palette.orange : "rgba(255,255,255,0.55)"}
                   />
                 </View>
@@ -92,29 +92,30 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 14,
   },
   cell: {
-    width: "30%",
+    flexBasis: "47%",
     flexGrow: 1,
-    aspectRatio: 1,
+    aspectRatio: 1.35,
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.1)",
-    borderRadius: 16,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 8,
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
   },
   cellSelected: {
     borderColor: palette.orange,
     backgroundColor: "rgba(251,146,60,0.12)",
   },
   iconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
@@ -123,11 +124,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(251,146,60,0.18)",
   },
   cellLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "600",
     color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    lineHeight: 16,
+    lineHeight: 19,
   },
   cellLabelSelected: {
     color: "#fff",
