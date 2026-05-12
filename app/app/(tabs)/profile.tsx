@@ -47,10 +47,6 @@ function getIdentityTitle(score: number) {
   return "Getting Started";
 }
 
-function formatFocusHours(minutes: number) {
-  return `${(minutes / 60).toFixed(1)}h`;
-}
-
 function buildLinePath(
   values: number[],
   width: number,
@@ -75,8 +71,9 @@ function buildLinePath(
   });
 
   const path = points
-    .map((point, index) =>
-      `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
     )
     .join(" ");
 
@@ -193,17 +190,11 @@ export default function ProfileScreen() {
       };
     });
 
-    const previousFocusWindow = focusTrendSeries.slice(0, 7);
-    const currentFocusWindow = focusTrendSeries.slice(7);
-    const previousFocusTotal = previousFocusWindow.reduce(
-      (sum, item) => sum + item.minutes,
-      0,
-    );
+    const currentFocusWindow = focusTrendSeries.slice(-7);
     const currentFocusTotal = currentFocusWindow.reduce(
       (sum, item) => sum + item.minutes,
       0,
     );
-    const focusTrend = currentFocusTotal - previousFocusTotal;
     const activeFocusDays = focusTrendSeries.filter(
       (item) => item.minutes > 0,
     ).length;
@@ -283,7 +274,6 @@ export default function ProfileScreen() {
       consistencyGrid,
       consistentDays,
       focusHours,
-      focusTrend,
       focusTrendSeries,
       activeFocusDays,
       averageFocusMinutes,
@@ -321,13 +311,6 @@ export default function ProfileScreen() {
     const lastPoint = trendChart.points[trendChart.points.length - 1];
     return `${trendChart.path} L ${lastPoint.x.toFixed(2)} 128 L ${firstPoint.x.toFixed(2)} 128 Z`;
   }, [trendChart]);
-  const focusTrendLabel =
-    analytics.focusTrend > 0
-      ? `+${formatFocusHours(analytics.focusTrend)}`
-      : analytics.focusTrend < 0
-        ? `-${formatFocusHours(Math.abs(analytics.focusTrend))}`
-        : "Flat";
-
   return (
     <View style={styles.container}>
       <GradientBackground />
@@ -382,10 +365,10 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.identityMetricSmall}>
               <Text selectable style={styles.metricEyebrow}>
-                Current streak
+                Streaks
               </Text>
-              <Text selectable style={styles.identityMetricSmallValue}>
-                {analytics.currentStreak} days
+              <Text selectable style={styles.identityMetricValue}>
+                {analytics.currentStreak}
               </Text>
             </View>
           </View>
@@ -426,27 +409,10 @@ export default function ProfileScreen() {
                 <Text selectable style={styles.metricEyebrow}>
                   Focus trend
                 </Text>
-                <Text selectable style={styles.trendHeadline}>
-                  {analytics.focusHours.toFixed(1)}h
-                </Text>
-                <Text selectable style={styles.trendSubhead}>
-                  Last 14 days of deep work
-                </Text>
               </View>
-              <View
-                style={[
-                  styles.trendDeltaPill,
-                  analytics.focusTrend > 0 && styles.trendDeltaPillUp,
-                  analytics.focusTrend < 0 && styles.trendDeltaPillDown,
-                ]}
-              >
-                <Text selectable style={styles.trendDeltaValue}>
-                  {focusTrendLabel}
-                </Text>
-                <Text selectable style={styles.trendDeltaLabel}>
-                  vs prior week
-                </Text>
-              </View>
+              <Text selectable style={styles.trendHeadline}>
+                {analytics.focusHours.toFixed(1)}h
+              </Text>
             </View>
             <View style={styles.trendStatsRow}>
               <View style={styles.trendStat}>
@@ -484,8 +450,16 @@ export default function ProfileScreen() {
                     x2="0"
                     y2="1"
                   >
-                    <Stop offset="0%" stopColor={palette.orange} stopOpacity={0.34} />
-                    <Stop offset="100%" stopColor={palette.orange} stopOpacity={0.02} />
+                    <Stop
+                      offset="0%"
+                      stopColor={palette.orange}
+                      stopOpacity={0.34}
+                    />
+                    <Stop
+                      offset="100%"
+                      stopColor={palette.orange}
+                      stopOpacity={0.02}
+                    />
                   </LinearGradient>
                 </Defs>
                 <Path
@@ -526,11 +500,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.trendLabelsRow}>
               {analytics.focusTrendSeries.map((item) => (
-                <Text
-                  key={item.dateKey}
-                  selectable
-                  style={styles.trendLabel}
-                >
+                <Text key={item.dateKey} selectable style={styles.trendLabel}>
                   {item.label}
                 </Text>
               ))}
@@ -803,7 +773,7 @@ const styles = StyleSheet.create({
   },
   trendHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
   },
