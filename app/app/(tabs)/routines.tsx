@@ -1,4 +1,5 @@
 import GradientBackground from "@/components/GradientBackground";
+import { Collapsible } from "@/components/ui/collapsible";
 import { palette } from "@/constants/theme";
 import {
   db,
@@ -23,7 +24,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAY_NAMES } from "@/lib/performance";
 
-const ORANGE = "#FB923C";
 const FOCUS_LABELS: Record<string, string> = {
   health: "Health & Vitality",
   mindset: "Mindset & Growth",
@@ -279,12 +279,12 @@ export default function RoutinesScreen() {
                           </View>
                         ) : status === "available" ? (
                           <View style={styles.focusHabitRight}>
-                            <Ionicons name="add-circle" size={22} color={ORANGE} />
+                            <Ionicons name="add-circle" size={22} color={palette.orange} />
                             <Text style={styles.focusHabitAvailable}>Add</Text>
                           </View>
                         ) : (
                           <View style={styles.focusHabitRight}>
-                            <Ionicons name="lock-closed" size={16} color="rgba(255,255,255,0.32)" />
+                            <Ionicons name="lock-closed" size={16} color={palette.white32} />
                             <Text style={styles.focusHabitLockedText}>
                               {Math.max(UNLOCK_STREAK_DAYS - stage.previousStreak, 0)} days left
                             </Text>
@@ -308,23 +308,28 @@ export default function RoutinesScreen() {
           <View style={styles.focusGroupsList}>
             {focusEntries.map(([focusKey, focusHabits]) => (
               <View key={focusKey} style={styles.focusGroupCard}>
-                <Text style={styles.focusGroupTitle}>{FOCUS_LABELS[focusKey] ?? focusKey}</Text>
-                <View style={styles.focusGroupItems}>
-                  {focusHabits.map((habit) => {
-                    const isOwned = existingHabitMap.has(habitKey(habit.title, habit.subtitle));
-                    return (
-                      <View key={`${focusKey}-${habit.title}`} style={styles.focusGroupItem}>
-                        <Text style={styles.focusGroupIcon}>{habit.icon}</Text>
-                        <Text style={styles.focusGroupItemText} numberOfLines={1}>
-                          {habit.title}
-                        </Text>
-                        {isOwned && (
-                          <Ionicons name="checkmark-circle" size={14} color={ORANGE} />
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
+                <Collapsible
+                  title={FOCUS_LABELS[focusKey] ?? focusKey}
+                  titleStyle={styles.focusGroupTitle}
+                  contentStyle={styles.focusGroupContent}
+                >
+                  <View style={styles.focusGroupItems}>
+                    {focusHabits.map((habit) => {
+                      const isOwned = existingHabitMap.has(habitKey(habit.title, habit.subtitle));
+                      return (
+                        <View key={`${focusKey}-${habit.title}`} style={styles.focusGroupItem}>
+                          <Text style={styles.focusGroupIcon}>{habit.icon}</Text>
+                          <Text style={styles.focusGroupItemText} numberOfLines={1}>
+                            {habit.title}
+                          </Text>
+                          {isOwned && (
+                            <Ionicons name="checkmark-circle" size={14} color={palette.orange} />
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </Collapsible>
               </View>
             ))}
           </View>
@@ -341,22 +346,22 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#fff",
-    marginBottom: 24,
+    color: palette.white,
+    marginBottom: 12,
   },
   section: { marginBottom: 24 },
   sectionLabel: {
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.35)",
+    color: palette.white35,
     marginBottom: 10,
   },
   card: {
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: palette.white06,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: palette.white08,
     padding: 16,
   },
   habitList: { gap: 10 },
@@ -366,10 +371,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     gap: 12,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: palette.white06,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: palette.white08,
   },
   habitIconWrap: {
     width: 28,
@@ -378,8 +383,8 @@ const styles = StyleSheet.create({
   },
   habitIcon: { fontSize: 22, textAlign: "center" },
   habitInfo: { flex: 1 },
-  habitTitle: { fontSize: 15, fontWeight: "600", color: "#fff" },
-  habitDuration: { fontSize: 14, fontWeight: "500", color: "rgba(255,255,255,0.42)" },
+  habitTitle: { fontSize: 15, fontWeight: "600", color: palette.white },
+  habitDuration: { fontSize: 14, fontWeight: "500", color: palette.white42 },
   streakDotsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -391,16 +396,16 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(255,255,255,0.04)",
+    borderColor: palette.white14,
+    backgroundColor: palette.white04,
   },
   streakDotActive: {
-    borderColor: "rgba(251,146,60,0.35)",
-    backgroundColor: ORANGE,
+    borderColor: palette.orange35,
+    backgroundColor: palette.orange,
   },
   streakBadge: { alignItems: "flex-end" },
-  streakText: { fontSize: 19, fontWeight: "800", color: ORANGE, lineHeight: 20 },
-  streakLabel: { fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 },
+  streakText: { fontSize: 19, fontWeight: "800", color: palette.orange, lineHeight: 20 },
+  streakLabel: { fontSize: 11, color: palette.white35, marginTop: 6 },
   focusHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -412,9 +417,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(251,146,60,0.12)",
+    backgroundColor: palette.orange12,
     borderWidth: 1,
-    borderColor: "rgba(251,146,60,0.3)",
+    borderColor: palette.orange30,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -426,11 +431,11 @@ const styles = StyleSheet.create({
   },
   focusRule: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.38)",
+    color: palette.white38,
   },
   focusText: {
     fontSize: 13,
-    color: "rgba(255,255,255,0.5)",
+    color: palette.white50,
     lineHeight: 19,
     marginTop: 12,
   },
@@ -442,16 +447,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: palette.white05,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: palette.white08,
     padding: 14,
     gap: 12,
   },
   focusHabitCardAvailable: {
-    borderColor: "rgba(251,146,60,0.35)",
-    backgroundColor: "rgba(251,146,60,0.08)",
+    borderColor: palette.orange35,
+    backgroundColor: palette.orange08,
   },
   focusHabitCardLocked: {
     opacity: 0.6,
@@ -466,23 +471,23 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: palette.white08,
     alignItems: "center",
     justifyContent: "center",
   },
   focusHabitIconWrapAvailable: {
-    backgroundColor: "rgba(251,146,60,0.16)",
+    backgroundColor: palette.orange16,
   },
   focusHabitIcon: { fontSize: 18 },
   focusHabitInfo: { flex: 1 },
   focusHabitTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#fff",
+    color: palette.white,
   },
   focusHabitSubtitle: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.38)",
+    color: palette.white38,
     marginTop: 2,
   },
   focusHabitRight: {
@@ -492,39 +497,42 @@ const styles = StyleSheet.create({
   focusHabitMetric: {
     fontSize: 18,
     fontWeight: "800",
-    color: ORANGE,
+    color: palette.orange,
   },
   focusHabitStatus: {
     fontSize: 10,
-    color: "rgba(255,255,255,0.35)",
+    color: palette.white35,
     marginTop: 2,
   },
   focusHabitAvailable: {
     fontSize: 11,
-    color: ORANGE,
+    color: palette.orange,
     fontWeight: "700",
     marginTop: 2,
   },
   focusHabitLockedText: {
     fontSize: 10,
-    color: "rgba(255,255,255,0.35)",
+    color: palette.white35,
     marginTop: 4,
   },
   focusGroupsList: {
     gap: 10,
   },
   focusGroupCard: {
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: palette.white06,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: palette.white08,
     padding: 14,
   },
   focusGroupTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#fff",
-    marginBottom: 10,
+    lineHeight: 20,
+    color: palette.white,
+  },
+  focusGroupContent: {
+    marginLeft: 0,
   },
   focusGroupItems: {
     gap: 8,
@@ -542,6 +550,6 @@ const styles = StyleSheet.create({
   focusGroupItemText: {
     flex: 1,
     fontSize: 13,
-    color: "rgba(255,255,255,0.62)",
+    color: palette.white62,
   },
 });
