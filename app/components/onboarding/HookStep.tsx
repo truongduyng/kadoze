@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
@@ -6,10 +7,14 @@ interface HookStepProps {
   onSelect: (value: string) => void;
 }
 
-const OPTIONS = [
-  { value: "too_many_ideas", label: "I have too many ideas and lose track of them." },
-  { value: "daily_habits", label: "I struggle to stick to daily habits." },
-  { value: "scattered", label: "I feel scattered across too many apps." },
+const OPTIONS: {
+  value: string;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+}[] = [
+  { value: "too_many_ideas", label: "I have too many ideas\nand lose track of them.", icon: "bulb-outline" },
+  { value: "daily_habits", label: "I struggle to stick\nto daily habits.", icon: "checkmark-circle-outline" },
+  { value: "scattered", label: "I feel scattered across\ntoo many apps.", icon: "apps" },
 ];
 
 const ORANGE = "#FB923C";
@@ -31,10 +36,21 @@ export default function HookStep({ selected, onSelect }: HookStepProps) {
                 onPress={() => onSelect(opt.value)}
                 activeOpacity={0.75}
               >
+                <View style={[styles.iconContainer, isSelected && styles.iconContainerSelected]}>
+                  <Ionicons
+                    name={opt.icon}
+                    size={20}
+                    color={isSelected ? ORANGE : "rgba(255,255,255,0.6)"}
+                  />
+                </View>
                 <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
                   {opt.label}
                 </Text>
-                {isSelected && <View style={styles.checkDot} />}
+                {isSelected ? (
+                  <Ionicons name="checkmark-circle" size={22} color={ORANGE} />
+                ) : (
+                  <Ionicons name="ellipse-outline" size={22} color="rgba(255,255,255,0.3)" />
+                )}
               </TouchableOpacity>
             );
           })}
@@ -100,5 +116,17 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     backgroundColor: "#FB923C",
     marginLeft: 12,
+  },
+  iconContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  iconContainerSelected: {
+    backgroundColor: "rgba(251,146,60,0.15)",
   },
 });
