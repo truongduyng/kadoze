@@ -10,10 +10,7 @@ import EmpathyStep from "@/components/onboarding/EmpathyStep";
 import PromiseStep from "@/components/onboarding/PromiseStep";
 import GoalStep from "@/components/onboarding/GoalStep";
 import KeystoneStep from "@/components/onboarding/KeystoneStep";
-import ConversionStep from "@/components/onboarding/ConversionStep";
-import PaywallModal from "@/components/chat/PaywallModal";
 import { STEPS, TOTAL, useOnboarding } from "@/hooks/useOnboarding";
-import { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 export default function OnboardingScreen() {
   const {
@@ -25,8 +22,6 @@ export default function OnboardingScreen() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
-    showPaywall,
-    setShowPaywall,
     goNext,
     goBack,
     showBack,
@@ -72,24 +67,9 @@ export default function OnboardingScreen() {
             focus={mainGoal}
             selected={keystoneHabit}
             onSelect={setKeystoneHabit}
-            onNext={goNext}
+            onNext={completeOnboarding}
           />
         );
-
-      case "conversion":
-        return (
-          <ConversionStep
-            onStartFree={completeOnboarding}
-            onUpgrade={() => setShowPaywall(true)}
-          />
-        );
-    }
-  };
-
-  const handlePaywallResult = (result: typeof PAYWALL_RESULT[keyof typeof PAYWALL_RESULT]) => {
-    setShowPaywall(false);
-    if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
-      completeOnboarding();
     }
   };
 
@@ -119,12 +99,6 @@ export default function OnboardingScreen() {
           {renderStep()}
         </Animated.View>
       </SafeAreaView>
-
-      <PaywallModal
-        visible={showPaywall}
-        onResult={handlePaywallResult}
-        allowDismiss
-      />
     </View>
   );
 }

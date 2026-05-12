@@ -12,8 +12,7 @@ export type StepType =
   | "empathy"
   | "promise"
   | "goal"
-  | "keystone"
-  | "conversion";
+  | "keystone";
 
 export interface StepConfig {
   type: StepType;
@@ -25,7 +24,6 @@ export const STEPS: StepConfig[] = [
   { type: "promise" },
   { type: "goal" },
   { type: "keystone" },
-  { type: "conversion" },
 ];
 
 export const TOTAL = STEPS.length;
@@ -106,8 +104,6 @@ export function useOnboarding() {
   const [mainGoal, setMainGoal] = useState("");
   const [keystoneHabit, setKeystoneHabit] = useState<string>("walk");
 
-  const [showPaywall, setShowPaywall] = useState(false);
-
   const goToStep = useCallback((next: number) => {
     Animated.timing(fadeAnim, {
       toValue: 0,
@@ -170,7 +166,7 @@ export function useOnboarding() {
     currentStep > 0 &&
     step.type !== "empathy" &&
     step.type !== "promise" &&
-    step.type !== "conversion";
+    true;
 
   return {
     currentStep,
@@ -181,8 +177,6 @@ export function useOnboarding() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
-    showPaywall,
-    setShowPaywall,
     goNext,
     goBack,
     goToStep,
