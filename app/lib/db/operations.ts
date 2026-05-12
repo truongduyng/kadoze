@@ -1,7 +1,7 @@
 import { eq, desc, asc, and, count } from 'drizzle-orm';
 import {
   db,
-  profiles, notes, habits, habitCompletions, dailyFocus,
+  profiles, notes, habits, habitCompletions, dailyFocus, todos,
   type NewProfile, type NewNote, type NewHabit, type NewHabitCompletion, type NewDailyFocus,
 } from './database';
 import { getLocalDateString } from '../timezone';
@@ -160,5 +160,26 @@ export const dailyFocusOps = {
       .set({ completedAt: null, updatedAt: new Date() })
       .where(eq(dailyFocus.date, key))
       .returning();
+  },
+};
+
+// ── todoOps ───────────────────────────────────────────────────────────────────
+export const todoOps = {
+  async getByDate(date: string) {
+    return await db.select().from(todos)
+      .where(eq(todos.date, date))
+      .orderBy(asc(todos.sortOrder), asc(todos.createdAt));
+  },
+
+  async add(date: string, title: string) {
+    return await db.insert(todos).values({ date, title }).returning();
+  },
+
+  async toggle(id: number, done: boolean) {
+    return await db.update(todos).set({ done }).where(eq(todos.id, id)).returning();
+  },
+
+  async delete(id: number) {
+    return await db.delete(todos).where(eq(todos.id, id));
   },
 };

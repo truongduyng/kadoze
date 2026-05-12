@@ -6,7 +6,7 @@ export * from './operations';
 
 export async function resetDatabase() {
   try {
-    const tables = ['habit_completions', 'habits', 'daily_focus', 'notes', 'profiles'];
+    const tables = ['habit_completions', 'habits', 'daily_focus', 'notes', 'profiles', 'todos'];
     for (const table of tables) {
       await expoDb.execAsync(`DROP TABLE IF EXISTS ${table};`);
     }
@@ -73,6 +73,16 @@ export async function initializeDatabase() {
         completed_at INTEGER,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+      );
+    `);
+    expoDb.execSync(`
+      CREATE TABLE IF NOT EXISTS todos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        date TEXT NOT NULL,
+        title TEXT NOT NULL,
+        done INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch())
       );
     `);
   } catch (error) {

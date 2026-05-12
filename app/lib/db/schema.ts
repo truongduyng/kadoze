@@ -56,6 +56,17 @@ export const dailyFocus = sqliteTable('daily_focus', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
+// ── todos ─────────────────────────────────────────────────────────────────────
+// Simple per-day task list
+export const todos = sqliteTable('todos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  date: text('date').notNull(),                  // 'YYYY-MM-DD'
+  title: text('title').notNull(),
+  done: integer('done', { mode: 'boolean' }).notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
 // ── TypeScript types ──────────────────────────────────────────────────────────
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
@@ -71,3 +82,6 @@ export type NewHabitCompletion = typeof habitCompletions.$inferInsert;
 
 export type DailyFocus = typeof dailyFocus.$inferSelect;
 export type NewDailyFocus = typeof dailyFocus.$inferInsert;
+
+export type Todo = typeof todos.$inferSelect;
+export type NewTodo = typeof todos.$inferInsert;
