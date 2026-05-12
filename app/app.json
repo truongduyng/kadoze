@@ -57,7 +57,7 @@
         "expo-image-picker",
         {
           "photosPermission": "$(PRODUCT_NAME) needs access to your photo library to attach photos to your journal entries.",
-          "cameraPermission": false
+          "cameraPermission": "$(PRODUCT_NAME) needs camera access to capture photos for your journal entries."
         }
       ],
       "expo-sharing",
