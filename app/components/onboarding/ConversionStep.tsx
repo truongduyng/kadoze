@@ -35,10 +35,10 @@ export default function ConversionStep({ onStartFree, onUpgrade }: ConversionSte
 
       <Text style={styles.headline}>Your dashboard is ready.</Text>
       <Text style={styles.subtext}>
-        You're set up for the Free Tier, giving you the core focus tools.
+        You&apos;re set up for the Free Tier, giving you the core focus tools.
       </Text>
       <Text style={styles.upsell}>
-        If you're serious about building lasting momentum, upgrade now for unlimited clarity.
+        If you&apos;re serious about building lasting momentum, upgrade now for unlimited clarity.
       </Text>
 
       <View style={styles.plans}>

@@ -24,7 +24,7 @@ export default function EmpathyStep({ onNext }: EmpathyStepProps) {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [opacityAnim, scaleAnim]);
 
   return (
     <View style={styles.container}>
@@ -33,7 +33,7 @@ export default function EmpathyStep({ onNext }: EmpathyStepProps) {
           <Text style={styles.icon}>✦</Text>
         </Animated.View>
 
-        <Text style={styles.headline}>You aren't broken;{"\n"}your system is.</Text>
+        <Text style={styles.headline}>You aren&apos;t broken;{"\n"}your system is.</Text>
         <Text style={styles.body}>
           Jumping between a note app, a habit tracker, and a calendar burns through your focus before the day even begins.
         </Text>

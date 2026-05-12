@@ -12,11 +12,11 @@ export default function ThreeDotsLoader({
   color = "rgba(255, 255, 255, 0.6)",
   gap = 5,
 }: Props) {
-  const dots = [
+  const dots = useRef([
     useRef(new Animated.Value(0)).current,
     useRef(new Animated.Value(0)).current,
     useRef(new Animated.Value(0)).current,
-  ];
+  ]).current;
 
   useEffect(() => {
     const animations = dots.map((dot) =>
@@ -36,7 +36,7 @@ export default function ThreeDotsLoader({
       stagger.stop();
       animations.forEach((a) => a.stop());
     };
-  }, []);
+  }, [dots]);
 
   const dotStyle = (dot: Animated.Value) => ({
     opacity: dot.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }),

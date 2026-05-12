@@ -330,7 +330,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.btn} onPress={onNext} activeOpacity={0.85}>
-          <Text style={styles.btnText}>Let's build your foundation.</Text>
+          <Text style={styles.btnText}>Let&apos;s build your foundation.</Text>
         </TouchableOpacity>
       </View>
     </View>
