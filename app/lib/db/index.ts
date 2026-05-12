@@ -4,6 +4,8 @@ import { expoDb } from './database';
 export * from './database';
 export * from './operations';
 
+let initializationPromise: Promise<void> | null = null;
+
 export async function resetDatabase() {
   try {
     const tables = ['habit_completions', 'habits', 'daily_focus', 'notes', 'profiles', 'todos'];
@@ -11,6 +13,8 @@ export async function resetDatabase() {
       await expoDb.execAsync(`DROP TABLE IF EXISTS ${table};`);
     }
     storage.clearAll();
+    initializationPromise = null;
+    await ensureDatabaseInitialized();
   } catch (error) {
     console.error('Failed to reset database:', error);
     throw error;
@@ -89,4 +93,12 @@ export async function initializeDatabase() {
     console.error('Failed to initialize database:', error);
     throw error;
   }
+}
+
+export function ensureDatabaseInitialized() {
+  if (!initializationPromise) {
+    initializationPromise = initializeDatabase();
+  }
+
+  return initializationPromise;
 }

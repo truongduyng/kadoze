@@ -32,6 +32,14 @@ const FOCUS_LABELS: Record<string, string> = {
   creative: "Creativity",
   finance: "Financial Freedom",
 };
+const FOCUS_ICONS: Record<string, React.ComponentProps<typeof Ionicons>["name"]> = {
+  health: "star-outline",
+  mindset: "person-outline",
+  work: "briefcase-outline",
+  relations: "heart-outline",
+  creative: "sparkles-outline",
+  finance: "cash-outline",
+};
 const UNLOCK_STREAK_DAYS = 14;
 
 function habitKey(title: string, subtitle?: string | null) {
@@ -304,13 +312,24 @@ export default function RoutinesScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ALL KEYSTONE PATHS</Text>
+          <Text style={styles.sectionLabel}>ALL PATHS</Text>
           <View style={styles.focusGroupsList}>
             {focusEntries.map(([focusKey, focusHabits]) => (
               <View key={focusKey} style={styles.focusGroupCard}>
                 <Collapsible
                   title={FOCUS_LABELS[focusKey] ?? focusKey}
-                  titleStyle={styles.focusGroupTitle}
+                  headerContent={
+                    <View style={styles.focusGroupHeaderContent}>
+                      <View style={styles.focusGroupHeaderIconWrap}>
+                        <Ionicons
+                          name={FOCUS_ICONS[focusKey] ?? "ellipse-outline"}
+                          size={20}
+                          color={palette.white55}
+                        />
+                      </View>
+                      <Text style={styles.focusGroupTitle}>{FOCUS_LABELS[focusKey] ?? focusKey}</Text>
+                    </View>
+                  }
                   contentStyle={styles.focusGroupContent}
                 >
                   <View style={styles.focusGroupItems}>
@@ -524,6 +543,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.white08,
     padding: 14,
+  },
+  focusGroupHeaderContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  focusGroupHeaderIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: palette.white08,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  focusGroupHeaderIcon: {
+    fontSize: 20,
   },
   focusGroupTitle: {
     fontSize: 14,
