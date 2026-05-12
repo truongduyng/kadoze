@@ -14,74 +14,55 @@ const LIST_ITEMS = [
 ];
 
 export default function PromiseStep({ onNext }: PromiseStepProps) {
-  const itemAnims = useRef(LIST_ITEMS.map(() => new Animated.Value(1))).current;
-  const checkAnim = useRef(new Animated.Value(0)).current;
-  const highlightAnim = useRef(new Animated.Value(0)).current;
+  // 0 = dim/default, 1 = orange highlight
+  const highlightAnims = useRef(LIST_ITEMS.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
-    const sequence = Animated.sequence([
-      Animated.delay(400),
-      Animated.stagger(120, itemAnims.map((anim) =>
+    // Stagger each item lighting up, then a brief pause before all stay lit
+    const staggerIn = Animated.stagger(
+      350,
+      highlightAnims.map((anim) =>
         Animated.timing(anim, {
-          toValue: 0.3,
-          duration: 200,
-          useNativeDriver: true,
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false, // needed for color interpolation
         })
-      )),
-      Animated.delay(100),
-      Animated.parallel([
-        Animated.timing(checkAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-        Animated.timing(highlightAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      ]),
-    ]);
-    sequence.start();
-  }, []);
+      )
+    );
+    Animated.sequence([Animated.delay(400), staggerIn]).start();
+  }, [highlightAnims]);
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.listCard}>
           {LIST_ITEMS.map((item, i) => {
-            const isLast = i === LIST_ITEMS.length - 1;
+            const anim = highlightAnims[i];
+            const bgColor = anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["rgba(255,255,255,0.06)", "rgba(251,146,60,0.2)"],
+            });
+            const borderColor = anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["rgba(255,255,255,0.2)", palette.orange],
+            });
+            const textColor = anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["rgba(255,255,255,0.4)", "#fff"],
+            });
+            const checkColor = anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["rgba(255,255,255,0.0)", palette.orange],
+            });
+
             return (
-              <Animated.View
-                key={item}
-                style={[styles.listRow, { opacity: isLast ? undefined : itemAnims[i] }]}
-              >
+              <Animated.View key={item} style={styles.listRow}>
                 <Animated.View
-                  style={[
-                    styles.listBullet,
-                    isLast && { opacity: highlightAnim },
-                    isLast && {
-                      backgroundColor: highlightAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ["rgba(255,255,255,0.1)", "rgba(251,146,60,0.25)"],
-                      }),
-                      borderColor: highlightAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ["rgba(255,255,255,0.2)", palette.orange],
-                      }),
-                    },
-                  ]}
+                  style={[styles.listBullet, { backgroundColor: bgColor, borderColor }]}
                 >
-                  {isLast ? (
-                    <Animated.Text style={[styles.check, { opacity: checkAnim }]}>✓</Animated.Text>
-                  ) : (
-                    <View style={styles.emptyBullet} />
-                  )}
+                  <Animated.Text style={[styles.check, { color: checkColor }]}>✓</Animated.Text>
                 </Animated.View>
-                <Animated.Text
-                  style={[
-                    styles.listText,
-                    isLast && {
-                      color: highlightAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ["rgba(255,255,255,0.5)", "#fff"],
-                      }),
-                      fontWeight: "600",
-                    },
-                  ]}
-                >
+                <Animated.Text style={[styles.listText, { color: textColor }]}>
                   {item}
                 </Animated.Text>
               </Animated.View>
@@ -139,25 +120,16 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.2)",
-    backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyBullet: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
   check: {
     fontSize: 13,
-    color: palette.orange,
     fontWeight: "700",
   },
   listText: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.5)",
+    flex: 1,
   },
   headline: {
     fontSize: 22,
