@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
 } from "react-native";
+import { palette } from "@/constants/theme";
 
 interface GoalStepProps {
   value: string;
@@ -14,7 +15,6 @@ interface GoalStepProps {
   onNext: () => void;
 }
 
-const ORANGE = "#FB923C";
 const MAX = 80;
 
 export default function GoalStep({ value, onChange, onNext }: GoalStepProps) {
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: ORANGE,
+    borderColor: palette.orange,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
   },
   question: {
     fontSize: 26,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   footer: {},
   btn: {
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     borderRadius: 14,
     paddingVertical: 18,
     alignItems: "center",

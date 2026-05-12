@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { palette } from "@/constants/theme";
 
 interface PromiseStepProps {
   onNext: () => void;
 }
-
-const ORANGE = "#FB923C";
 
 const LIST_ITEMS = [
   "Track your mood daily",
@@ -60,7 +59,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
                       }),
                       borderColor: highlightAnim.interpolate({
                         inputRange: [0, 1],
-                        outputRange: ["rgba(255,255,255,0.2)", ORANGE],
+                        outputRange: ["rgba(255,255,255,0.2)", palette.orange],
                       }),
                     },
                   ]}
@@ -153,7 +152,7 @@ const styles = StyleSheet.create({
   },
   check: {
     fontSize: 13,
-    color: ORANGE,
+    color: palette.orange,
     fontWeight: "700",
   },
   listText: {
@@ -169,7 +168,7 @@ const styles = StyleSheet.create({
   highlight: {
     fontSize: 22,
     fontWeight: "800",
-    color: ORANGE,
+    color: palette.orange,
     lineHeight: 30,
   },
   body: {
@@ -181,7 +180,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   btn: {
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     borderRadius: 14,
     paddingVertical: 18,
     alignItems: "center",

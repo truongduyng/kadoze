@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { palette } from "@/constants/theme";
 
 interface EmpathyStepProps {
   onNext: () => void;
 }
-
-const ORANGE = "#FB923C";
 
 export default function EmpathyStep({ onNext }: EmpathyStepProps) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -44,12 +43,6 @@ export default function EmpathyStep({ onNext }: EmpathyStepProps) {
         <TouchableOpacity style={styles.btn} onPress={onNext} activeOpacity={0.85}>
           <Text style={styles.btnText}>There is a quieter way.</Text>
         </TouchableOpacity>
-
-        <View style={styles.dots}>
-          {[0, 1, 2, 3].map((i) => (
-            <View key={i} style={[styles.dot, i === 0 && styles.dotActive]} />
-          ))}
-        </View>
       </View>
     </View>
   );
@@ -73,14 +66,14 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: ORANGE,
+    borderColor: palette.orange,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 36,
   },
   icon: {
     fontSize: 32,
-    color: ORANGE,
+    color: palette.orange,
   },
   headline: {
     fontSize: 30,
@@ -102,7 +95,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btn: {
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     borderRadius: 14,
     paddingVertical: 18,
     alignItems: "center",

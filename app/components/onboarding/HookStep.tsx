@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { palette } from "@/constants/theme";
 
 interface HookStepProps {
   selected: string | null;
@@ -17,7 +18,6 @@ const OPTIONS: {
   { value: "scattered", label: "I feel scattered across\ntoo many apps.", icon: "apps" },
 ];
 
-const ORANGE = "#FB923C";
 
 export default function HookStep({ selected, onSelect }: HookStepProps) {
   return (
@@ -40,14 +40,14 @@ export default function HookStep({ selected, onSelect }: HookStepProps) {
                   <Ionicons
                     name={opt.icon}
                     size={20}
-                    color={isSelected ? ORANGE : "rgba(255,255,255,0.6)"}
+                    color={isSelected ? palette.orange : "rgba(255,255,255,0.6)"}
                   />
                 </View>
                 <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
                   {opt.label}
                 </Text>
                 {isSelected ? (
-                  <Ionicons name="checkmark-circle" size={22} color={ORANGE} />
+                  <Ionicons name="checkmark-circle" size={22} color={palette.orange} />
                 ) : (
                   <Ionicons name="ellipse-outline" size={22} color="rgba(255,255,255,0.3)" />
                 )}

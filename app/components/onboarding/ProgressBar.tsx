@@ -1,12 +1,11 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
+import { palette } from "@/constants/theme";
 
 interface ProgressBarProps {
-  step: number; // 1-based current step
+  step: number;
   total: number;
 }
-
-const ORANGE = "#FB923C";
 
 export default function ProgressBar({ step, total }: ProgressBarProps) {
   return (
@@ -41,7 +40,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   filled: {
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
   },
   empty: {
     backgroundColor: "rgba(255,255,255,0.15)",

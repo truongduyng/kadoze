@@ -1,12 +1,11 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { palette } from "@/constants/theme";
 
 interface ConversionStepProps {
   onStartFree: () => void;
   onUpgrade: () => void;
 }
-
-const ORANGE = "#FB923C";
 
 const FREE_FEATURES = [
   "1 Goal per day",
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
   },
   upsell: {
     fontSize: 13,
-    color: ORANGE,
+    color: palette.orange,
     textAlign: "center",
     lineHeight: 19,
   },
@@ -140,7 +139,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   planCardPro: {
-    borderColor: ORANGE,
+    borderColor: palette.orange,
     backgroundColor: "rgba(251,146,60,0.06)",
     position: "relative",
   },
@@ -148,7 +147,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -1,
     right: -1,
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     borderTopRightRadius: 14,
     borderBottomLeftRadius: 8,
     paddingHorizontal: 8,
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   featureCheckPro: {
-    color: ORANGE,
+    color: palette.orange,
   },
   featureText: {
     fontSize: 12,
@@ -228,7 +227,7 @@ const styles = StyleSheet.create({
   },
   proBtn: {
     marginTop: 8,
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",

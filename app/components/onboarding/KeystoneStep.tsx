@@ -1,14 +1,13 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { KEYSTONE_HABITS, type KeystoneHabit } from "@/hooks/useOnboarding";
+import { palette } from "@/constants/theme";
 
 interface KeystoneStepProps {
   selected: string;
   onSelect: (id: string) => void;
   onNext: () => void;
 }
-
-const ORANGE = "#FB923C";
 
 export default function KeystoneStep({ selected, onSelect, onNext }: KeystoneStepProps) {
   return (
@@ -100,7 +99,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   rowSelected: {
-    borderColor: ORANGE,
+    borderColor: palette.orange,
     backgroundColor: "rgba(251,146,60,0.1)",
   },
   rowLocked: {
@@ -133,7 +132,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -144,7 +143,7 @@ const styles = StyleSheet.create({
   },
   footer: {},
   btn: {
-    backgroundColor: ORANGE,
+    backgroundColor: palette.orange,
     borderRadius: 14,
     paddingVertical: 18,
     alignItems: "center",
