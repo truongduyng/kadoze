@@ -2,7 +2,9 @@ import GradientBackground from "@/components/GradientBackground";
 import { palette } from "@/constants/theme";
 import { dailyFocus, db, todoOps } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
+import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
+import { eq } from "drizzle-orm";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -51,7 +53,7 @@ function getTomorrowKey() {
 }
 
 export default function EveningResetScreen() {
-  const [screen, setScreen] = useState<"timer" | "done">("timer");
+  const tomorrowKey = useMemo(() => getTomorrowKey(), []);
   const [remainingSeconds, setRemainingSeconds] = useState(RESET_DURATION_SECONDS);
   const [isRunning, setIsRunning] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
@@ -61,7 +63,7 @@ export default function EveningResetScreen() {
   const [isSavingPlan, setIsSavingPlan] = useState(false);
 
   useEffect(() => {
-    if (screen !== "timer" || !isRunning || remainingSeconds <= 0) return;
+    if (!isRunning || remainingSeconds <= 0) return;
 
     const interval = setInterval(() => {
       setRemainingSeconds((current) => {
@@ -74,7 +76,31 @@ export default function EveningResetScreen() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, remainingSeconds, screen]);
+  }, [isRunning, remainingSeconds]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadTomorrowPlan = async () => {
+      const [focusRow] = await db
+        .select()
+        .from(dailyFocus)
+        .where(eq(dailyFocus.date, tomorrowKey))
+        .limit(1);
+      const todoRows = await todoOps.getByDate(tomorrowKey);
+
+      if (!isActive) return;
+
+      setGoalDraft(focusRow?.goal ?? "");
+      setPlannedTodos(todoRows.map((todo) => todo.title.trim()).filter(Boolean));
+    };
+
+    void loadTomorrowPlan();
+
+    return () => {
+      isActive = false;
+    };
+  }, [tomorrowKey]);
 
   const progress = remainingSeconds / RESET_DURATION_SECONDS;
   const progressOffset = -CIRCUMFERENCE * (1 - progress);
@@ -83,11 +109,11 @@ export default function EveningResetScreen() {
     () => RESET_STEPS.findIndex((_, index) => !completedSteps[index]),
     [completedSteps]
   );
+  const isCompleted = activeStepIndex === -1;
   const currentStepIndex = activeStepIndex === -1 ? RESET_STEPS.length - 1 : activeStepIndex;
   const currentStep = RESET_STEPS[currentStepIndex];
 
   const saveTomorrowPlan = async () => {
-    const tomorrowKey = getTomorrowKey();
     const normalizedGoal = goalDraft.trim();
     const normalizedTodos = plannedTodos
       .map((todo) => todo.trim())
@@ -143,7 +169,6 @@ export default function EveningResetScreen() {
       const next = { ...current, [index]: true };
       if (index === RESET_STEPS.length - 1) {
         setIsRunning(false);
-        setScreen("done");
       }
       return next;
     });
@@ -165,17 +190,16 @@ export default function EveningResetScreen() {
     <View style={styles.container}>
       <GradientBackground />
       <SafeAreaView style={styles.safeArea}>
-        {screen === "timer" ? (
-          <KeyboardAvoidingView
-            style={styles.keyboard}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        <KeyboardAvoidingView
+          style={styles.keyboard}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
               <View style={styles.header}>
                 <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
                   <Ionicons name="chevron-back" size={24} color={palette.white70} />
@@ -215,16 +239,18 @@ export default function EveningResetScreen() {
                   </View>
                 </View>
 
-                <Pressable
-                  style={styles.pauseControl}
-                  onPress={() => setIsRunning((current) => !current)}
-                >
-                  <Ionicons
-                    name={isRunning ? "pause" : "play"}
-                    size={22}
-                    color={palette.white}
-                  />
-                </Pressable>
+                {!isCompleted ? (
+                  <Pressable
+                    style={styles.pauseControl}
+                    onPress={() => setIsRunning((current) => !current)}
+                  >
+                    <Ionicons
+                      name={isRunning ? "pause" : "play"}
+                      size={22}
+                      color={palette.white}
+                    />
+                  </Pressable>
+                ) : null}
 
                 <View style={styles.stepsCard}>
                   <Text style={styles.stepsLabel}>RESET STEPS</Text>
@@ -251,7 +277,7 @@ export default function EveningResetScreen() {
                               <Text style={[styles.stepText, isDone && styles.stepTextActive]}>
                                 {item.title}
                               </Text>
-                              {isCurrent ? (
+                              {isCurrent && !isCompleted ? (
                                 <Text style={styles.stepHint}>{currentStep.hint}</Text>
                               ) : null}
                             </View>
@@ -266,7 +292,7 @@ export default function EveningResetScreen() {
                     })}
                   </View>
 
-                  {currentStepIndex === 2 ? (
+                  {currentStepIndex === 2 && !isCompleted ? (
                     <View style={styles.planCard}>
                       <Text style={styles.planSectionLabel}>MAIN GOAL</Text>
                       <TextInput
@@ -310,48 +336,36 @@ export default function EveningResetScreen() {
                           />
                           {todoDraft.trim().length > 0 ? (
                             <Pressable style={styles.todoAddButton} onPress={addPlannedTodo}>
-                              <Text style={styles.todoAddText}>Add</Text>
+                              <Ionicons name="add" size={18} color={palette.white} />
                             </Pressable>
                           ) : null}
                         </View>
                       </View>
-                      <Text style={styles.planHint}>
-                        Add at least one task, then tick step 3 to save tomorrow&apos;s plan.
-                      </Text>
                       {isSavingPlan ? <Text style={styles.planSaving}>Saving...</Text> : null}
+                    </View>
+                  ) : null}
+
+                  {isCompleted ? (
+                    <View style={styles.doneInlineCard}>
+                      <Text style={styles.doneInlineTitle}>Great job.</Text>
+                      <Text style={styles.doneInlineBody}>
+                        You&apos;ve reset your space and lined up tomorrow&apos;s first move.
+                      </Text>
+                      <Pressable
+                        style={styles.doneInlineButton}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          router.replace("/" as any);
+                        }}
+                      >
+                        <Text style={styles.doneInlineButtonText}>Done</Text>
+                      </Pressable>
                     </View>
                   ) : null}
                 </View>
               </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        ) : null}
-
-        {screen === "done" ? (
-          <>
-            <View style={styles.doneHeader}>
-              <Pressable onPress={() => router.back()} hitSlop={10} style={styles.doneHeaderIcon}>
-                <Ionicons name="close" size={20} color={palette.orange} />
-              </Pressable>
-            </View>
-
-            <View style={styles.doneContent}>
-              <View style={styles.doneBadge}>
-                <Ionicons name="checkmark" size={40} color={palette.orange} />
-              </View>
-              <Text style={styles.doneTitle}>Great job.</Text>
-              <Text style={styles.doneBody}>
-                You&apos;ve reset your space and lined up tomorrow&apos;s first move.
-              </Text>
-            </View>
-
-            <View style={styles.footer}>
-              <Pressable style={styles.primaryButton} onPress={() => router.replace("/" as any)}>
-                <Text style={styles.primaryButtonText}>Done</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : null}
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
@@ -589,15 +603,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   todoAddButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    width: 32,
+    height: 32,
     backgroundColor: palette.orange,
     borderRadius: 8,
-  },
-  todoAddText: {
-    color: palette.white,
-    fontSize: 13,
-    fontWeight: "700",
+    alignItems: "center",
+    justifyContent: "center",
   },
   planHint: {
     color: palette.white42,
@@ -609,56 +620,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  doneHeader: {
-    alignItems: "flex-end",
-    paddingTop: 8,
+  doneInlineCard: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.white08,
+    alignItems: "center",
   },
-  doneHeaderIcon: {
-    width: 36,
-    height: 36,
+  doneInlineBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: palette.orange25,
+    backgroundColor: palette.orange08,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 12,
   },
-  doneContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  doneBadge: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    borderWidth: 2,
-    borderColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 34,
-  },
-  doneTitle: {
+  doneInlineTitle: {
     color: palette.white,
-    fontSize: 34,
+    fontSize: 22,
     fontWeight: "700",
     textAlign: "center",
   },
-  doneBody: {
-    marginTop: 14,
+  doneInlineBody: {
+    marginTop: 8,
     color: palette.white45,
-    fontSize: 18,
-    lineHeight: 28,
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: "center",
-    maxWidth: 300,
+    maxWidth: 280,
   },
-  footer: {
-    paddingBottom: 20,
-  },
-  primaryButton: {
+  doneInlineButton: {
+    marginTop: 16,
     backgroundColor: palette.orange,
-    borderRadius: 16,
-    paddingVertical: 18,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
     alignItems: "center",
   },
-  primaryButtonText: {
+  doneInlineButtonText: {
     color: palette.white,
     fontSize: 16,
     fontWeight: "700",
