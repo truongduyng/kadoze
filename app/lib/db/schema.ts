@@ -11,12 +11,11 @@ export const profiles = sqliteTable('profiles', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// ── notes (inbox) ─────────────────────────────────────────────────────────────
-// Free-form captures; role = 'user' | 'assistant' for AI thread
+// ── notes ─────────────────────────────────────────────────────────────────────
+// Free-form notes.
 export const notes = sqliteTable('notes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   content: text('content').notNull(),
-  role: text('role').notNull().default('user'), // 'user' | 'assistant'
   mediaUrl: text('media_url'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),

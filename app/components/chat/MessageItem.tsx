@@ -7,7 +7,6 @@ import ThreeDotsLoader from "@/components/ui/ThreeDotsLoader";
 
 interface MessageItemProps {
   message: {
-    role: string;
     content: string;
     createdAt: string | Date;
     mediaUrl?: string | null;
@@ -123,8 +122,8 @@ const markdownStyle = {
 };
 
 const MessageItem = ({ message, isStreaming, streamingWords, onRetry, isOffline }: MessageItemProps) => {
-  const isBot = message.role === "assistant";
-  const isProcessing = message.content === "Processing...";
+  const isBot = false;
+  const isProcessing = message.content === "Processing..." || message.content === "...";
   const displayContent = isStreaming ? (streamingWords || message.content) : message.content;
 
   return (

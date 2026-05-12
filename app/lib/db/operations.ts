@@ -1,4 +1,4 @@
-import { eq, desc, asc, and, count } from 'drizzle-orm';
+import { eq, desc, asc, count } from 'drizzle-orm';
 import {
   db,
   profiles, notes, habits, habitCompletions, dailyFocus, todos,
@@ -43,16 +43,16 @@ export const noteOps = {
     const result = await withInitializedDb(() => db.select().from(notes).limit(1));
     return result[0] ?? null;
   },
-  async countByRole(role: string): Promise<number> {
+  async countAll(): Promise<number> {
     const result = await withInitializedDb(() =>
-      db.select({ count: count() }).from(notes).where(eq(notes.role, role))
+      db.select({ count: count() }).from(notes)
     );
     return result[0]?.count ?? 0;
   },
-  async existsByContentAndRole(content: string, role: string): Promise<boolean> {
+  async existsByContent(content: string): Promise<boolean> {
     const result = await withInitializedDb(() =>
       db.select({ count: count() }).from(notes)
-        .where(and(eq(notes.content, content), eq(notes.role, role))).limit(1)
+        .where(eq(notes.content, content)).limit(1)
     );
     return (result[0]?.count ?? 0) > 0;
   },

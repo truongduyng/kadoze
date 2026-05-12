@@ -26,8 +26,7 @@ export function useMessageLimit(hasActiveSubscription: (entitlement: string) => 
 
   const loadMessageCount = async () => {
     try {
-      // Count only user messages (role: 'user') using SQL COUNT
-      const count = await noteOps.countByRole('user');
+      const count = await noteOps.countAll();
       setMessageCount(count);
     } catch (error) {
       console.error('Error loading message count:', error);
@@ -41,7 +40,7 @@ export function useMessageLimit(hasActiveSubscription: (entitlement: string) => 
   // Refresh count and immediately return whether soft limit is reached
   const refreshAndCheckSoftLimit = async (): Promise<boolean> => {
     try {
-      const count = await noteOps.countByRole('user');
+      const count = await noteOps.countAll();
       setMessageCount(count);
       return !isPro && count >= SOFT_LIMIT && count < HARD_LIMIT;
     } catch (error) {

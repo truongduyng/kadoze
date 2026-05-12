@@ -5,12 +5,6 @@ import { db, notes, noteOps } from "@/lib/db";
 import MessageItem from "@/components/chat/MessageItem";
 import { useImageUpload } from "./useImageUpload";
 
-function isNetworkError(error: unknown): boolean {
-  if (error instanceof TypeError && /network|fetch|abort/i.test(error.message)) return true;
-  if (error instanceof Error && /network/i.test(error.message)) return true;
-  return false;
-}
-
 function getLocalDateKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -80,7 +74,6 @@ export const useMessages = (
 
       const userNoteResult = await noteOps.create({
         content: inputText.trim() || "",
-        role: "user",
         mediaUrl: uploadedImageUrl,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -93,7 +86,6 @@ export const useMessages = (
 
       const loadingNote = await noteOps.create({
         content: "...",
-        role: "assistant",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -102,7 +94,7 @@ export const useMessages = (
         const context = [...allNotesData, userNote]
           .filter((n) => n.content?.trim())
           .slice(-60)
-          .map((n) => ({ role: n.role, content: n.content }));
+          .map((n) => ({ role: "user", content: n.content }));
 
         const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/process-message`, {
           method: "POST",

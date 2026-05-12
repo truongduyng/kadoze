@@ -12,7 +12,7 @@ import { useImagePicker } from "@/hooks/chat/useImagePicker";
 import InputSection from "@/components/chat/InputSection";
 import PaywallModal from "@/components/chat/PaywallModal";
 import MessageList from "@/components/chat/MessageList";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AdaptiveBlurView from "@/components/ui/AdaptiveBlurView";
 import { Colors } from "@/constants/theme";

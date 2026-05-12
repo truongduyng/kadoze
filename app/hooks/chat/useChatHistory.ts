@@ -8,7 +8,6 @@ export type DaySummary = {
   messageCount: number;
   snippet: string;
   lastCreatedAt: Date;
-  isWelcome?: boolean;   // true for the first day containing the welcome message
   // Set when this entry represents a collapsed range of empty days
   gapDays?: number;      // number of consecutive empty days in this gap
   gapEndKey?: string;    // "YYYY-MM-DD" of the last day in the gap
@@ -79,12 +78,6 @@ export function useChatHistory(): {
     end.setHours(0, 0, 0, 0);
 
     // First pass: flat list oldest→newest
-    // Detect the welcome message: first assistant message that starts with "Hey"
-    const firstAssistant = (liveNotes || []).find(m => m.role === "assistant");
-    const welcomeDateKey = firstAssistant
-      ? getLocalDateKey(new Date(firstAssistant.createdAt))
-      : null;
-
     type RawDay = DaySummary & { isEmpty: boolean };
     const flat: RawDay[] = [];
     while (cursor <= end) {
@@ -92,17 +85,9 @@ export function useChatHistory(): {
       const group = map.get(dateKey);
       if (group) {
         const msgs = group.messages;
-        const lastAssistant = [...msgs].reverse().find(m => m.role === "assistant");
-        // isWelcome: welcome date AND the snippet (last assistant) is still the welcome message itself
-        const isWelcome = firstAssistant != null
-          && dateKey === welcomeDateKey
-          && lastAssistant?.id === firstAssistant.id;
-        const lastMsg = lastAssistant ?? msgs[msgs.length - 1];
-        const snippetRaw = lastMsg?.content ?? "";
-        const snippet = isWelcome
-          ? snippetRaw.replace(/[#*`_>]/g, "").trim()
-          : snippetRaw.replace(/[#*`_>]/g, "").trim().slice(0, 120);
-        flat.push({ dateKey, displayDate: formatDisplayDate(dateKey), messageCount: msgs.length, snippet, lastCreatedAt: group.lastCreatedAt, isEmpty: false, isWelcome });
+        const lastMsg = msgs[msgs.length - 1];
+        const snippet = (lastMsg?.content ?? "").replace(/[#*`_>]/g, "").trim().slice(0, 120);
+        flat.push({ dateKey, displayDate: formatDisplayDate(dateKey), messageCount: msgs.length, snippet, lastCreatedAt: group.lastCreatedAt, isEmpty: false });
       } else {
         flat.push({ dateKey, displayDate: formatDisplayDate(dateKey), messageCount: 0, snippet: "", lastCreatedAt: new Date(cursor), isEmpty: true });
       }

@@ -36,12 +36,10 @@ export function usePaywall() {
 
     if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
       await refreshCustomerInfo();
-      // Inject a warm AI welcome message into the chat
       const message = PRO_WELCOME_MESSAGES[Math.floor(Math.random() * PRO_WELCOME_MESSAGES.length)];
       try {
         await noteOps.create({
           content: message,
-          role: 'assistant',
           createdAt: new Date(),
           updatedAt: new Date(),
         });

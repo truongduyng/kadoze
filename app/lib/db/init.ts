@@ -35,7 +35,6 @@ export async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         content TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'user',
         media_url TEXT,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())

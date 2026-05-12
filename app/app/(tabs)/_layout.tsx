@@ -32,7 +32,7 @@ export default function TabLayout() {
           />
           <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="chat">
+        <NativeTabs.Trigger name="notes">
           <NativeTabs.Trigger.Icon
             sf={{
               default: "note.text",
@@ -40,7 +40,7 @@ export default function TabLayout() {
             }}
             md="edit_note"
           />
-          <NativeTabs.Trigger.Label>Note</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="routines">
           <NativeTabs.Trigger.Icon
