@@ -19,25 +19,16 @@
         "NSPhotoLibraryUsageDescription": "$(PRODUCT_NAME) needs access to your photo library to attach photos to your journal entries."
       }
     },
-    "splash": {
-      "image": "./assets/images/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-      "dark": {
-        "image": "./assets/images/icon.png",
-        "backgroundColor": "#000000"
-      }
-    },
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon.png",
+          "image": "./assets/images/icon-ref.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "image": "./assets/images/icon.png",
-            "backgroundColor": "#000000"
+            "image": "./assets/images/icon-ref.png",
+            "backgroundColor": "#ffffff"
           }
         }
       ],

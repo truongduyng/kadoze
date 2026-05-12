@@ -3,7 +3,6 @@ import {
   addWeeks,
   addDays,
   isAfter,
-  startOfDay,
   startOfYear,
   endOfYear,
 } from "date-fns";
@@ -33,9 +32,83 @@ export interface ColorConfig {
   borderWidth?: number;
 }
 
+interface DatedCompletion {
+  completedDate: string;
+  status?: string | null;
+}
+
+interface TodoCompletion extends DatedCompletion {
+  todoId: number;
+  status: string;
+}
+
+interface GoalTodo {
+  id: number;
+  goalId: number | null;
+  daysOfWeek: string[];
+  createdAt: Date;
+}
+
+interface IndexedGoalTodo {
+  id: number;
+  daysSet: Set<string>;
+  createdKey: string;
+}
+
+const EMPTY_BOUNCEBACK_RESULT: BouncebackResult = {
+  rate: 1,
+  lastRecoveryDays: -1,
+  totalFalls: 0,
+  totalRecovered: 0,
+};
+
 // Utility Functions
 export function getDateKey(date: Date): string {
   return getLocalDateString(date);
+}
+
+function isDoneStatus(status?: string | null): boolean {
+  return status === undefined || status === null || status === "done";
+}
+
+function buildDoneDateCounts(completions: DatedCompletion[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+
+  for (const completion of completions) {
+    if (!isDoneStatus(completion.status)) continue;
+    counts[completion.completedDate] = (counts[completion.completedDate] ?? 0) + 1;
+  }
+
+  return counts;
+}
+
+function buildDoneCompletionSet(completions: TodoCompletion[]): Set<string> {
+  const completionSet = new Set<string>();
+
+  for (const completion of completions) {
+    if (completion.status !== "done") continue;
+    completionSet.add(`${completion.todoId}|${completion.completedDate}`);
+  }
+
+  return completionSet;
+}
+
+function indexTodosByGoal(todos: GoalTodo[]): Map<number, IndexedGoalTodo[]> {
+  const todosByGoal = new Map<number, IndexedGoalTodo[]>();
+
+  for (const todo of todos) {
+    if (todo.goalId === null) continue;
+
+    const goalTodos = todosByGoal.get(todo.goalId) ?? [];
+    goalTodos.push({
+      id: todo.id,
+      daysSet: new Set(todo.daysOfWeek),
+      createdKey: getLocalDateString(todo.createdAt),
+    });
+    todosByGoal.set(todo.goalId, goalTodos);
+  }
+
+  return todosByGoal;
 }
 
 export function getColorForCount(
@@ -143,16 +216,8 @@ export function generateUserGrid(_userCreationDate: Date): HeatmapDay[][] {
 
 
 // Accepts todo_completions rows — counts only 'done' records per date
-export function countTodosByDate(completions: { completedDate: string; status?: string | null }[]): Record<string, number> {
-  const todoCounts: Record<string, number> = {};
-
-  completions.forEach((c) => {
-    if (c.status && c.status !== 'done') return;
-    const key = c.completedDate;
-    todoCounts[key] = (todoCounts[key] || 0) + 1;
-  });
-
-  return todoCounts;
+export function countTodosByDate(completions: DatedCompletion[]): Record<string, number> {
+  return buildDoneDateCounts(completions);
 }
 
 export function applyTodoCountsToGrid(
@@ -174,37 +239,19 @@ export interface GoalProgress {
   rate: number; // 0–1
 }
 
-export const DAY_NAMES = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+export const DAY_NAMES = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 export function computeGoalProgress(
   goalIds: number[],
   goalCreatedAts: Map<number, Date>,
   goalTargetDates: Map<number, Date | null>,
-  allTodos: { id: number; goalId: number | null; daysOfWeek: string[]; createdAt: Date }[],
-  allCompletions: { todoId: number; completedDate: string; status: string }[],
+  allTodos: GoalTodo[],
+  allCompletions: TodoCompletion[],
   today: Date = new Date(),
 ): GoalProgress[] {
-  // Build a set of "todoId|completedDate" for done completions
-  const completionSet = new Set<string>();
-  for (const c of allCompletions) {
-    if (c.status === 'done') {
-      completionSet.add(`${c.todoId}|${c.completedDate}`);
-    }
-  }
-
+  const completionSet = buildDoneCompletionSet(allCompletions);
   const todayStart = getStartOfDay(today);
-
-  // Pre-index todos by goalId and precompute daysOfWeek Sets
-  const todosByGoal = new Map<number, { id: number; daysSet: Set<string>; createdKey: string }[]>();
-  for (const t of allTodos) {
-    if (t.goalId === null) continue;
-    if (!todosByGoal.has(t.goalId)) todosByGoal.set(t.goalId, []);
-    todosByGoal.get(t.goalId)!.push({
-      id: t.id,
-      daysSet: new Set(t.daysOfWeek),
-      createdKey: getLocalDateString(t.createdAt),
-    });
-  }
+  const todosByGoal = indexTodosByGoal(allTodos);
 
   return goalIds.map((goalId) => {
     const startDate = goalCreatedAts.get(goalId) ?? today;
@@ -261,29 +308,25 @@ export interface BouncebackResult {
 }
 
 export function computeBouncebackRate(
-  completions: { completedDate: string; status: string }[],
+  completions: DatedCompletion[],
 ): BouncebackResult {
   if (completions.length === 0) {
-    return { rate: 1, lastRecoveryDays: -1, totalFalls: 0, totalRecovered: 0 };
+    return EMPTY_BOUNCEBACK_RESULT;
   }
 
   // Group by date: determine if a date is 'done' (at least one done) or 'failed-only'
   const doneSet = new Set<string>();
-  const failedOnlySet = new Set<string>();
   const allDatesSet = new Set<string>();
 
   for (const c of completions) {
     allDatesSet.add(c.completedDate);
-    if (c.status === 'done') doneSet.add(c.completedDate);
-  }
-  for (const date of allDatesSet) {
-    if (!doneSet.has(date)) failedOnlySet.add(date);
+    if (c.status === "done") doneSet.add(c.completedDate);
   }
 
   // Sort all unique dates that have any record
   const allDates = Array.from(allDatesSet).sort();
   if (allDates.length === 0) {
-    return { rate: 1, lastRecoveryDays: -1, totalFalls: 0, totalRecovered: 0 };
+    return EMPTY_BOUNCEBACK_RESULT;
   }
 
   let totalFalls = 0;
@@ -294,14 +337,14 @@ export function computeBouncebackRate(
   // then measure how long until the next done date
   for (let i = 0; i < allDates.length; i++) {
     const date = allDates[i];
-    if (!doneSet.has(date) && failedOnlySet.has(date)) {
+    if (!doneSet.has(date)) {
       // This is a fall day — find next done date
       totalFalls++;
       let recoveryDays = -1;
       for (let j = i + 1; j < allDates.length && j <= i + 5; j++) {
         if (doneSet.has(allDates[j])) {
-          const fallDate = new Date(date + 'T00:00:00');
-          const comebackDate = new Date(allDates[j] + 'T00:00:00');
+          const fallDate = new Date(`${date}T00:00:00`);
+          const comebackDate = new Date(`${allDates[j]}T00:00:00`);
           const diffMs = comebackDate.getTime() - fallDate.getTime();
           recoveryDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
           break;
@@ -316,20 +359,6 @@ export function computeBouncebackRate(
 
   const rate = totalFalls === 0 ? 1 : totalRecovered / totalFalls;
   return { rate, lastRecoveryDays, totalFalls, totalRecovered };
-}
-
-// ── Shared week boundary helper ───────────────────────────────────────────────
-// Returns { weekStart, weekEnd, label } for a given week index (0 = current week).
-
-function getWeekBounds(today: Date, weeksBack: number): { weekStart: Date; weekEnd: Date; label: string } {
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - today.getDay() + 1 - weeksBack * 7);
-  weekStart.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-  weekEnd.setHours(23, 59, 59, 999);
-  const label = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return { weekStart, weekEnd, label };
 }
 
 // ── Weekly Completion Rates ───────────────────────────────────────────────────
