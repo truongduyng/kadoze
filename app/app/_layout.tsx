@@ -54,10 +54,6 @@ function AppLayout() {
                 options={{ headerShown: false, gestureEnabled: false }}
               />
               <Stack.Screen
-                name="chat"
-                options={{ gestureEnabled: true }}
-              />
-              <Stack.Screen
                 name="focus"
                 options={{ headerShown: false, presentation: "card" }}
               />

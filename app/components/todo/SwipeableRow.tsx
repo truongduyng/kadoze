@@ -11,11 +11,13 @@ import { Ionicons } from "@expo/vector-icons";
 interface SwipeableRowProps {
   children: React.ReactNode;
   onDelete: () => void;
+  onEdit?: () => void;
 }
 
 export const SwipeableRow: React.FC<SwipeableRowProps> = ({
   children,
   onDelete,
+  onEdit,
 }) => {
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -28,11 +30,11 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
       translateX.value = Math.min(0, event.translationX);
     })
     .onEnd((event) => {
+      const openOffset = onEdit ? -144 : -76;
       const shouldShowButton = event.translationX < -50; // Threshold to show button
 
       if (shouldShowButton) {
-        // Show delete button by staying at -76px (60px button + 8px spacing + 8px gap)
-        translateX.value = withSpring(-76);
+        translateX.value = withSpring(openOffset);
       } else {
         // Snap back
         translateX.value = withSpring(0);
@@ -45,7 +47,12 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
 
   const deleteButtonStyle = useAnimatedStyle(() => ({
     opacity: translateX.value < -40 ? 1 : 0,
-    transform: [{ translateX: Math.max(-68, translateX.value + 76) }],
+    transform: [{ translateX: Math.max(-68, translateX.value + (onEdit ? 144 : 76)) }],
+  }));
+
+  const editButtonStyle = useAnimatedStyle(() => ({
+    opacity: translateX.value < -90 ? 1 : 0,
+    transform: [{ translateX: Math.max(-136, translateX.value + 144) }],
   }));
 
   const handleDeletePress = () => {
@@ -55,6 +62,17 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
 
   return (
     <View style={styles.swipeableContainer}>
+      {onEdit ? (
+        <Animated.View style={[styles.editButton, editButtonStyle]}>
+          <TouchableOpacity
+            style={styles.editButtonTouchable}
+            onPress={onEdit}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="create-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+        </Animated.View>
+      ) : null}
       <Animated.View style={[styles.deleteButton, deleteButtonStyle]}>
         <TouchableOpacity
           style={styles.deleteButtonTouchable}
@@ -87,7 +105,24 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
   },
+  editButton: {
+    position: "absolute",
+    right: 76,
+    top: 0,
+    bottom: 0,
+    width: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    marginBottom: 8,
+  },
   deleteButtonTouchable: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editButtonTouchable: {
     width: "100%",
     height: "100%",
     justifyContent: "center",

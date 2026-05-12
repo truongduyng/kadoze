@@ -1,4 +1,5 @@
 import GradientBackground from "@/components/GradientBackground";
+import { SwipeableRow } from "@/components/todo/SwipeableRow";
 import AdaptiveBlurView from "@/components/ui/AdaptiveBlurView";
 import { palette } from "@/constants/theme";
 import { db, noteOps, notes, type Note } from "@/lib/db";
@@ -14,12 +15,14 @@ import {
   Image,
   Modal,
   Pressable,
+  ScrollView,
   SectionList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Share,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -66,7 +69,12 @@ function formatTime(date: Date | null): string {
 }
 
 function getPreview(content: string): string {
-  return content.replace(/\s+/g, " ").trim();
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized === "Image note" ? "" : normalized;
+}
+
+function isTrimmed(content: string, maxLength = 220): boolean {
+  return getPreview(content).length > maxLength;
 }
 
 export default function NotesScreen() {
@@ -74,18 +82,40 @@ export default function NotesScreen() {
   const [isSheetVisible, setIsSheetVisible] = useState(false);
   const [isTextComposerVisible, setIsTextComposerVisible] = useState(false);
   const [draft, setDraft] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const { data: liveNotes } = useLiveQuery(
     db.select().from(notes).orderBy(desc(notes.createdAt)),
   );
 
   const closeSheet = () => setIsSheetVisible(false);
+  const selectedNoteContent = selectedNote ? getPreview(selectedNote.content) : "";
+
+  const copyNote = async (note: Note) => {
+    const content = getPreview(note.content);
+    if (!content) {
+      Alert.alert("Nothing to copy", "This note does not contain text.");
+      return;
+    }
+    await Clipboard.setStringAsync(content);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const shareNote = async (note: Note) => {
+    const content = getPreview(note.content);
+    if (!content) {
+      Alert.alert("Nothing to share", "This note does not contain text.");
+      return;
+    }
+    await Share.share({ message: content });
+  };
 
   const createNote = async (content: string, mediaUrl?: string | null) => {
     const normalizedContent = content.trim();
     if (!normalizedContent && !mediaUrl) return;
 
     await noteOps.create({
-      content: normalizedContent || "Image note",
+      content: normalizedContent,
       mediaUrl: mediaUrl ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -95,15 +125,50 @@ export default function NotesScreen() {
 
   const handleSubmitTextNote = async () => {
     if (!draft.trim()) return;
-    await createNote(draft);
+    if (editingNoteId != null) {
+      await noteOps.update(editingNoteId, {
+        content: draft.trim(),
+      });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } else {
+      await createNote(draft);
+    }
     setDraft("");
+    setEditingNoteId(null);
     setIsTextComposerVisible(false);
     closeSheet();
   };
 
   const handleOpenTextComposer = () => {
     closeSheet();
+    setEditingNoteId(null);
+    setDraft("");
     setIsTextComposerVisible(true);
+  };
+
+  const handleEditNote = (note: Note) => {
+    setIsSheetVisible(false);
+    setEditingNoteId(note.id);
+    setDraft(note.content);
+    setIsTextComposerVisible(true);
+  };
+
+  const handleDeleteNote = (note: Note) => {
+    Alert.alert(
+      "Delete note",
+      "This note will be removed permanently.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await noteOps.delete(note.id);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          },
+        },
+      ],
+    );
   };
 
   const handlePasteNote = async () => {
@@ -148,23 +213,31 @@ export default function NotesScreen() {
 
   const handleOpenCamera = async () => {
     closeSheet();
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (permission.status !== "granted") {
-      Alert.alert(
-        "Camera unavailable",
-        "Camera access was not granted.",
-      );
-      return;
-    }
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (permission.status !== "granted") {
+        Alert.alert(
+          "Camera unavailable",
+          "Camera access was not granted.",
+        );
+        return;
+      }
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      allowsEditing: false,
-      quality: 1,
-    });
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        quality: 1,
+      });
 
-    if (!result.canceled && result.assets.length > 0) {
-      await createNote("", result.assets[0].uri);
+      if (!result.canceled && result.assets.length > 0) {
+        await createNote("", result.assets[0].uri);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error && /simulator|camera not available/i.test(error.message)
+          ? "Camera is not available on the iOS simulator. Use a real device for this action."
+          : "Unable to open the camera right now.";
+      Alert.alert("Camera unavailable", message);
     }
   };
 
@@ -225,25 +298,62 @@ export default function NotesScreen() {
           )}
           renderItem={({ item, index, section }) => {
             const preview = getPreview(item.content);
+            const trimmed = isTrimmed(item.content);
+            const shouldOpenDetail = Boolean(item.mediaUrl) || trimmed;
             const cardStyle = {
               ...styles.card,
               ...(index === 0 ? styles.cardFirst : {}),
               ...(index === section.data.length - 1 ? styles.cardLast : {}),
             };
             return (
-              <AdaptiveBlurView style={cardStyle}>
-                <View style={styles.cardTopRow}>
-                  <Text style={styles.timeLabel}>{formatTime(item.createdAt ?? null)}</Text>
-                </View>
-                {item.mediaUrl ? (
-                  <Image
-                    source={{ uri: item.mediaUrl }}
-                    style={styles.noteImage}
-                    resizeMode="cover"
-                  />
-                ) : null}
-                <Text style={styles.noteBody}>{preview || "Untitled note"}</Text>
-              </AdaptiveBlurView>
+              <SwipeableRow
+                onEdit={() => handleEditNote(item)}
+                onDelete={() => handleDeleteNote(item)}
+              >
+                <Pressable
+                  disabled={!shouldOpenDetail}
+                  onPress={() => {
+                    if (shouldOpenDetail) setSelectedNote(item);
+                  }}
+                >
+                  <AdaptiveBlurView style={cardStyle}>
+                    <View style={styles.cardTopRow}>
+                      <Text style={styles.timeLabel}>{formatTime(item.createdAt ?? null)}</Text>
+                    </View>
+                    {item.mediaUrl ? (
+                      <Image
+                        source={{ uri: item.mediaUrl }}
+                        style={styles.noteImage}
+                        resizeMode="cover"
+                      />
+                    ) : null}
+                    {preview ? (
+                      <View>
+                        <Text style={styles.noteBody} numberOfLines={6}>
+                          {preview}
+                        </Text>
+                        {trimmed ? (
+                          <Text style={styles.trimmedHint}>... more</Text>
+                        ) : null}
+                      </View>
+                    ) : null}
+                    <View style={styles.noteActions}>
+                      <TouchableOpacity
+                        style={styles.noteActionButton}
+                        onPress={() => copyNote(item)}
+                      >
+                        <Ionicons name="copy-outline" size={14} color={palette.white70} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.noteActionButton}
+                        onPress={() => shareNote(item)}
+                      >
+                        <Ionicons name="share-outline" size={14} color={palette.white70} />
+                      </TouchableOpacity>
+                    </View>
+                  </AdaptiveBlurView>
+                </Pressable>
+              </SwipeableRow>
             );
           }}
           SectionSeparatorComponent={() => <View style={styles.sectionSpacer} />}
@@ -318,7 +428,9 @@ export default function NotesScreen() {
             onPress={(event) => event.stopPropagation()}
           >
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>New note</Text>
+            <Text style={styles.sheetTitle}>
+              {editingNoteId != null ? "Edit note" : "New note"}
+            </Text>
             <TextInput
               value={draft}
               onChangeText={setDraft}
@@ -329,10 +441,67 @@ export default function NotesScreen() {
               style={styles.composerInput}
             />
             <TouchableOpacity style={styles.primaryButton} onPress={handleSubmitTextNote}>
-              <Text style={styles.primaryButtonLabel}>Save note</Text>
+              <Text style={styles.primaryButtonLabel}>
+                {editingNoteId != null ? "Update note" : "Save note"}
+              </Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={selectedNote != null}
+        onRequestClose={() => setSelectedNote(null)}
+      >
+        <View style={styles.viewerOverlay}>
+          <View style={[styles.viewerCard, { marginBottom: insets.bottom + 24 }]}>
+            <View style={styles.viewerHeader}>
+              <Text style={styles.viewerTime}>
+                {formatTime(selectedNote?.createdAt ?? null)}
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedNote(null)}>
+                <Ionicons name="close" size={20} color={palette.white70} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.viewerScroll}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.viewerScrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {selectedNote?.mediaUrl ? (
+                <Image
+                  source={{ uri: selectedNote.mediaUrl }}
+                  style={styles.viewerImage}
+                  resizeMode="contain"
+                />
+              ) : null}
+              {selectedNoteContent ? (
+                <Text style={styles.viewerBody}>{selectedNoteContent}</Text>
+              ) : null}
+            </ScrollView>
+            {selectedNote ? (
+              <View style={styles.viewerFooter}>
+                <TouchableOpacity
+                  style={styles.viewerFooterButton}
+                  onPress={() => copyNote(selectedNote)}
+                >
+                  <Ionicons name="copy-outline" size={16} color={palette.white70} />
+                  <Text style={styles.viewerFooterLabel}>Copy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.viewerFooterButton}
+                  onPress={() => shareNote(selectedNote)}
+                >
+                  <Ionicons name="share-outline" size={16} color={palette.white70} />
+                  <Text style={styles.viewerFooterLabel}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -364,7 +533,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.35)",
     textTransform: "uppercase",
   },
   sectionMeta: {
@@ -411,6 +579,33 @@ const styles = StyleSheet.create({
     color: palette.white,
     fontSize: 15,
     lineHeight: 23,
+  },
+  trimmedHint: {
+    color: palette.orange,
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  noteActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  noteActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  noteActionLabel: {
+    color: palette.white70,
+    fontSize: 12,
+    fontWeight: "600",
   },
   emptyCard: {
     borderRadius: 14,
@@ -519,5 +714,72 @@ const styles = StyleSheet.create({
     color: "#121212",
     fontSize: 15,
     fontWeight: "800",
+  },
+  viewerOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingHorizontal: 16,
+    paddingTop: 40,
+  },
+  viewerCard: {
+    maxHeight: "85%",
+    borderRadius: 24,
+    backgroundColor: "#141414",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    padding: 18,
+  },
+  viewerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  viewerTime: {
+    color: palette.white55,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  viewerImage: {
+    width: "100%",
+    height: 280,
+    borderRadius: 14,
+    marginBottom: 14,
+  },
+  viewerBody: {
+    color: palette.white,
+    fontSize: 16,
+    lineHeight: 25,
+  },
+  viewerScroll: {
+    flexGrow: 0,
+  },
+  viewerScrollContent: {
+    paddingBottom: 8,
+  },
+  viewerFooter: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
+  },
+  viewerFooterButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  viewerFooterLabel: {
+    color: palette.white70,
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
