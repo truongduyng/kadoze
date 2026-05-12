@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Kado",
+    "slug": "kado",
+    "platforms": [
+      "ios"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "kado",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.kado.yikudo",
+      "icon": "./assets/images/kado.icon",
+      "appleTeamId": "MVAX6C967A",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "$(PRODUCT_NAME) needs access to your photo library to attach photos to your journal entries."
+      }
+    },
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff",
+      "dark": {
+        "image": "./assets/images/icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "image": "./assets/images/icon.png",
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-router",
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#000000"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "$(PRODUCT_NAME) needs access to your photo library to attach photos to your journal entries.",
+          "cameraPermission": false
+        }
+      ],
+      "expo-sharing",
+      "expo-sqlite",
+      "expo-asset"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0f0dc66c-a660-49d6-96bb-668dd710a6cf"
+      }
+    }
+  }
+}

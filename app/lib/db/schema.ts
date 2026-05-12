@@ -1,0 +1,73 @@
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+
+// ── profiles ─────────────────────────────────────────────────────────────────
+export const profiles = sqliteTable('profiles', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name'),
+  timezone: text('timezone'),
+  onboardingCompleted: integer('onboarding_completed', { mode: 'boolean' }).notNull().default(false),
+  pushToken: text('push_token'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ── notes (inbox) ─────────────────────────────────────────────────────────────
+// Free-form captures; role = 'user' | 'assistant' for AI thread
+export const notes = sqliteTable('notes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  content: text('content').notNull(),
+  role: text('role').notNull().default('user'), // 'user' | 'assistant'
+  mediaUrl: text('media_url'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ── habits ────────────────────────────────────────────────────────────────────
+// Recurring daily habits (keystone + future unlocked ones)
+export const habits = sqliteTable('habits', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  subtitle: text('subtitle'),
+  icon: text('icon'),                            // emoji
+  daysOfWeek: text('days_of_week', { mode: 'json' }).$type<string[]>().notNull(), // ['mon','tue',…]
+  isLocked: integer('is_locked', { mode: 'boolean' }).notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ── habit_completions ─────────────────────────────────────────────────────────
+// One record per habit per day; status: 'done' | 'skipped'
+export const habitCompletions = sqliteTable('habit_completions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  habitId: integer('habit_id').notNull().references(() => habits.id),
+  date: text('date').notNull(),                  // 'YYYY-MM-DD'
+  status: text('status').notNull().default('done'), // 'done' | 'skipped'
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ── daily_focus ───────────────────────────────────────────────────────────────
+// One Main Goal per day (editable, not carried forward)
+export const dailyFocus = sqliteTable('daily_focus', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  date: text('date').notNull().unique(),         // 'YYYY-MM-DD'
+  goal: text('goal').notNull().default(''),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ── TypeScript types ──────────────────────────────────────────────────────────
+export type Profile = typeof profiles.$inferSelect;
+export type NewProfile = typeof profiles.$inferInsert;
+
+export type Note = typeof notes.$inferSelect;
+export type NewNote = typeof notes.$inferInsert;
+
+export type Habit = typeof habits.$inferSelect;
+export type NewHabit = typeof habits.$inferInsert;
+
+export type HabitCompletion = typeof habitCompletions.$inferSelect;
+export type NewHabitCompletion = typeof habitCompletions.$inferInsert;
+
+export type DailyFocus = typeof dailyFocus.$inferSelect;
+export type NewDailyFocus = typeof dailyFocus.$inferInsert;
