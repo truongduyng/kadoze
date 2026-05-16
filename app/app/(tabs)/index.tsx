@@ -1,6 +1,6 @@
 import GradientBackground from "@/components/GradientBackground";
 import { db, habits, habitCompletions, dailyFocus, todos, completionOps, todoOps, dailyFocusOps } from "@/lib/db";
-import { getTodayInLocalTimezone, getLocalDateString, formatDateInLocalTimezone } from "@/lib/timezone";
+import { getTodayInLocalTimezone, getLocalDateString } from "@/lib/timezone";
 import { useProfile } from "@/hooks/useProfile";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq, desc } from "drizzle-orm";
@@ -22,7 +22,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAY_NAMES } from "@/lib/performance";
 import { palette } from "@/constants/theme";
-import { SymbolView } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SwipeableRow } from "@/components/todo/SwipeableRow";
 
@@ -39,12 +38,6 @@ export default function HomeScreen() {
   const today = useMemo(() => getTodayInLocalTimezone(), []);
   const todayKey = getLocalDateString(today);
   const todayName = DAY_NAMES[today.getDay()];
-
-  const dateLabel = formatDateInLocalTimezone(today, {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
@@ -144,73 +137,66 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
+        <View style={styles.topHero}>
+          <View style={styles.sunDisc} />
+          <View style={styles.horizonShape} />
+          <Text style={[styles.bird, styles.birdOne]}>⌒</Text>
+          <Text style={[styles.bird, styles.birdTwo]}>⌒</Text>
+          <Text style={[styles.bird, styles.birdThree]}>⌒</Text>
+
+          <View style={styles.header}>
             <View style={styles.greetingRow}>
+              <Ionicons name="sunny" size={26} color={palette.orange} />
               <Text style={styles.greeting}>
                 {getGreeting()}, {firstName}
               </Text>
-              <SymbolView
-                name="hand.wave"
-                size={22}
-                tintColor={palette.orange}
-                style={styles.waveIcon}
-              />
             </View>
-            <Text style={styles.date}>{dateLabel}</Text>
+            <Text style={styles.date}>{"Let's make today count."}</Text>
           </View>
-        </View>
 
-        {/* One Main Goal */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ONE MAIN GOAL</Text>
+          <Text style={styles.heroSectionLabel}>{"TODAY'S MAIN GOAL"}</Text>
           <View style={styles.goalCard}>
-            <View style={styles.goalContent}>
-              {editingGoal ? (
-                <>
+            <View style={styles.goalTopRow}>
+              <View style={styles.goalRing}>
+                <View style={styles.ringOuter}>
+                  <View style={styles.ringInner} />
+                </View>
+              </View>
+
+              <View style={styles.goalContent}>
+                {editingGoal ? (
                   <TextInput
                     ref={goalInputRef}
                     style={styles.goalInput}
                     value={goalDraft}
                     onChangeText={setGoalDraft}
                     onBlur={saveGoal}
-                    placeholder="What's your main goal these days?"
+                    placeholder="What's your main goal today?"
                     placeholderTextColor={palette.white25}
                     multiline
                   />
-                </>
-              ) : (
-                <Pressable onPress={openGoalEditor}>
-                  {goalText ? (
-                    <Text style={styles.goalText}>{goalText}</Text>
-                  ) : (
-                    <View style={styles.goalPlaceholderCard}>
-                      <Text style={styles.goalPlaceholderTitle}>Set one clear target</Text>
+                ) : (
+                  <Pressable onPress={openGoalEditor} hitSlop={10}>
+                    <Text style={goalText ? styles.goalText : styles.goalPlaceholderTitle}>
+                      {goalText || "Set one clear target"}
+                    </Text>
+                    {!goalText && (
                       <Text style={styles.goalPlaceholderBody}>
                         Choose the main outcome you want this day to revolve around.
                       </Text>
-                    </View>
-                  )}
-                </Pressable>
-              )}
-            </View>
-            {!editingGoal && (
-              <View style={styles.goalRing}>
-                <View style={styles.ringOuter}>
-                  {goalText ? (
-                    <Pressable
-                      style={styles.focusRingButton}
-                      onPress={() => router.push("/focus" as any)}
-                    >
-                      <Text style={styles.focusRingIcon}>▶</Text>
-                    </Pressable>
-                  ) : (
-                    <View style={styles.ringInner} />
-                  )}
-                </View>
+                    )}
+                  </Pressable>
+                )}
               </View>
-            )}
+            </View>
+
+            <Pressable
+              style={[styles.focusButton, !goalText && styles.focusButtonDisabled]}
+              onPress={() => (goalText ? router.push("/focus" as any) : openGoalEditor())}
+            >
+              <Ionicons name="play" size={19} color={palette.white} />
+              <Text style={styles.focusButtonText}>Start Focus</Text>
+            </Pressable>
           </View>
         </View>
 
@@ -335,29 +321,63 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20 },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: 28,
+  topHero: {
+    marginHorizontal: -20,
+    marginTop: -16,
+    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 22,
+    backgroundColor: "#0D0D0D",
+    overflow: "hidden",
   },
-  headerLeft: { flex: 1 },
+  sunDisc: {
+    position: "absolute",
+    width: 158,
+    height: 158,
+    borderRadius: 79,
+    right: 54,
+    top: 126,
+    backgroundColor: "rgba(251,146,60,0.12)",
+  },
+  horizonShape: {
+    position: "absolute",
+    width: 230,
+    height: 98,
+    borderTopLeftRadius: 115,
+    borderTopRightRadius: 115,
+    right: -80,
+    bottom: 116,
+    backgroundColor: "rgba(251,146,60,0.08)",
+  },
+  bird: {
+    position: "absolute",
+    color: "rgba(251,146,60,0.3)",
+    fontSize: 22,
+    fontWeight: "700",
+    transform: [{ rotate: "180deg" }],
+  },
+  birdOne: { right: 96, top: 24 },
+  birdTwo: { right: 74, top: 48 },
+  birdThree: { right: 42, top: 82 },
+  header: {
+    marginBottom: 52,
+  },
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 2,
+    gap: 10,
+    marginBottom: 12,
   },
   greeting: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
     color: palette.white,
   },
-  waveIcon: { marginTop: 1 },
   date: {
-    fontSize: 13,
-    color: palette.white40,
-    fontWeight: "500",
+    fontSize: 16,
+    color: palette.white55,
+    fontWeight: "600",
   },
 
   section: { marginBottom: 24 },
@@ -368,65 +388,68 @@ const styles = StyleSheet.create({
     color: palette.white35,
     marginBottom: 10,
   },
+  heroSectionLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+    color: palette.white60,
+    marginBottom: 12,
+  },
 
   goalCard: {
     backgroundColor: palette.white06,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: palette.white08,
+    borderColor: palette.white12,
     padding: 20,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.22,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  goalTopRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 16,
   },
   goalContent: { flex: 1 },
   goalText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "700",
     color: palette.white,
-    lineHeight: 26,
-    marginBottom: 14,
+    lineHeight: 32,
   },
   goalInput: {
-    fontSize: 18,
+    fontSize: 23,
     fontWeight: "700",
     color: palette.white,
-    lineHeight: 26,
-    marginBottom: 14,
-    minHeight: 52,
-  },
-  goalPlaceholderCard: {
-    marginBottom: 14,
-    gap: 8,
-  },
-  goalPlaceholderBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(251,146,60,0.12)",
-    borderWidth: 1,
-    borderColor: palette.orange25,
-  },
-  goalPlaceholderBadgeText: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
-    color: palette.orange,
+    lineHeight: 31,
+    minHeight: 68,
+    padding: 0,
   },
   goalPlaceholderTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: palette.white70,
-    lineHeight: 23,
+    fontSize: 23,
+    fontWeight: "600",
+    color: palette.white,
+    lineHeight: 31,
   },
   goalPlaceholderBody: {
     fontSize: 14,
-    color: palette.white40,
-    lineHeight: 21,
-    maxWidth: 240,
+    color: palette.white45,
+    lineHeight: 20,
+    marginTop: 6,
   },
-  goalRing: { alignItems: "center", justifyContent: "center" },
+  focusHint: {
+    fontSize: 15,
+    color: palette.white55,
+    fontWeight: "600",
+    marginTop: 16,
+  },
+  goalRing: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   ringOuter: {
     width: 64,
     height: 64,
@@ -442,21 +465,30 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(251,146,60,0.08)",
+    backgroundColor: palette.orange08,
   },
-  focusRingButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: palette.orange,
+  focusButton: {
+    height: 58,
+    borderRadius: 16,
+    backgroundColor: "#FF6B22",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 12,
+    marginTop: 28,
+    shadowColor: "#FF6B22",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.26,
+    shadowRadius: 18,
+    elevation: 6,
   },
-  focusRingIcon: {
-    fontSize: 14,
+  focusButtonDisabled: {
+    backgroundColor: palette.orange,
+  },
+  focusButtonText: {
     color: palette.white,
-    fontWeight: "800",
-    marginLeft: 2,
+    fontSize: 19,
+    fontWeight: "600",
   },
 
   card: {
