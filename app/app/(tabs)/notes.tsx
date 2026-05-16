@@ -5,6 +5,14 @@ import { palette } from "@/constants/theme";
 import { db, noteOps, notes, type Note } from "@/lib/db";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { desc } from "drizzle-orm";
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
@@ -25,6 +33,8 @@ import {
   Share,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+
+const VOICE_NOTE_CONTENT = "Voice note";
 
 type NoteSection = {
   title: string;
@@ -77,10 +87,59 @@ function isTrimmed(content: string, maxLength = 220): boolean {
   return getPreview(content).length > maxLength;
 }
 
+function formatDuration(milliseconds = 0): string {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function isAudioNote(note: Pick<Note, "content" | "mediaUrl"> | null): boolean {
+  if (!note?.mediaUrl) return false;
+  return (
+    note.content === VOICE_NOTE_CONTENT ||
+    /\.(aac|caf|m4a|mp3|wav)(\?|#|$)/i.test(note.mediaUrl)
+  );
+}
+
+function AudioNotePlayer({
+  uri,
+  compact = false,
+}: {
+  uri: string;
+  compact?: boolean;
+}) {
+  const player = useAudioPlayer({ uri });
+
+  return (
+    <TouchableOpacity
+      style={[styles.audioPlayer, compact ? styles.audioPlayerCompact : null]}
+      onPress={async () => {
+        await Haptics.selectionAsync();
+        player.seekTo(0);
+        player.play();
+      }}
+    >
+      <View style={styles.audioIcon}>
+        <Ionicons name="play" size={compact ? 14 : 16} color={palette.white} />
+      </View>
+      <View style={styles.audioTextWrap}>
+        <Text style={styles.audioTitle}>Voice note</Text>
+        <Text style={styles.audioSubtitle}>Tap to play</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export default function NotesScreen() {
   const insets = useSafeAreaInsets();
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
   const [isSheetVisible, setIsSheetVisible] = useState(false);
   const [isTextComposerVisible, setIsTextComposerVisible] = useState(false);
+  const [isVoiceComposerVisible, setIsVoiceComposerVisible] = useState(false);
+  const [isSavingVoiceNote, setIsSavingVoiceNote] = useState(false);
+  const [hasVoiceRecording, setHasVoiceRecording] = useState(false);
   const [draft, setDraft] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -102,6 +161,11 @@ export default function NotesScreen() {
   };
 
   const shareNote = async (note: Note) => {
+    if (isAudioNote(note) && note.mediaUrl) {
+      await Share.share({ url: note.mediaUrl, message: "Voice note" });
+      return;
+    }
+
     const content = getPreview(note.content);
     if (!content) {
       Alert.alert("Nothing to share", "This note does not contain text.");
@@ -182,12 +246,62 @@ export default function NotesScreen() {
     await createNote(value);
   };
 
-  const handleVoiceNote = () => {
+  const handleVoiceNote = async () => {
     closeSheet();
-    Alert.alert(
-      "Voice unavailable",
-      "Voice capture is currently disabled in this project.",
-    );
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Microphone unavailable", "Microphone access was not granted.");
+      return;
+    }
+
+    await setAudioModeAsync({
+      allowsRecording: true,
+      playsInSilentMode: true,
+    });
+    setHasVoiceRecording(false);
+    setIsVoiceComposerVisible(true);
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
+      setHasVoiceRecording(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      Alert.alert("Recording unavailable", "Unable to start a voice note right now.");
+    }
+  };
+
+  const handleCancelRecording = async () => {
+    if (recorderState.isRecording) {
+      await audioRecorder.stop();
+    }
+    setIsVoiceComposerVisible(false);
+  };
+
+  const handleSaveRecording = async () => {
+    if (isSavingVoiceNote) return;
+    setIsSavingVoiceNote(true);
+
+    try {
+      if (recorderState.isRecording) {
+        await audioRecorder.stop();
+      }
+
+      const uri = audioRecorder.uri;
+      if (!hasVoiceRecording || !uri) {
+        Alert.alert("No recording", "Record something before saving a voice note.");
+        return;
+      }
+
+      await createNote(VOICE_NOTE_CONTENT, uri);
+      setIsVoiceComposerVisible(false);
+    } catch {
+      Alert.alert("Save failed", "Unable to save this voice note right now.");
+    } finally {
+      setIsSavingVoiceNote(false);
+    }
   };
 
   const handlePickImage = async () => {
@@ -294,6 +408,7 @@ export default function NotesScreen() {
           renderItem={({ item, index, section }) => {
             const preview = getPreview(item.content);
             const trimmed = isTrimmed(item.content);
+            const audioNote = isAudioNote(item);
             const shouldOpenDetail = Boolean(item.mediaUrl) || trimmed;
             const cardStyle = {
               ...styles.card,
@@ -315,14 +430,16 @@ export default function NotesScreen() {
                     <View style={styles.cardTopRow}>
                       <Text style={styles.timeLabel}>{formatTime(item.createdAt ?? null)}</Text>
                     </View>
-                    {item.mediaUrl ? (
+                    {audioNote && item.mediaUrl ? (
+                      <AudioNotePlayer uri={item.mediaUrl} compact />
+                    ) : item.mediaUrl ? (
                       <Image
                         source={{ uri: item.mediaUrl }}
                         style={styles.noteImage}
                         resizeMode="cover"
                       />
                     ) : null}
-                    {preview ? (
+                    {preview && !audioNote ? (
                       <View>
                         <Text style={styles.noteBody} numberOfLines={6}>
                           {preview}
@@ -445,6 +562,63 @@ export default function NotesScreen() {
       </Modal>
 
       <Modal
+        animationType="slide"
+        transparent
+        visible={isVoiceComposerVisible}
+        onRequestClose={handleCancelRecording}
+      >
+        <Pressable style={styles.sheetOverlay} onPress={handleCancelRecording}>
+          <Pressable
+            style={[styles.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Voice note</Text>
+            <Text style={styles.recordingTimer}>
+              {formatDuration(recorderState.durationMillis)}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.recordButton,
+                recorderState.isRecording ? styles.recordButtonActive : null,
+              ]}
+              onPress={
+                recorderState.isRecording
+                  ? async () => {
+                      await audioRecorder.stop();
+                      await Haptics.selectionAsync();
+                    }
+                  : handleStartRecording
+              }
+            >
+              <Ionicons
+                name={recorderState.isRecording ? "stop" : "mic"}
+                size={28}
+                color={palette.white}
+              />
+            </TouchableOpacity>
+            <View style={styles.voiceActions}>
+              <TouchableOpacity style={styles.secondaryButton} onPress={handleCancelRecording}>
+                <Text style={styles.secondaryButtonLabel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  !hasVoiceRecording ? styles.primaryButtonDisabled : null,
+                ]}
+                disabled={!hasVoiceRecording || isSavingVoiceNote}
+                onPress={handleSaveRecording}
+              >
+                <Text style={styles.primaryButtonLabel}>
+                  {isSavingVoiceNote ? "Saving..." : "Save note"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
         animationType="fade"
         transparent
         visible={selectedNote != null}
@@ -466,14 +640,16 @@ export default function NotesScreen() {
               contentContainerStyle={styles.viewerScrollContent}
               keyboardShouldPersistTaps="handled"
             >
-              {selectedNote?.mediaUrl ? (
+              {selectedNote && isAudioNote(selectedNote) && selectedNote.mediaUrl ? (
+                <AudioNotePlayer uri={selectedNote.mediaUrl} />
+              ) : selectedNote?.mediaUrl ? (
                 <Image
                   source={{ uri: selectedNote.mediaUrl }}
                   style={styles.viewerImage}
                   resizeMode="contain"
                 />
               ) : null}
-              {selectedNoteContent ? (
+              {selectedNoteContent && !isAudioNote(selectedNote) ? (
                 <Text style={styles.viewerBody}>{selectedNoteContent}</Text>
               ) : null}
             </ScrollView>
@@ -585,6 +761,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     marginTop: 12,
+  },
+  audioPlayer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    padding: 14,
+    marginBottom: 12,
+  },
+  audioPlayerCompact: {
+    marginBottom: 0,
+  },
+  audioIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.orange30,
+    borderWidth: 1,
+    borderColor: palette.orange35,
+  },
+  audioTextWrap: {
+    flex: 1,
+  },
+  audioTitle: {
+    color: palette.white,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  audioSubtitle: {
+    color: palette.white55,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
   },
   noteActionButton: {
     flexDirection: "row",
@@ -705,10 +919,56 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 15,
   },
+  primaryButtonDisabled: {
+    opacity: 0.45,
+  },
   primaryButtonLabel: {
     color: "#121212",
     fontSize: 15,
     fontWeight: "800",
+  },
+  secondaryButton: {
+    flex: 1,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+  },
+  secondaryButtonLabel: {
+    color: palette.white70,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  recordingTimer: {
+    color: palette.white,
+    fontSize: 40,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+    textAlign: "center",
+    marginTop: 18,
+    marginBottom: 18,
+  },
+  recordButton: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.orange,
+    borderWidth: 1,
+    borderColor: palette.orange35,
+    marginBottom: 22,
+  },
+  recordButtonActive: {
+    backgroundColor: "#D94A38",
+  },
+  voiceActions: {
+    flexDirection: "row",
+    gap: 10,
   },
   viewerOverlay: {
     flex: 1,

@@ -1,4 +1,4 @@
-import { eq, desc, asc, count } from 'drizzle-orm';
+import { eq, desc, asc, count, and } from 'drizzle-orm';
 import {
   db,
   profiles, notes, habits, habitCompletions, dailyFocus, todos,

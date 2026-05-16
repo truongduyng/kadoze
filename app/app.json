@@ -16,6 +16,7 @@
       "appleTeamId": "MVAX6C967A",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "$(PRODUCT_NAME) needs microphone access to record voice notes.",
         "NSPhotoLibraryUsageDescription": "$(PRODUCT_NAME) needs access to your photo library to attach photos to your journal entries."
       }
     },
@@ -44,6 +45,12 @@
       "@react-native-community/datetimepicker",
       "expo-font",
       "expo-image",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "$(PRODUCT_NAME) needs microphone access to record voice notes."
+        }
+      ],
       [
         "expo-image-picker",
         {

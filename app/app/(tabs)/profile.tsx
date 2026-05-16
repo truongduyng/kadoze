@@ -321,9 +321,9 @@ export default function ProfileScreen() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingTop: 20,
-          paddingBottom: insets.bottom + 96,
+          paddingBottom: insets.bottom + 26,
           paddingHorizontal: 20,
-          gap: 28,
+          gap: 14,
         }}
         showsVerticalScrollIndicator={false}
       >
