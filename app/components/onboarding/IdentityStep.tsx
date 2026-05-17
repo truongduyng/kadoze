@@ -52,7 +52,7 @@ export default function IdentityStep({
         <View style={s.header}>
           <Text style={s.headline}>What should we call you?</Text>
           <Text style={s.body}>
-            Pick a name and an avatar so Kado feels a little more like yours.
+            Pick a name and an avatar so Kadoze feels a little more like yours.
           </Text>
         </View>
 

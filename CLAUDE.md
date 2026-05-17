@@ -33,7 +33,7 @@ There is no test suite configured.
 
 ## Architecture Overview
 
-**Kado** is an offline-first iOS/Android app (React Native + Expo SDK 55, React 19) built around the "10k Iteration Protocol" — habit tracking, daily focus, note capture, and routines in one unified workspace.
+**Kadoze** is an offline-first iOS/Android app (React Native + Expo SDK 55, React 19) built around the "10k Iteration Protocol" — habit tracking, daily focus, note capture, and routines in one unified workspace.
 
 ### Directory layout (inside `app/`)
 

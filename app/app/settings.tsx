@@ -108,7 +108,7 @@ export default function SettingsScreen() {
               Theme
             </Text>
             <Text selectable style={s.cardCopy}>
-              Choose whether Kado follows the system or stays fixed.
+              Choose whether Kadoze follows the system or stays fixed.
             </Text>
 
             <View style={s.segmentRow}>
@@ -164,7 +164,7 @@ export default function SettingsScreen() {
             <View style={s.divider} />
             <Pressable style={s.actionRow} onPress={handleRate}>
               <Text selectable style={s.rowLabel}>
-                Rate Kado
+                Rate Kadoze
               </Text>
               <Text selectable style={s.chevron}>
                 ›
