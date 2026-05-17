@@ -127,24 +127,35 @@ export default function RoutinesScreen() {
   }, [currentFocus]);
 
   const currentFocusStages = useMemo(() => {
+    const currentFocusOwnedHabits = currentFocusHabits
+      .map((keystone) => existingHabitMap.get(habitKey(keystone.title, keystone.subtitle)))
+      .filter((habit): habit is NonNullable<typeof habit> => !!habit);
+    const unlockedHabitSlots =
+      1 +
+      currentFocusOwnedHabits.filter(
+        (habit) => (streakMap[habit.id] ?? 0) >= UNLOCK_STREAK_DAYS,
+      ).length;
+    const hasOpenHabitSlot = currentFocusOwnedHabits.length < unlockedHabitSlots;
+    const nextUnlockStreak = hasOpenHabitSlot
+      ? UNLOCK_STREAK_DAYS
+      : currentFocusOwnedHabits.reduce((best, habit) => {
+          const streak = streakMap[habit.id] ?? 0;
+          return streak < UNLOCK_STREAK_DAYS ? Math.max(best, streak) : best;
+        }, 0);
+
     return currentFocusHabits.map((keystone, index) => {
       const existing = existingHabitMap.get(habitKey(keystone.title, keystone.subtitle));
-      const previousKeystone = index > 0 ? currentFocusHabits[index - 1] : null;
-      const previousHabit = previousKeystone
-        ? existingHabitMap.get(habitKey(previousKeystone.title, previousKeystone.subtitle))
-        : null;
-      const previousStreak = previousHabit ? (streakMap[previousHabit.id] ?? 0) : 0;
       const isAvailable =
         !!existing ||
-        index === 0 ||
-        (!!previousHabit && previousStreak >= UNLOCK_STREAK_DAYS);
+        (currentFocusOwnedHabits.length === 0 && index === 0) ||
+        hasOpenHabitSlot;
 
       return {
         keystone,
         existing,
         streak: existing ? (streakMap[existing.id] ?? 0) : 0,
         isAvailable,
-        previousStreak,
+        nextUnlockStreak,
       };
     });
   }, [currentFocusHabits, existingHabitMap, streakMap]);
@@ -160,7 +171,10 @@ export default function RoutinesScreen() {
   };
 
   const addFocusHabit = async (keystone: KeystoneHabit) => {
-    if (existingHabitMap.has(habitKey(keystone.title, keystone.subtitle))) return;
+    const key = habitKey(keystone.title, keystone.subtitle);
+    const stage = currentFocusStages.find((item) => habitKey(item.keystone.title, item.keystone.subtitle) === key);
+    if (!stage || stage.existing || !stage.isAvailable) return;
+
     await habitOps.create({
       title: keystone.title,
       subtitle: keystone.subtitle,
@@ -304,7 +318,7 @@ export default function RoutinesScreen() {
                           <View style={s.focusHabitRight}>
                             <Ionicons name="lock-closed" size={16} color={C.textQuaternary} />
                             <Text style={s.focusHabitLockedText}>
-                              {Math.max(UNLOCK_STREAK_DAYS - stage.previousStreak, 0)} days left
+                              {Math.max(UNLOCK_STREAK_DAYS - stage.nextUnlockStreak, 0)} days left
                             </Text>
                           </View>
                         )}

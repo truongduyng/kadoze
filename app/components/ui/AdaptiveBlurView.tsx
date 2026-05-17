@@ -1,12 +1,12 @@
 import React from "react";
-import { ViewStyle } from "react-native";
+import { StyleProp, ViewStyle } from "react-native";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { BlurView } from "expo-blur";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 interface AdaptiveBlurViewProps {
   children: React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   glassEffectStyle?: "clear" | "regular";
   tintColor?: string;
   blurIntensity?: number;
