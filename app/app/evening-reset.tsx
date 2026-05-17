@@ -1,5 +1,6 @@
 import GradientBackground from "@/components/GradientBackground";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 import { dailyFocus, db, todoOps } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import * as Haptics from "expo-haptics";
@@ -54,6 +55,7 @@ function getTomorrowKey() {
 
 export default function EveningResetScreen() {
   const tomorrowKey = useMemo(() => getTomorrowKey(), []);
+  const C = useTheme();
   const [remainingSeconds, setRemainingSeconds] = useState(RESET_DURATION_SECONDS);
   const [isRunning, setIsRunning] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
@@ -186,36 +188,38 @@ export default function EveningResetScreen() {
     setPlannedTodos((current) => current.filter((_, currentIndex) => currentIndex !== index));
   };
 
+  const s = makeStyles(C);
+
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <GradientBackground />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={s.safeArea}>
         <KeyboardAvoidingView
-          style={styles.keyboard}
+          style={s.keyboard}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
         >
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={s.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-              <View style={styles.header}>
-                <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
-                  <Ionicons name="chevron-back" size={24} color={palette.white70} />
+              <View style={s.header}>
+                <Pressable onPress={() => router.back()} hitSlop={10} style={s.headerButton}>
+                  <Ionicons name="chevron-back" size={24} color={C.iconSecondary} />
                 </Pressable>
-                <Text style={styles.headerTitle}>Evening Reset</Text>
-                <View style={styles.headerSpacer} />
+                <Text style={s.headerTitle}>Evening Reset</Text>
+                <View style={s.headerSpacer} />
               </View>
 
-              <View style={styles.timerContent}>
-                <View style={styles.ringWrap}>
-                  <Svg width={RING_SIZE} height={RING_SIZE} style={styles.ringSvg}>
+              <View style={s.timerContent}>
+                <View style={s.ringWrap}>
+                  <Svg width={RING_SIZE} height={RING_SIZE} style={s.ringSvg}>
                     <Circle
                       cx={RING_SIZE / 2}
                       cy={RING_SIZE / 2}
                       r={RADIUS}
-                      stroke="rgba(255,255,255,0.1)"
+                      stroke={C.cardBorder}
                       strokeWidth={STROKE_WIDTH}
                       fill="none"
                     />
@@ -233,15 +237,15 @@ export default function EveningResetScreen() {
                     />
                   </Svg>
 
-                  <View style={styles.ringCenter}>
-                    <Text style={styles.timerText}>{countdownText}</Text>
-                    <Text style={styles.timerMode}>Reset</Text>
+                  <View style={s.ringCenter}>
+                    <Text style={s.timerText}>{countdownText}</Text>
+                    <Text style={s.timerMode}>Reset</Text>
                   </View>
                 </View>
 
                 {!isCompleted ? (
                   <Pressable
-                    style={styles.pauseControl}
+                    style={s.pauseControl}
                     onPress={() => setIsRunning((current) => !current)}
                   >
                     <Ionicons
@@ -252,10 +256,10 @@ export default function EveningResetScreen() {
                   </Pressable>
                 ) : null}
 
-                <View style={styles.stepsCard}>
-                  <Text style={styles.stepsLabel}>RESET STEPS</Text>
+                <View style={s.stepsCard}>
+                  <Text style={s.stepsLabel}>RESET STEPS</Text>
 
-                  <View style={styles.stepsList}>
+                  <View style={s.stepsList}>
                     {RESET_STEPS.map((item, index) => {
                       const isDone = Boolean(completedSteps[index]);
                       const isCurrent = index === currentStepIndex;
@@ -265,24 +269,24 @@ export default function EveningResetScreen() {
                         <Pressable
                           key={item.title}
                           style={[
-                            styles.stepRow,
-                            isCurrent && styles.stepRowCurrent,
-                            isLocked && styles.stepRowLocked,
+                            s.stepRow,
+                            isCurrent && s.stepRowCurrent,
+                            isLocked && s.stepRowLocked,
                           ]}
                           onPress={() => handleStepPress(index)}
                         >
-                          <View style={styles.stepCopy}>
-                            <Text style={styles.stepKicker}>{index + 1}</Text>
-                            <View style={styles.stepTextWrap}>
-                              <Text style={[styles.stepText, isDone && styles.stepTextActive]}>
+                          <View style={s.stepCopy}>
+                            <Text style={s.stepKicker}>{index + 1}</Text>
+                            <View style={s.stepTextWrap}>
+                              <Text style={[s.stepText, isDone && s.stepTextActive]}>
                                 {item.title}
                               </Text>
                               {isCurrent && !isCompleted ? (
-                                <Text style={styles.stepHint}>{currentStep.hint}</Text>
+                                <Text style={s.stepHint}>{currentStep.hint}</Text>
                               ) : null}
                             </View>
                           </View>
-                          <View style={[styles.stepIcon, isDone && styles.stepIconActive]}>
+                          <View style={[s.stepIcon, isDone && s.stepIconActive]}>
                             {isDone ? (
                               <Ionicons name="checkmark" size={14} color={palette.orange} />
                             ) : null}
@@ -293,72 +297,72 @@ export default function EveningResetScreen() {
                   </View>
 
                   {currentStepIndex === 2 && !isCompleted ? (
-                    <View style={styles.planCard}>
-                      <Text style={styles.planSectionLabel}>MAIN GOAL</Text>
+                    <View style={s.planCard}>
+                      <Text style={s.planSectionLabel}>MAIN GOAL</Text>
                       <TextInput
-                        style={styles.planInput}
+                        style={s.planInput}
                         value={goalDraft}
                         onChangeText={setGoalDraft}
                         placeholder="Tomorrow's main goal"
-                        placeholderTextColor={palette.white25}
+                        placeholderTextColor={C.textPlaceholder}
                         returnKeyType="next"
                       />
 
-                      <Text style={styles.planSectionLabel}>TO-DO</Text>
-                      <View style={styles.todoCard}>
+                      <Text style={s.planSectionLabel}>TO-DO</Text>
+                      <View style={s.todoCard}>
                         {plannedTodos.map((todo, index) => (
                           <View key={`${todo}-${index}`}>
-                            {index > 0 ? <View style={styles.todoDivider} /> : null}
-                            <View style={styles.todoRow}>
-                              <View style={styles.todoBullet} />
-                              <Text style={styles.todoText}>{todo}</Text>
+                            {index > 0 ? <View style={s.todoDivider} /> : null}
+                            <View style={s.todoRow}>
+                              <View style={s.todoBullet} />
+                              <Text style={s.todoText}>{todo}</Text>
                               <Pressable
-                                style={styles.todoDeleteButton}
+                                style={s.todoDeleteButton}
                                 onPress={() => removePlannedTodo(index)}
                                 hitSlop={8}
                               >
-                                <Text style={styles.todoDeleteText}>×</Text>
+                                <Text style={s.todoDeleteText}>×</Text>
                               </Pressable>
                             </View>
                           </View>
                         ))}
-                        {plannedTodos.length > 0 ? <View style={styles.todoDivider} /> : null}
-                        <View style={styles.todoInputRow}>
+                        {plannedTodos.length > 0 ? <View style={s.todoDivider} /> : null}
+                        <View style={s.todoInputRow}>
                           <TextInput
-                            style={styles.todoInput}
+                            style={s.todoInput}
                             value={todoDraft}
                             onChangeText={setTodoDraft}
                             placeholder="Add a task..."
-                            placeholderTextColor={palette.white25}
+                            placeholderTextColor={C.textPlaceholder}
                             returnKeyType="done"
                             submitBehavior="submit"
                             onSubmitEditing={addPlannedTodo}
                           />
                           {todoDraft.trim().length > 0 ? (
-                            <Pressable style={styles.todoAddButton} onPress={addPlannedTodo}>
+                            <Pressable style={s.todoAddButton} onPress={addPlannedTodo}>
                               <Ionicons name="add" size={18} color={palette.white} />
                             </Pressable>
                           ) : null}
                         </View>
                       </View>
-                      {isSavingPlan ? <Text style={styles.planSaving}>Saving...</Text> : null}
+                      {isSavingPlan ? <Text style={s.planSaving}>Saving...</Text> : null}
                     </View>
                   ) : null}
 
                   {isCompleted ? (
-                    <View style={styles.doneInlineCard}>
-                      <Text style={styles.doneInlineTitle}>Great job.</Text>
-                      <Text style={styles.doneInlineBody}>
+                    <View style={s.doneInlineCard}>
+                      <Text style={s.doneInlineTitle}>Great job.</Text>
+                      <Text style={s.doneInlineBody}>
                         You&apos;ve reset your space and lined up tomorrow&apos;s first move.
                       </Text>
                       <Pressable
-                        style={styles.doneInlineButton}
+                        style={s.doneInlineButton}
                         onPress={() => {
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           router.replace("/" as any);
                         }}
                       >
-                        <Text style={styles.doneInlineButtonText}>Done</Text>
+                        <Text style={s.doneInlineButtonText}>Done</Text>
                       </Pressable>
                     </View>
                   ) : null}
@@ -371,298 +375,257 @@ export default function EveningResetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#070b10",
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  keyboard: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 28,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 8,
-  },
-  headerButton: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerSpacer: {
-    width: 36,
-  },
-  headerTitle: {
-    color: palette.white,
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  timerContent: {
-    alignItems: "center",
-    paddingTop: 20,
-    paddingBottom: 12,
-  },
-  ringWrap: {
-    width: RING_SIZE,
-    height: RING_SIZE,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ringSvg: {
-    position: "absolute",
-  },
-  ringCenter: {
-    width: 184,
-    height: 184,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(5,9,14,0.5)",
-  },
-  timerText: {
-    color: palette.white,
-    fontSize: 58,
-    fontWeight: "300",
-    letterSpacing: -2,
-  },
-  timerMode: {
-    marginTop: 4,
-    color: palette.white70,
-    fontSize: 24,
-    fontWeight: "500",
-  },
-  pauseControl: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    backgroundColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 14,
-  },
-  stepsCard: {
-    width: "100%",
-    borderRadius: 18,
-    backgroundColor: palette.white06,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    marginTop: 28,
-  },
-  stepsLabel: {
-    color: palette.white35,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    marginBottom: 16,
-  },
-  stepsList: {
-    gap: 10,
-  },
-  stepRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  stepRowCurrent: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  stepRowLocked: {
-    opacity: 0.5,
-  },
-  stepCopy: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 10,
-  },
-  stepKicker: {
-    color: palette.white35,
-    fontSize: 13,
-    fontWeight: "700",
-    minWidth: 10,
-    marginTop: 1,
-  },
-  stepTextWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  stepText: {
-    color: palette.white60,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  stepTextActive: {
-    color: palette.white,
-  },
-  stepHint: {
-    color: palette.white42,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  stepIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: palette.white15,
-    backgroundColor: palette.white04,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepIconActive: {
-    borderColor: palette.orange25,
-    backgroundColor: palette.orange08,
-  },
-  planCard: {
-    marginTop: 16,
-    gap: 10,
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.white08,
-  },
-  planSectionLabel: {
-    color: palette.white35,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    marginTop: 4,
-  },
-  planInput: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: palette.white10,
-    backgroundColor: palette.white04,
-    color: palette.white,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: 15,
-  },
-  todoCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    backgroundColor: palette.white04,
-    overflow: "hidden",
-  },
-  todoDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: palette.white08,
-    marginHorizontal: 14,
-  },
-  todoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-  },
-  todoBullet: {
-    width: 7,
-    height: 7,
-    borderRadius: 999,
-    backgroundColor: palette.orange,
-  },
-  todoText: {
-    flex: 1,
-    color: palette.white80,
-    fontSize: 15,
-  },
-  todoDeleteButton: {
-    paddingHorizontal: 4,
-  },
-  todoDeleteText: {
-    color: palette.white35,
-    fontSize: 22,
-    lineHeight: 24,
-  },
-  todoInputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  todoInput: {
-    flex: 1,
-    color: palette.white,
-    fontSize: 15,
-    paddingVertical: 4,
-  },
-  todoAddButton: {
-    width: 32,
-    height: 32,
-    backgroundColor: palette.orange,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  planHint: {
-    color: palette.white42,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  planSaving: {
-    color: palette.orange,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  doneInlineCard: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.white08,
-    alignItems: "center",
-  },
-  doneInlineBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    borderColor: palette.orange25,
-    backgroundColor: palette.orange08,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  doneInlineTitle: {
-    color: palette.white,
-    fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  doneInlineBody: {
-    marginTop: 8,
-    color: palette.white45,
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: "center",
-    maxWidth: 280,
-  },
-  doneInlineButton: {
-    marginTop: 16,
-    backgroundColor: palette.orange,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    alignItems: "center",
-  },
-  doneInlineButtonText: {
-    color: palette.white,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    safeArea: { flex: 1, paddingHorizontal: 24 },
+    keyboard: { flex: 1 },
+    scrollContent: { paddingBottom: 28 },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingTop: 8,
+    },
+    headerButton: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerSpacer: { width: 36 },
+    headerTitle: {
+      color: C.textPrimary,
+      fontSize: 18,
+      fontWeight: "700",
+    },
+    timerContent: {
+      alignItems: "center",
+      paddingTop: 20,
+      paddingBottom: 12,
+    },
+    ringWrap: {
+      width: RING_SIZE,
+      height: RING_SIZE,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    ringSvg: { position: "absolute" },
+    ringCenter: {
+      width: 184,
+      height: 184,
+      borderRadius: 999,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.inputBg,
+    },
+    timerText: {
+      color: C.textPrimary,
+      fontSize: 58,
+      fontWeight: "300",
+      letterSpacing: -2,
+    },
+    timerMode: {
+      marginTop: 4,
+      color: C.textSecondary,
+      fontSize: 24,
+      fontWeight: "500",
+    },
+    pauseControl: {
+      width: 66,
+      height: 66,
+      borderRadius: 33,
+      backgroundColor: palette.orange,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 14,
+    },
+    stepsCard: {
+      width: "100%",
+      borderRadius: 18,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      paddingHorizontal: 18,
+      paddingVertical: 18,
+      marginTop: 28,
+    },
+    stepsLabel: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1.4,
+      marginBottom: 16,
+    },
+    stepsList: { gap: 10 },
+    stepRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      borderRadius: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+    },
+    stepRowCurrent: { backgroundColor: C.inputBg },
+    stepRowLocked: { opacity: 0.5 },
+    stepCopy: {
+      flex: 1,
+      flexDirection: "row",
+      gap: 10,
+    },
+    stepKicker: {
+      color: C.textTertiary,
+      fontSize: 13,
+      fontWeight: "700",
+      minWidth: 10,
+      marginTop: 1,
+    },
+    stepTextWrap: { flex: 1, gap: 4 },
+    stepText: {
+      color: C.textSecondary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    stepTextActive: { color: C.textPrimary },
+    stepHint: {
+      color: C.textQuaternary,
+      fontSize: 13,
+      lineHeight: 19,
+    },
+    stepIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    stepIconActive: {
+      borderColor: C.accentBorderSubtle,
+      backgroundColor: C.accentBgSubtle,
+    },
+    planCard: {
+      marginTop: 16,
+      gap: 10,
+      paddingTop: 14,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: C.divider,
+    },
+    planSectionLabel: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1.2,
+      marginTop: 4,
+    },
+    planInput: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      backgroundColor: C.inputBg,
+      color: C.textPrimary,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      fontSize: 15,
+    },
+    todoCard: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+      overflow: "hidden",
+    },
+    todoDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: C.divider,
+      marginHorizontal: 14,
+    },
+    todoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+    },
+    todoBullet: {
+      width: 7,
+      height: 7,
+      borderRadius: 999,
+      backgroundColor: palette.orange,
+    },
+    todoText: {
+      flex: 1,
+      color: C.textPrimary,
+      fontSize: 15,
+    },
+    todoDeleteButton: { paddingHorizontal: 4 },
+    todoDeleteText: {
+      color: C.textTertiary,
+      fontSize: 22,
+      lineHeight: 24,
+    },
+    todoInputRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    todoInput: {
+      flex: 1,
+      color: C.textPrimary,
+      fontSize: 15,
+      paddingVertical: 4,
+    },
+    todoAddButton: {
+      width: 32,
+      height: 32,
+      backgroundColor: palette.orange,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    planSaving: {
+      color: palette.orange,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    doneInlineCard: {
+      marginTop: 16,
+      paddingTop: 16,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: C.divider,
+      alignItems: "center",
+    },
+    doneInlineTitle: {
+      color: C.textPrimary,
+      fontSize: 22,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    doneInlineBody: {
+      marginTop: 8,
+      color: C.textTertiary,
+      fontSize: 14,
+      lineHeight: 21,
+      textAlign: "center",
+      maxWidth: 280,
+    },
+    doneInlineButton: {
+      marginTop: 16,
+      backgroundColor: palette.orange,
+      borderRadius: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 28,
+      alignItems: "center",
+    },
+    doneInlineButtonText: {
+      color: palette.white,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+  });
+}

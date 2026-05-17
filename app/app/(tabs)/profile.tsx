@@ -23,6 +23,7 @@ import {
 import { DAY_NAMES } from "@/lib/performance";
 import { getTodayInLocalTimezone } from "@/lib/timezone";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 const CONSISTENCY_DAYS = 28;
@@ -82,6 +83,7 @@ function buildLinePath(
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const C = useTheme();
   const today = useMemo(() => getTodayInLocalTimezone(), []);
 
   const { data: profileData } = useLiveQuery(
@@ -314,8 +316,11 @@ export default function ProfileScreen() {
     const lastPoint = trendChart.points[trendChart.points.length - 1];
     return `${trendChart.path} L ${lastPoint.x.toFixed(2)} 128 L ${firstPoint.x.toFixed(2)} 128 Z`;
   }, [trendChart]);
+
+  const s = makeStyles(C);
+
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <GradientBackground />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
@@ -327,76 +332,76 @@ export default function ProfileScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.section}>
-          <View style={styles.identityTop}>
-            <View style={styles.identityPrimary}>
-              <View style={styles.avatar}>
-                <Text selectable style={styles.avatarText}>
+        <View style={s.section}>
+          <View style={s.identityTop}>
+            <View style={s.identityPrimary}>
+              <View style={s.avatar}>
+                <Text selectable style={s.avatarText}>
                   {displayAvatar}
                 </Text>
               </View>
-              <View style={styles.identityMeta}>
-                <Text selectable style={styles.name}>
+              <View style={s.identityMeta}>
+                <Text selectable style={s.name}>
                   {displayName}
                 </Text>
-                <Text selectable style={styles.identityTitle}>
+                <Text selectable style={s.identityTitle}>
                   {analytics.identityTitle}
                 </Text>
               </View>
             </View>
             <Pressable
-              style={styles.settingsButton}
+              style={s.settingsButton}
               onPress={() => router.push("/settings")}
               hitSlop={10}
             >
               <Ionicons
                 name="settings-outline"
                 size={18}
-                color={palette.white80}
+                color={C.iconSecondary}
               />
             </Pressable>
           </View>
 
-          <View style={styles.identityStats}>
-            <View style={styles.identityMetricLarge}>
-              <Text selectable style={styles.metricEyebrow}>
+          <View style={s.identityStats}>
+            <View style={s.identityMetricLarge}>
+              <Text selectable style={s.metricEyebrow}>
                 Momentum Score
               </Text>
-              <Text selectable style={styles.identityMetricValue}>
+              <Text selectable style={s.identityMetricValue}>
                 {analytics.momentumScore}
               </Text>
             </View>
-            <View style={styles.identityMetricSmall}>
-              <Text selectable style={styles.metricEyebrow}>
+            <View style={s.identityMetricSmall}>
+              <Text selectable style={s.metricEyebrow}>
                 Streaks
               </Text>
-              <Text selectable style={styles.identityMetricValue}>
+              <Text selectable style={s.identityMetricValue}>
                 {analytics.currentStreak}
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.heroCard}>
-            <Text selectable style={styles.metricEyebrow}>
+        <View style={s.section}>
+          <View style={s.heroCard}>
+            <Text selectable style={s.metricEyebrow}>
               Heat map
             </Text>
 
-            <View style={styles.gridWrap}>
+            <View style={s.gridWrap}>
               {analytics.consistencyGrid.map((item) => (
-                <View key={item.dateKey} style={styles.gridCellWrap}>
+                <View key={item.dateKey} style={s.gridCellWrap}>
                   <View
                     style={[
-                      styles.gridCell,
-                      item.intensity === 0 && styles.gridCellIdle,
+                      s.gridCell,
+                      item.intensity === 0 && s.gridCellIdle,
                       item.intensity > 0 &&
                         item.intensity < 0.5 &&
-                        styles.gridCellLow,
+                        s.gridCellLow,
                       item.intensity >= 0.5 &&
                         item.intensity < 1 &&
-                        styles.gridCellMid,
-                      item.intensity === 1 && styles.gridCellHigh,
+                        s.gridCellMid,
+                      item.intensity === 1 && s.gridCellHigh,
                     ]}
                   />
                 </View>
@@ -405,45 +410,45 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <View style={[styles.analyticsCard, styles.trendCard]}>
-            <View style={styles.trendHeader}>
-              <View style={styles.trendHeaderCopy}>
-                <Text selectable style={styles.metricEyebrow}>
+        <View style={s.section}>
+          <View style={[s.analyticsCard, s.trendCard]}>
+            <View style={s.trendHeader}>
+              <View style={s.trendHeaderCopy}>
+                <Text selectable style={s.metricEyebrow}>
                   Focus trend
                 </Text>
               </View>
-              <Text selectable style={styles.trendHeadline}>
+              <Text selectable style={s.trendHeadline}>
                 {analytics.focusHours.toFixed(1)}h
               </Text>
             </View>
-            <View style={styles.trendStatsRow}>
-              <View style={styles.trendStat}>
-                <Text selectable style={styles.trendStatValue}>
+            <View style={s.trendStatsRow}>
+              <View style={s.trendStat}>
+                <Text selectable style={s.trendStatValue}>
                   {analytics.activeFocusDays}
                 </Text>
-                <Text selectable style={styles.trendStatLabel}>
+                <Text selectable style={s.trendStatLabel}>
                   active days
                 </Text>
               </View>
-              <View style={styles.trendStat}>
-                <Text selectable style={styles.trendStatValue}>
+              <View style={s.trendStat}>
+                <Text selectable style={s.trendStatValue}>
                   {analytics.averageFocusMinutes}m
                 </Text>
-                <Text selectable style={styles.trendStatLabel}>
+                <Text selectable style={s.trendStatLabel}>
                   7-day avg
                 </Text>
               </View>
-              <View style={styles.trendStat}>
-                <Text selectable style={styles.trendStatValue}>
+              <View style={s.trendStat}>
+                <Text selectable style={s.trendStatValue}>
                   {analytics.focusPeak}m
                 </Text>
-                <Text selectable style={styles.trendStatLabel}>
+                <Text selectable style={s.trendStatLabel}>
                   peak day
                 </Text>
               </View>
             </View>
-            <View style={styles.trendChartWrap}>
+            <View style={s.trendChartWrap}>
               <Svg width="100%" height="140" viewBox="0 0 320 140">
                 <Defs>
                   <LinearGradient
@@ -467,13 +472,13 @@ export default function ProfileScreen() {
                 </Defs>
                 <Path
                   d="M 12 128 L 308 128"
-                  stroke="rgba(255,255,255,0.08)"
+                  stroke={C.divider}
                   strokeWidth={1}
                   strokeLinecap="round"
                 />
                 <Path
                   d="M 12 88 L 308 88"
-                  stroke="rgba(255,255,255,0.05)"
+                  stroke={C.cardBorder}
                   strokeWidth={1}
                   strokeDasharray="3 5"
                   strokeLinecap="round"
@@ -501,34 +506,34 @@ export default function ProfileScreen() {
                 ))}
               </Svg>
             </View>
-            <View style={styles.trendLabelsRow}>
+            <View style={s.trendLabelsRow}>
               {analytics.focusTrendSeries.map((item) => (
-                <Text key={item.dateKey} selectable style={styles.trendLabel}>
+                <Text key={item.dateKey} selectable style={s.trendLabel}>
                   {item.label}
                 </Text>
               ))}
             </View>
           </View>
 
-          <View style={styles.activityCard}>
-            <View style={styles.activityHeader}>
+          <View style={s.activityCard}>
+            <View style={s.activityHeader}>
               <View>
-                <Text selectable style={styles.metricEyebrow}>
+                <Text selectable style={s.metricEyebrow}>
                   Weekly rhythm
                 </Text>
               </View>
             </View>
 
-            <View style={styles.chartRow}>
+            <View style={s.chartRow}>
               {analytics.weekActivity.map((item, index) => (
-                <View key={`${index}-${item.label}`} style={styles.chartColumn}>
-                  <Text selectable style={styles.chartCount}>
+                <View key={`${index}-${item.label}`} style={s.chartColumn}>
+                  <Text selectable style={s.chartCount}>
                     {item.count}
                   </Text>
-                  <View style={styles.chartTrack}>
+                  <View style={s.chartTrack}>
                     <View
                       style={[
-                        styles.chartFill,
+                        s.chartFill,
                         {
                           height: `${Math.max(
                             12,
@@ -538,7 +543,7 @@ export default function ProfileScreen() {
                       ]}
                     />
                   </View>
-                  <Text selectable style={styles.chartLabel}>
+                  <Text selectable style={s.chartLabel}>
                     {item.label}
                   </Text>
                 </View>
@@ -547,21 +552,21 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.analyticsRow}>
-            <View style={styles.analyticsCard}>
-              <Text selectable style={styles.metricEyebrow}>
+        <View style={s.section}>
+          <View style={s.analyticsRow}>
+            <View style={s.analyticsCard}>
+              <Text selectable style={s.metricEyebrow}>
                 Completion
               </Text>
-              <Text selectable style={styles.analyticsValueSmall}>
+              <Text selectable style={s.analyticsValueSmall}>
                 {analytics.completionRate}%
               </Text>
             </View>
-            <View style={styles.analyticsCard}>
-              <Text selectable style={styles.metricEyebrow}>
+            <View style={s.analyticsCard}>
+              <Text selectable style={s.metricEyebrow}>
                 Best streak
               </Text>
-              <Text selectable style={styles.analyticsValueSmall}>
+              <Text selectable style={s.analyticsValueSmall}>
                 {analytics.longestHabitStreak}d
               </Text>
             </View>
@@ -572,420 +577,257 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  settingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: palette.white08,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -46,
-  },
-  section: {
-    gap: 14,
-  },
-  identityTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  identityPrimary: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    paddingRight: 8,
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    borderCurve: "continuous",
-    backgroundColor: palette.orange15,
-    borderWidth: 1,
-    borderColor: palette.orange35,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    color: palette.orange,
-    fontSize: 26,
-    fontWeight: "800",
-  },
-  identityMeta: {
-    flex: 1,
-    gap: 3,
-  },
-  name: {
-    color: palette.white,
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  identityTitle: {
-    color: palette.orange,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  identityCaption: {
-    color: palette.white55,
-    fontSize: 13,
-  },
-  identityStats: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  identityMetricLarge: {
-    flex: 1.1,
-    borderRadius: 24,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: palette.white08,
-    padding: 16,
-    gap: 10,
-  },
-  identityMetricSmall: {
-    flex: 0.9,
-    borderRadius: 24,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderWidth: 1,
-    borderColor: palette.white08,
-    padding: 16,
-    justifyContent: "space-between",
-  },
-  metricEyebrow: {
-    color: palette.white45,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.3,
-    textTransform: "uppercase",
-  },
-  identityMetricValue: {
-    color: palette.white,
-    fontSize: 52,
-    lineHeight: 56,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  identityMetricSmallValue: {
-    color: palette.white,
-    fontSize: 24,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-  },
-  metaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  metaPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: palette.white06,
-    borderWidth: 1,
-    borderColor: palette.white08,
-  },
-  metaLabel: {
-    color: palette.white70,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  heroCard: {
-    borderRadius: 28,
-    borderCurve: "continuous",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: palette.white08,
-    padding: 18,
-    gap: 16,
-  },
-  gridWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
-  },
-  gridCellWrap: {
-    width: "12.5%",
-    alignItems: "center",
-    gap: 2,
-  },
-  gridCell: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-  },
-  gridCellIdle: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  gridCellLow: {
-    backgroundColor: "rgba(240,136,60,0.28)",
-  },
-  gridCellMid: {
-    backgroundColor: "rgba(240,136,60,0.55)",
-  },
-  gridCellHigh: {
-    backgroundColor: palette.orange,
-  },
-  gridDayLabel: {
-    color: palette.white35,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  analyticsRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  analyticsCard: {
-    flex: 1,
-    minHeight: 130,
-    borderRadius: 24,
-    borderCurve: "continuous",
-    backgroundColor: palette.white06,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    padding: 16,
-    gap: 12,
-  },
-  analyticsCardPrimary: {
-    backgroundColor: "rgba(240,136,60,0.12)",
-    borderColor: "rgba(240,136,60,0.25)",
-  },
-  analyticsValue: {
-    color: palette.white,
-    fontSize: 38,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  analyticsValueSmall: {
-    color: palette.white,
-    fontSize: 30,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  trendCard: {
-    minHeight: 0,
-    paddingTop: 18,
-    paddingBottom: 18,
-    gap: 18,
-  },
-  trendHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  trendHeaderCopy: {
-    flex: 1,
-    gap: 6,
-  },
-  trendHeadline: {
-    color: palette.white,
-    fontSize: 34,
-    lineHeight: 38,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  trendSubhead: {
-    color: palette.white50,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  trendDeltaPill: {
-    minWidth: 96,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    backgroundColor: palette.white04,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 2,
-  },
-  trendDeltaPillUp: {
-    backgroundColor: palette.orange10,
-    borderColor: palette.orange25,
-  },
-  trendDeltaPillDown: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  trendDeltaValue: {
-    color: palette.white,
-    fontSize: 16,
-    fontWeight: "800",
-    textAlign: "right",
-    fontVariant: ["tabular-nums"],
-  },
-  trendDeltaLabel: {
-    color: palette.white50,
-    fontSize: 11,
-    fontWeight: "700",
-    textAlign: "right",
-    textTransform: "uppercase",
-  },
-  trendStatsRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  trendStat: {
-    flex: 1,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 4,
-  },
-  trendStatValue: {
-    color: palette.white,
-    fontSize: 16,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  trendStatLabel: {
-    color: palette.white45,
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  trendChartWrap: {
-    marginTop: 2,
-    marginHorizontal: -2,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.03)",
-  },
-  trendLabelsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 2,
-    paddingTop: 2,
-  },
-  trendLabel: {
-    flex: 1,
-    color: palette.white35,
-    fontSize: 10,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  trendSummary: {
-    color: palette.white60,
-    fontSize: 13,
-    fontWeight: "600",
-    fontVariant: ["tabular-nums"],
-  },
-  activityCard: {
-    borderRadius: 28,
-    borderCurve: "continuous",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: palette.white08,
-    padding: 18,
-    gap: 16,
-  },
-  activityHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  chartRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  chartColumn: {
-    flex: 1,
-    alignItems: "center",
-    gap: 8,
-  },
-  chartCount: {
-    color: palette.white60,
-    fontSize: 11,
-    fontVariant: ["tabular-nums"],
-  },
-  chartTrack: {
-    width: "100%",
-    height: 128,
-    borderRadius: 20,
-    borderCurve: "continuous",
-    backgroundColor: "rgba(255,255,255,0.06)",
-    justifyContent: "flex-end",
-    overflow: "hidden",
-    padding: 6,
-  },
-  chartFill: {
-    width: "100%",
-    borderRadius: 14,
-    borderCurve: "continuous",
-    backgroundColor: palette.orange,
-    minHeight: 10,
-  },
-  chartLabel: {
-    color: palette.white50,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  habitListCard: {
-    borderRadius: 24,
-    borderCurve: "continuous",
-    backgroundColor: palette.white06,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    overflow: "hidden",
-  },
-  habitRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  habitRowLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  habitIcon: {
-    fontSize: 20,
-  },
-  habitRowCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  habitTitle: {
-    color: palette.white,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  habitMeta: {
-    color: palette.white50,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  habitStreak: {
-    color: palette.orange,
-    fontSize: 16,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  divider: {
-    height: 1,
-    backgroundColor: palette.white08,
-  },
-  emptyCopy: {
-    color: palette.white50,
-    fontSize: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-  },
-});
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    settingsButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: -46,
+    },
+    section: { gap: 14 },
+    identityTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 16,
+    },
+    identityPrimary: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 16,
+      paddingRight: 8,
+    },
+    avatar: {
+      width: 72,
+      height: 72,
+      borderRadius: 24,
+      borderCurve: "continuous",
+      backgroundColor: C.accentBg,
+      borderWidth: 1,
+      borderColor: C.accentBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: {
+      color: palette.orange,
+      fontSize: 26,
+      fontWeight: "800",
+    },
+    identityMeta: { flex: 1, gap: 3 },
+    name: {
+      color: C.textPrimary,
+      fontSize: 28,
+      fontWeight: "800",
+    },
+    identityTitle: {
+      color: palette.orange,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    identityStats: { flexDirection: "row", gap: 12 },
+    identityMetricLarge: {
+      flex: 1.1,
+      borderRadius: 24,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 16,
+      gap: 10,
+    },
+    identityMetricSmall: {
+      flex: 0.9,
+      borderRadius: 24,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 16,
+      justifyContent: "space-between",
+    },
+    metricEyebrow: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1.3,
+      textTransform: "uppercase",
+    },
+    identityMetricValue: {
+      color: C.textPrimary,
+      fontSize: 52,
+      lineHeight: 56,
+      fontWeight: "800",
+      fontVariant: ["tabular-nums"],
+    },
+    heroCard: {
+      borderRadius: 28,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 18,
+      gap: 16,
+    },
+    gridWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 4,
+    },
+    gridCellWrap: {
+      width: "12.5%",
+      alignItems: "center",
+      gap: 2,
+    },
+    gridCell: {
+      width: 24,
+      height: 24,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: C.heatIdleBorder,
+    },
+    gridCellIdle: { backgroundColor: C.heatIdle },
+    gridCellLow: { backgroundColor: C.heatLow },
+    gridCellMid: { backgroundColor: C.heatMid },
+    gridCellHigh: { backgroundColor: C.heatHigh },
+    analyticsRow: { flexDirection: "row", gap: 12 },
+    analyticsCard: {
+      flex: 1,
+      minHeight: 130,
+      borderRadius: 24,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 16,
+      gap: 12,
+    },
+    analyticsValueSmall: {
+      color: C.textPrimary,
+      fontSize: 30,
+      fontWeight: "800",
+      fontVariant: ["tabular-nums"],
+    },
+    trendCard: {
+      minHeight: 0,
+      paddingTop: 18,
+      paddingBottom: 18,
+      gap: 18,
+    },
+    trendHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    trendHeaderCopy: { flex: 1, gap: 6 },
+    trendHeadline: {
+      color: C.textPrimary,
+      fontSize: 34,
+      lineHeight: 38,
+      fontWeight: "800",
+      fontVariant: ["tabular-nums"],
+    },
+    trendStatsRow: { flexDirection: "row", gap: 10 },
+    trendStat: {
+      flex: 1,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      gap: 4,
+    },
+    trendStatValue: {
+      color: C.textPrimary,
+      fontSize: 16,
+      fontWeight: "800",
+      fontVariant: ["tabular-nums"],
+    },
+    trendStatLabel: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "700",
+      textTransform: "uppercase",
+    },
+    trendChartWrap: {
+      marginTop: 2,
+      marginHorizontal: -2,
+      borderRadius: 20,
+      overflow: "hidden",
+      backgroundColor: C.inputBg,
+    },
+    trendLabelsRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 2,
+      paddingTop: 2,
+    },
+    trendLabel: {
+      flex: 1,
+      color: C.textTertiary,
+      fontSize: 10,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    activityCard: {
+      borderRadius: 28,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 18,
+      gap: 16,
+    },
+    activityHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    chartRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      gap: 10,
+    },
+    chartColumn: {
+      flex: 1,
+      alignItems: "center",
+      gap: 8,
+    },
+    chartCount: {
+      color: C.textSecondary,
+      fontSize: 11,
+      fontVariant: ["tabular-nums"],
+    },
+    chartTrack: {
+      width: "100%",
+      height: 128,
+      borderRadius: 20,
+      borderCurve: "continuous",
+      backgroundColor: C.inputBg,
+      justifyContent: "flex-end",
+      overflow: "hidden",
+      padding: 6,
+    },
+    chartFill: {
+      width: "100%",
+      borderRadius: 14,
+      borderCurve: "continuous",
+      backgroundColor: palette.orange,
+      minHeight: 10,
+    },
+    chartLabel: {
+      color: C.textSecondary,
+      fontSize: 11,
+      fontWeight: "700",
+    },
+  });
+}

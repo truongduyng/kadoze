@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 interface ProgressBarProps {
   step: number;
@@ -8,6 +9,7 @@ interface ProgressBarProps {
 }
 
 export default function ProgressBar({ step, total }: ProgressBarProps) {
+  const C = useTheme();
   return (
     <View style={styles.row}>
       {Array.from({ length: total }).map((_, i) => {
@@ -18,7 +20,7 @@ export default function ProgressBar({ step, total }: ProgressBarProps) {
             style={[
               styles.segment,
               { flex: 1 },
-              filled ? styles.filled : styles.empty,
+              filled ? styles.filled : { backgroundColor: C.cardBorder },
               i < total - 1 && styles.gap,
             ]}
           />
@@ -41,9 +43,6 @@ const styles = StyleSheet.create({
   },
   filled: {
     backgroundColor: palette.orange,
-  },
-  empty: {
-    backgroundColor: "rgba(255,255,255,0.15)",
   },
   gap: {
     marginRight: 4,

@@ -22,7 +22,7 @@ export function Collapsible({
   contentStyle?: StyleProp<ViewStyle>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const theme = useColorScheme() ?? 'light';
+  const theme = useColorScheme() ?? 'dark';
 
   return (
     <ThemedView lightColor="transparent" darkColor="transparent">

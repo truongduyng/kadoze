@@ -2,6 +2,7 @@ import React from "react";
 import { ViewStyle } from "react-native";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { BlurView } from "expo-blur";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 interface AdaptiveBlurViewProps {
   children: React.ReactNode;
@@ -16,10 +17,16 @@ const AdaptiveBlurView: React.FC<AdaptiveBlurViewProps> = ({
   children,
   style,
   glassEffectStyle = "clear",
-  tintColor = "rgba(255, 255, 255, 0.01)",
+  tintColor,
   blurIntensity = 20,
-  blurTint = "light",
+  blurTint,
 }) => {
+  const colorScheme = useColorScheme();
+  const resolvedTint = blurTint ?? (colorScheme === "light" ? "light" : "dark");
+  const resolvedTintColor = tintColor ?? (colorScheme === "light"
+    ? "rgba(0, 0, 0, 0.01)"
+    : "rgba(255, 255, 255, 0.01)");
+
   const useGlassView = isLiquidGlassAvailable();
 
   if (useGlassView) {
@@ -27,7 +34,7 @@ const AdaptiveBlurView: React.FC<AdaptiveBlurViewProps> = ({
       <GlassView
         glassEffectStyle={glassEffectStyle}
         style={style}
-        tintColor={tintColor}
+        tintColor={resolvedTintColor}
       >
         {children}
       </GlassView>
@@ -38,7 +45,7 @@ const AdaptiveBlurView: React.FC<AdaptiveBlurViewProps> = ({
     <BlurView
       intensity={blurIntensity}
       style={style}
-      tint={blurTint}
+      tint={resolvedTint}
     >
       {children}
     </BlurView>

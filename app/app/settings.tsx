@@ -17,11 +17,13 @@ import {
   useThemePreference,
 } from "@/contexts/ThemeContext";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const C = useTheme();
   const version = Constants.expoConfig?.version ?? "1.0.0";
   const { preference, setPreference } = useThemePreference();
 
@@ -43,8 +45,10 @@ export default function SettingsScreen() {
     );
   };
 
+  const s = makeStyles(C);
+
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <GradientBackground />
       <Stack.Screen options={{ title: "Settings", headerShown: true }} />
       <ScrollView
@@ -57,30 +61,30 @@ export default function SettingsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.section}>
-          <Text selectable style={styles.sectionLabel}>
+        <View style={s.section}>
+          <Text selectable style={s.sectionLabel}>
             Appearance
           </Text>
-          <View style={styles.card}>
-            <Text selectable style={styles.cardTitle}>
+          <View style={s.card}>
+            <Text selectable style={s.cardTitle}>
               Theme
             </Text>
-            <Text selectable style={styles.cardCopy}>
+            <Text selectable style={s.cardCopy}>
               Choose whether Kado follows the system or stays fixed.
             </Text>
 
-            <View style={styles.segmentRow}>
+            <View style={s.segmentRow}>
               {THEME_OPTIONS.map((option) => {
                 const active = preference === option;
                 return (
                   <Pressable
                     key={option}
-                    style={[styles.segmentButton, active && styles.segmentButtonActive]}
+                    style={[s.segmentButton, active && s.segmentButtonActive]}
                     onPress={() => setPreference(option)}
                   >
                     <Text
                       selectable
-                      style={[styles.segmentLabel, active && styles.segmentLabelActive]}
+                      style={[s.segmentLabel, active && s.segmentLabelActive]}
                     >
                       {option.charAt(0).toUpperCase() + option.slice(1)}
                     </Text>
@@ -91,46 +95,46 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text selectable style={styles.sectionLabel}>
+        <View style={s.section}>
+          <Text selectable style={s.sectionLabel}>
             App
           </Text>
-          <View style={styles.listCard}>
-            <View style={styles.listRow}>
-              <Text selectable style={styles.rowLabel}>
+          <View style={s.listCard}>
+            <View style={s.listRow}>
+              <Text selectable style={s.rowLabel}>
                 Version
               </Text>
-              <Text selectable style={styles.rowValue}>
+              <Text selectable style={s.rowValue}>
                 {version}
               </Text>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.listRow}>
-              <Text selectable style={styles.rowLabel}>
+            <View style={s.divider} />
+            <View style={s.listRow}>
+              <Text selectable style={s.rowLabel}>
                 Navigation
               </Text>
-              <Text selectable style={styles.rowValue}>
+              <Text selectable style={s.rowValue}>
                 Native tabs
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text selectable style={styles.sectionLabel}>
+        <View style={s.section}>
+          <Text selectable style={s.sectionLabel}>
             Data
           </Text>
-          <View style={styles.listCard}>
-            <Pressable style={styles.actionRow} onPress={handleReset}>
-              <View style={styles.actionTextBlock}>
-                <Text selectable style={styles.dangerLabel}>
+          <View style={s.listCard}>
+            <Pressable style={s.actionRow} onPress={handleReset}>
+              <View style={s.actionTextBlock}>
+                <Text selectable style={s.dangerLabel}>
                   Reset all data
                 </Text>
-                <Text selectable style={styles.dangerCopy}>
+                <Text selectable style={s.dangerCopy}>
                   Start over from onboarding and clear the local database.
                 </Text>
               </View>
-              <Text selectable style={styles.chevron}>
+              <Text selectable style={s.chevron}>
                 ›
               </Text>
             </Pressable>
@@ -141,117 +145,117 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  section: {
-    gap: 10,
-  },
-  sectionLabel: {
-    color: palette.white40,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-  },
-  card: {
-    borderRadius: 24,
-    borderCurve: "continuous",
-    backgroundColor: "rgba(12,14,18,0.62)",
-    borderWidth: 1,
-    borderColor: palette.white08,
-    padding: 18,
-    gap: 14,
-  },
-  cardTitle: {
-    color: palette.white,
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  cardCopy: {
-    color: palette.white60,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  segmentRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  segmentButton: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderCurve: "continuous",
-    backgroundColor: palette.white06,
-    borderWidth: 1,
-    borderColor: palette.white08,
-  },
-  segmentButtonActive: {
-    backgroundColor: palette.orange15,
-    borderColor: palette.orange35,
-  },
-  segmentLabel: {
-    color: palette.white70,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  segmentLabelActive: {
-    color: palette.orange,
-  },
-  listCard: {
-    borderRadius: 24,
-    borderCurve: "continuous",
-    backgroundColor: palette.white06,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    overflow: "hidden",
-  },
-  listRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  rowLabel: {
-    color: palette.white75,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  rowValue: {
-    color: palette.white50,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: palette.white08,
-  },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  actionTextBlock: {
-    flex: 1,
-    gap: 4,
-  },
-  dangerLabel: {
-    color: "#FF7B7B",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  dangerCopy: {
-    color: palette.white50,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  chevron: {
-    color: palette.white40,
-    fontSize: 22,
-  },
-});
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    section: { gap: 10 },
+    sectionLabel: {
+      color: C.textTertiary,
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 1.5,
+      textTransform: "uppercase",
+    },
+    card: {
+      borderRadius: 24,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 18,
+      gap: 14,
+    },
+    cardTitle: {
+      color: C.textPrimary,
+      fontSize: 18,
+      fontWeight: "700",
+    },
+    cardCopy: {
+      color: C.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    segmentRow: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    segmentButton: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 12,
+      borderRadius: 16,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    segmentButtonActive: {
+      backgroundColor: C.accentBg,
+      borderColor: C.accentBorder,
+    },
+    segmentLabel: {
+      color: C.textSecondary,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    segmentLabelActive: {
+      color: palette.orange,
+    },
+    listCard: {
+      borderRadius: 24,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      overflow: "hidden",
+    },
+    listRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    rowLabel: {
+      color: C.textPrimary,
+      fontSize: 15,
+      fontWeight: "500",
+    },
+    rowValue: {
+      color: C.textSecondary,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    divider: {
+      height: 1,
+      backgroundColor: C.divider,
+    },
+    actionRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    actionTextBlock: {
+      flex: 1,
+      gap: 4,
+    },
+    dangerLabel: {
+      color: "#FF7B7B",
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    dangerCopy: {
+      color: C.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    chevron: {
+      color: C.textTertiary,
+      fontSize: 22,
+    },
+  });
+}

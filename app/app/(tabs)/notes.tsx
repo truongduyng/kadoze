@@ -2,6 +2,7 @@ import GradientBackground from "@/components/GradientBackground";
 import { SwipeableRow } from "@/components/todo/SwipeableRow";
 import AdaptiveBlurView from "@/components/ui/AdaptiveBlurView";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 import { db, noteOps, notes, type Note } from "@/lib/db";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { desc } from "drizzle-orm";
@@ -110,22 +111,24 @@ function AudioNotePlayer({
   compact?: boolean;
 }) {
   const player = useAudioPlayer({ uri });
+  const C = useTheme();
+  const s = makeStyles(C);
 
   return (
     <TouchableOpacity
-      style={[styles.audioPlayer, compact ? styles.audioPlayerCompact : null]}
+      style={[s.audioPlayer, compact ? s.audioPlayerCompact : null]}
       onPress={async () => {
         await Haptics.selectionAsync();
         player.seekTo(0);
         player.play();
       }}
     >
-      <View style={styles.audioIcon}>
+      <View style={s.audioIcon}>
         <Ionicons name="play" size={compact ? 14 : 16} color={palette.white} />
       </View>
-      <View style={styles.audioTextWrap}>
-        <Text style={styles.audioTitle}>Voice note</Text>
-        <Text style={styles.audioSubtitle}>Tap to play</Text>
+      <View style={s.audioTextWrap}>
+        <Text style={s.audioTitle}>Voice note</Text>
+        <Text style={s.audioSubtitle}>Tap to play</Text>
       </View>
     </TouchableOpacity>
   );
@@ -133,6 +136,7 @@ function AudioNotePlayer({
 
 export default function NotesScreen() {
   const insets = useSafeAreaInsets();
+  const C = useTheme();
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
   const [isSheetVisible, setIsSheetVisible] = useState(false);
@@ -378,31 +382,33 @@ export default function NotesScreen() {
       }));
   }, [liveNotes]);
 
+  const s = makeStyles(C);
+
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <GradientBackground />
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={s.container} edges={["top"]}>
         <SectionList
           sections={sections}
           keyExtractor={(item) => String(item.id)}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
-            styles.content,
+            s.content,
             { paddingTop: 16, paddingBottom: insets.bottom + 96 },
           ]}
           ListEmptyComponent={
-            <AdaptiveBlurView style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>No notes yet</Text>
-              <Text style={styles.emptyBody}>
+            <AdaptiveBlurView style={s.emptyCard}>
+              <Text style={s.emptyTitle}>No notes yet</Text>
+              <Text style={s.emptyBody}>
                 Start writing and your notes will appear here, grouped by day.
               </Text>
             </AdaptiveBlurView>
           }
           renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <Text style={styles.sectionMeta}>{section.data.length} items</Text>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>{section.title}</Text>
+              <Text style={s.sectionMeta}>{section.data.length} items</Text>
             </View>
           )}
           renderItem={({ item, index, section }) => {
@@ -411,9 +417,9 @@ export default function NotesScreen() {
             const audioNote = isAudioNote(item);
             const shouldOpenDetail = Boolean(item.mediaUrl) || trimmed;
             const cardStyle = {
-              ...styles.card,
-              ...(index === 0 ? styles.cardFirst : {}),
-              ...(index === section.data.length - 1 ? styles.cardLast : {}),
+              ...s.card,
+              ...(index === 0 ? s.cardFirst : {}),
+              ...(index === section.data.length - 1 ? s.cardLast : {}),
             };
             return (
               <SwipeableRow
@@ -427,40 +433,40 @@ export default function NotesScreen() {
                   }}
                 >
                   <AdaptiveBlurView style={cardStyle}>
-                    <View style={styles.cardTopRow}>
-                      <Text style={styles.timeLabel}>{formatTime(item.createdAt ?? null)}</Text>
+                    <View style={s.cardTopRow}>
+                      <Text style={s.timeLabel}>{formatTime(item.createdAt ?? null)}</Text>
                     </View>
                     {audioNote && item.mediaUrl ? (
                       <AudioNotePlayer uri={item.mediaUrl} compact />
                     ) : item.mediaUrl ? (
                       <Image
                         source={{ uri: item.mediaUrl }}
-                        style={styles.noteImage}
+                        style={s.noteImage}
                         resizeMode="cover"
                       />
                     ) : null}
                     {preview && !audioNote ? (
                       <View>
-                        <Text style={styles.noteBody} numberOfLines={6}>
+                        <Text style={s.noteBody} numberOfLines={6}>
                           {preview}
                         </Text>
                         {trimmed ? (
-                          <Text style={styles.trimmedHint}>... more</Text>
+                          <Text style={s.trimmedHint}>... more</Text>
                         ) : null}
                       </View>
                     ) : null}
-                    <View style={styles.noteActions}>
+                    <View style={s.noteActions}>
                       <TouchableOpacity
-                        style={styles.noteActionButton}
+                        style={s.noteActionButton}
                         onPress={() => copyNote(item)}
                       >
-                        <Ionicons name="copy-outline" size={14} color={palette.white70} />
+                        <Ionicons name="copy-outline" size={14} color={C.iconSecondary} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={styles.noteActionButton}
+                        style={s.noteActionButton}
                         onPress={() => shareNote(item)}
                       >
-                        <Ionicons name="share-outline" size={14} color={palette.white70} />
+                        <Ionicons name="share-outline" size={14} color={C.iconSecondary} />
                       </TouchableOpacity>
                     </View>
                   </AdaptiveBlurView>
@@ -468,18 +474,18 @@ export default function NotesScreen() {
               </SwipeableRow>
             );
           }}
-          SectionSeparatorComponent={() => <View style={styles.sectionSpacer} />}
+          SectionSeparatorComponent={() => <View style={s.sectionSpacer} />}
         />
       </SafeAreaView>
 
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.85}
         onPress={() => setIsSheetVisible(true)}
-        style={[styles.fab, { bottom: insets.bottom + 28 }]}
+        style={[s.fab, { bottom: insets.bottom + 28 }]}
       >
-        <AdaptiveBlurView style={styles.fabInner}>
-          <Ionicons name="add" size={24} color={palette.white} />
-        </AdaptiveBlurView>
+        <View style={s.fabInner}>
+          <Ionicons name="add" size={26} color="#FFFFFF" />
+        </View>
       </TouchableOpacity>
 
       <Modal
@@ -488,38 +494,38 @@ export default function NotesScreen() {
         visible={isSheetVisible}
         onRequestClose={closeSheet}
       >
-        <Pressable style={styles.sheetOverlay} onPress={closeSheet}>
+        <Pressable style={s.sheetOverlay} onPress={closeSheet}>
           <Pressable
-            style={[styles.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
+            style={[s.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
             onPress={(event) => event.stopPropagation()}
           >
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Add a note</Text>
-            <Text style={styles.sheetSubtitle}>Choose how you want to capture it.</Text>
+            <View style={s.sheetHandle} />
+            <Text style={s.sheetTitle}>Add a note</Text>
+            <Text style={s.sheetSubtitle}>Choose how you want to capture it.</Text>
 
-            <TouchableOpacity style={styles.sheetRow} onPress={handleOpenTextComposer}>
-              <Ionicons name="create-outline" size={20} color={palette.white} />
-              <Text style={styles.sheetRowLabel}>Text input</Text>
+            <TouchableOpacity style={s.sheetRow} onPress={handleOpenTextComposer}>
+              <Ionicons name="create-outline" size={20} color={C.textPrimary} />
+              <Text style={s.sheetRowLabel}>Text input</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetRow} onPress={handlePasteNote}>
-              <Ionicons name="clipboard-outline" size={20} color={palette.white} />
-              <Text style={styles.sheetRowLabel}>Pasted input</Text>
+            <TouchableOpacity style={s.sheetRow} onPress={handlePasteNote}>
+              <Ionicons name="clipboard-outline" size={20} color={C.textPrimary} />
+              <Text style={s.sheetRowLabel}>Pasted input</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetRow} onPress={handleVoiceNote}>
-              <Ionicons name="mic-outline" size={20} color={palette.white} />
-              <Text style={styles.sheetRowLabel}>Voice</Text>
+            <TouchableOpacity style={s.sheetRow} onPress={handleVoiceNote}>
+              <Ionicons name="mic-outline" size={20} color={C.textPrimary} />
+              <Text style={s.sheetRowLabel}>Voice</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetRow} onPress={handlePickImage}>
-              <Ionicons name="image-outline" size={20} color={palette.white} />
-              <Text style={styles.sheetRowLabel}>Image</Text>
+            <TouchableOpacity style={s.sheetRow} onPress={handlePickImage}>
+              <Ionicons name="image-outline" size={20} color={C.textPrimary} />
+              <Text style={s.sheetRowLabel}>Image</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetRow} onPress={handleOpenCamera}>
-              <Ionicons name="camera-outline" size={20} color={palette.white} />
-              <Text style={styles.sheetRowLabel}>Cam</Text>
+            <TouchableOpacity style={s.sheetRow} onPress={handleOpenCamera}>
+              <Ionicons name="camera-outline" size={20} color={C.textPrimary} />
+              <Text style={s.sheetRowLabel}>Cam</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -532,28 +538,28 @@ export default function NotesScreen() {
         onRequestClose={() => setIsTextComposerVisible(false)}
       >
         <Pressable
-          style={styles.sheetOverlay}
+          style={s.sheetOverlay}
           onPress={() => setIsTextComposerVisible(false)}
         >
           <Pressable
-            style={[styles.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
+            style={[s.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
             onPress={(event) => event.stopPropagation()}
           >
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>
+            <View style={s.sheetHandle} />
+            <Text style={s.sheetTitle}>
               {editingNoteId != null ? "Edit note" : "New note"}
             </Text>
             <TextInput
               value={draft}
               onChangeText={setDraft}
               placeholder="Capture a thought, plan, or reminder..."
-              placeholderTextColor={palette.white45}
+              placeholderTextColor={C.textPlaceholder}
               multiline
               autoFocus
-              style={styles.composerInput}
+              style={s.composerInput}
             />
-            <TouchableOpacity style={styles.primaryButton} onPress={handleSubmitTextNote}>
-              <Text style={styles.primaryButtonLabel}>
+            <TouchableOpacity style={s.primaryButton} onPress={handleSubmitTextNote}>
+              <Text style={s.primaryButtonLabel}>
                 {editingNoteId != null ? "Update note" : "Save note"}
               </Text>
             </TouchableOpacity>
@@ -567,20 +573,20 @@ export default function NotesScreen() {
         visible={isVoiceComposerVisible}
         onRequestClose={handleCancelRecording}
       >
-        <Pressable style={styles.sheetOverlay} onPress={handleCancelRecording}>
+        <Pressable style={s.sheetOverlay} onPress={handleCancelRecording}>
           <Pressable
-            style={[styles.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
+            style={[s.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
             onPress={(event) => event.stopPropagation()}
           >
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Voice note</Text>
-            <Text style={styles.recordingTimer}>
+            <View style={s.sheetHandle} />
+            <Text style={s.sheetTitle}>Voice note</Text>
+            <Text style={s.recordingTimer}>
               {formatDuration(recorderState.durationMillis)}
             </Text>
             <TouchableOpacity
               style={[
-                styles.recordButton,
-                recorderState.isRecording ? styles.recordButtonActive : null,
+                s.recordButton,
+                recorderState.isRecording ? s.recordButtonActive : null,
               ]}
               onPress={
                 recorderState.isRecording
@@ -597,19 +603,19 @@ export default function NotesScreen() {
                 color={palette.white}
               />
             </TouchableOpacity>
-            <View style={styles.voiceActions}>
-              <TouchableOpacity style={styles.secondaryButton} onPress={handleCancelRecording}>
-                <Text style={styles.secondaryButtonLabel}>Cancel</Text>
+            <View style={s.voiceActions}>
+              <TouchableOpacity style={s.secondaryButton} onPress={handleCancelRecording}>
+                <Text style={s.secondaryButtonLabel}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.primaryButton,
-                  !hasVoiceRecording ? styles.primaryButtonDisabled : null,
+                  s.primaryButton,
+                  !hasVoiceRecording ? s.primaryButtonDisabled : null,
                 ]}
                 disabled={!hasVoiceRecording || isSavingVoiceNote}
                 onPress={handleSaveRecording}
               >
-                <Text style={styles.primaryButtonLabel}>
+                <Text style={s.primaryButtonLabel}>
                   {isSavingVoiceNote ? "Saving..." : "Save note"}
                 </Text>
               </TouchableOpacity>
@@ -624,20 +630,20 @@ export default function NotesScreen() {
         visible={selectedNote != null}
         onRequestClose={() => setSelectedNote(null)}
       >
-        <View style={styles.viewerOverlay}>
-          <View style={[styles.viewerCard, { marginBottom: insets.bottom + 24 }]}>
-            <View style={styles.viewerHeader}>
-              <Text style={styles.viewerTime}>
+        <View style={s.viewerOverlay}>
+          <View style={[s.viewerCard, { marginBottom: insets.bottom + 24 }]}>
+            <View style={s.viewerHeader}>
+              <Text style={s.viewerTime}>
                 {formatTime(selectedNote?.createdAt ?? null)}
               </Text>
               <TouchableOpacity onPress={() => setSelectedNote(null)}>
-                <Ionicons name="close" size={20} color={palette.white70} />
+                <Ionicons name="close" size={20} color={C.iconSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView
-              style={styles.viewerScroll}
+              style={s.viewerScroll}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.viewerScrollContent}
+              contentContainerStyle={s.viewerScrollContent}
               keyboardShouldPersistTaps="handled"
             >
               {selectedNote && isAudioNote(selectedNote) && selectedNote.mediaUrl ? (
@@ -645,29 +651,29 @@ export default function NotesScreen() {
               ) : selectedNote?.mediaUrl ? (
                 <Image
                   source={{ uri: selectedNote.mediaUrl }}
-                  style={styles.viewerImage}
+                  style={s.viewerImage}
                   resizeMode="contain"
                 />
               ) : null}
               {selectedNoteContent && !isAudioNote(selectedNote) ? (
-                <Text style={styles.viewerBody}>{selectedNoteContent}</Text>
+                <Text style={s.viewerBody}>{selectedNoteContent}</Text>
               ) : null}
             </ScrollView>
             {selectedNote ? (
-              <View style={styles.viewerFooter}>
+              <View style={s.viewerFooter}>
                 <TouchableOpacity
-                  style={styles.viewerFooterButton}
+                  style={s.viewerFooterButton}
                   onPress={() => copyNote(selectedNote)}
                 >
-                  <Ionicons name="copy-outline" size={16} color={palette.white70} />
-                  <Text style={styles.viewerFooterLabel}>Copy</Text>
+                  <Ionicons name="copy-outline" size={16} color={C.iconSecondary} />
+                  <Text style={s.viewerFooterLabel}>Copy</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.viewerFooterButton}
+                  style={s.viewerFooterButton}
                   onPress={() => shareNote(selectedNote)}
                 >
-                  <Ionicons name="share-outline" size={16} color={palette.white70} />
-                  <Text style={styles.viewerFooterLabel}>Share</Text>
+                  <Ionicons name="share-outline" size={16} color={C.iconSecondary} />
+                  <Text style={s.viewerFooterLabel}>Share</Text>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -678,363 +684,336 @@ export default function NotesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  heading: {
-    color: palette.white,
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    color: palette.white,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-  },
-  sectionMeta: {
-    color: "rgba(255,255,255,0.35)",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  sectionSpacer: {
-    height: 20,
-  },
-  card: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    marginBottom: 8,
-  },
-  cardFirst: {
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
-  },
-  cardLast: {
-    marginBottom: 0,
-  },
-  cardTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  noteImage: {
-    width: "100%",
-    height: 180,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  timeLabel: {
-    color: palette.white45,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  noteBody: {
-    color: palette.white,
-    fontSize: 15,
-    lineHeight: 23,
-  },
-  trimmedHint: {
-    color: palette.orange,
-    fontSize: 13,
-    fontWeight: "700",
-    marginTop: 6,
-  },
-  noteActions: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 12,
-  },
-  audioPlayer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(255,255,255,0.06)",
-    padding: 14,
-    marginBottom: 12,
-  },
-  audioPlayerCompact: {
-    marginBottom: 0,
-  },
-  audioIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: palette.orange30,
-    borderWidth: 1,
-    borderColor: palette.orange35,
-  },
-  audioTextWrap: {
-    flex: 1,
-  },
-  audioTitle: {
-    color: palette.white,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  audioSubtitle: {
-    color: palette.white55,
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  noteActionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  noteActionLabel: {
-    color: palette.white70,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  emptyCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    padding: 20,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  emptyTitle: {
-    color: palette.white,
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  emptyBody: {
-    color: palette.white60,
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-  },
-  fabInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: palette.orange30,
-    borderWidth: 1,
-    borderColor: palette.orange35,
-  },
-  sheetOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  sheetWrap: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    backgroundColor: "#141414",
-    paddingHorizontal: 20,
-    paddingTop: 12,
-  },
-  sheetHandle: {
-    width: 42,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignSelf: "center",
-    marginBottom: 18,
-  },
-  sheetTitle: {
-    color: palette.white,
-    fontSize: 22,
-    fontWeight: "800",
-    marginBottom: 6,
-  },
-  sheetSubtitle: {
-    color: palette.white55,
-    fontSize: 14,
-    marginBottom: 18,
-  },
-  sheetRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    marginBottom: 10,
-  },
-  sheetRowLabel: {
-    color: palette.white85,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  composerInput: {
-    minHeight: 140,
-    maxHeight: 240,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    color: palette.white,
-    fontSize: 16,
-    lineHeight: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    textAlignVertical: "top",
-    marginTop: 10,
-    marginBottom: 14,
-  },
-  primaryButton: {
-    borderRadius: 14,
-    backgroundColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
-  },
-  primaryButtonDisabled: {
-    opacity: 0.45,
-  },
-  primaryButtonLabel: {
-    color: "#121212",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  secondaryButton: {
-    flex: 1,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
-  },
-  secondaryButtonLabel: {
-    color: palette.white70,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  recordingTimer: {
-    color: palette.white,
-    fontSize: 40,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-    textAlign: "center",
-    marginTop: 18,
-    marginBottom: 18,
-  },
-  recordButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: palette.orange,
-    borderWidth: 1,
-    borderColor: palette.orange35,
-    marginBottom: 22,
-  },
-  recordButtonActive: {
-    backgroundColor: "#D94A38",
-  },
-  voiceActions: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  viewerOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    paddingHorizontal: 16,
-    paddingTop: 40,
-  },
-  viewerCard: {
-    maxHeight: "85%",
-    borderRadius: 24,
-    backgroundColor: "#141414",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    padding: 18,
-  },
-  viewerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  viewerTime: {
-    color: palette.white55,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  viewerImage: {
-    width: "100%",
-    height: 280,
-    borderRadius: 14,
-    marginBottom: 14,
-  },
-  viewerBody: {
-    color: palette.white,
-    fontSize: 16,
-    lineHeight: 25,
-  },
-  viewerScroll: {
-    flexGrow: 0,
-  },
-  viewerScrollContent: {
-    paddingBottom: 8,
-  },
-  viewerFooter: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 14,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.08)",
-  },
-  viewerFooterButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  viewerFooterLabel: {
-    color: palette.white70,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-});
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    content: { paddingHorizontal: 20 },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      color: C.textPrimary,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1.5,
+      textTransform: "uppercase",
+    },
+    sectionMeta: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "600",
+    },
+    sectionSpacer: { height: 20 },
+    card: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      paddingHorizontal: 16,
+      paddingVertical: 15,
+      backgroundColor: C.cardBg,
+      marginBottom: 8,
+    },
+    cardFirst: {
+      borderTopLeftRadius: 14,
+      borderTopRightRadius: 14,
+    },
+    cardLast: { marginBottom: 0 },
+    cardTopRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    noteImage: {
+      width: "100%",
+      height: 180,
+      borderRadius: 10,
+      marginBottom: 12,
+    },
+    timeLabel: {
+      color: C.textTertiary,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    noteBody: {
+      color: C.textPrimary,
+      fontSize: 15,
+      lineHeight: 23,
+    },
+    trimmedHint: {
+      color: palette.orange,
+      fontSize: 13,
+      fontWeight: "700",
+      marginTop: 6,
+    },
+    noteActions: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 12,
+    },
+    audioPlayer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.cardBg,
+      padding: 14,
+      marginBottom: 12,
+    },
+    audioPlayerCompact: { marginBottom: 0 },
+    audioIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: palette.orange30,
+      borderWidth: 1,
+      borderColor: palette.orange35,
+    },
+    audioTextWrap: { flex: 1 },
+    audioTitle: {
+      color: C.textPrimary,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    audioSubtitle: {
+      color: C.textSecondary,
+      fontSize: 12,
+      fontWeight: "600",
+      marginTop: 2,
+    },
+    noteActionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+      borderRadius: 999,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    emptyCard: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 20,
+      backgroundColor: C.cardBg,
+    },
+    emptyTitle: {
+      color: C.textPrimary,
+      fontSize: 18,
+      fontWeight: "700",
+      marginBottom: 8,
+    },
+    emptyBody: {
+      color: C.textSecondary,
+      fontSize: 14,
+      lineHeight: 21,
+    },
+    fab: {
+      position: "absolute",
+      right: 20,
+      shadowColor: palette.orange,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    fabInner: {
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: palette.orange,
+    },
+    sheetOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: C.overlayBg,
+    },
+    sheetWrap: {
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      backgroundColor: C.sheetBg,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+    },
+    sheetHandle: {
+      width: 42,
+      height: 5,
+      borderRadius: 999,
+      backgroundColor: C.sheetHandle,
+      alignSelf: "center",
+      marginBottom: 18,
+    },
+    sheetTitle: {
+      color: C.textPrimary,
+      fontSize: 22,
+      fontWeight: "800",
+      marginBottom: 6,
+    },
+    sheetSubtitle: {
+      color: C.textSecondary,
+      fontSize: 14,
+      marginBottom: 18,
+    },
+    sheetRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      borderRadius: 14,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      paddingHorizontal: 16,
+      paddingVertical: 15,
+      marginBottom: 10,
+    },
+    sheetRowLabel: {
+      color: C.textPrimary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    composerInput: {
+      minHeight: 140,
+      maxHeight: 240,
+      borderRadius: 18,
+      backgroundColor: C.inputBg,
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      color: C.textPrimary,
+      fontSize: 16,
+      lineHeight: 24,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      textAlignVertical: "top",
+      marginTop: 10,
+      marginBottom: 14,
+    },
+    primaryButton: {
+      borderRadius: 14,
+      backgroundColor: palette.orange,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 15,
+    },
+    primaryButtonDisabled: { opacity: 0.45 },
+    primaryButtonLabel: {
+      color: "#121212",
+      fontSize: 15,
+      fontWeight: "800",
+    },
+    secondaryButton: {
+      flex: 1,
+      borderRadius: 14,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 15,
+    },
+    secondaryButtonLabel: {
+      color: C.textSecondary,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    recordingTimer: {
+      color: C.textPrimary,
+      fontSize: 40,
+      fontWeight: "800",
+      fontVariant: ["tabular-nums"],
+      textAlign: "center",
+      marginTop: 18,
+      marginBottom: 18,
+    },
+    recordButton: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: palette.orange,
+      borderWidth: 1,
+      borderColor: palette.orange35,
+      marginBottom: 22,
+    },
+    recordButtonActive: { backgroundColor: "#D94A38" },
+    voiceActions: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    viewerOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      paddingHorizontal: 16,
+      paddingTop: 40,
+      backgroundColor: C.overlayBg,
+    },
+    viewerCard: {
+      maxHeight: "85%",
+      borderRadius: 24,
+      backgroundColor: C.sheetBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 18,
+    },
+    viewerHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 12,
+    },
+    viewerTime: {
+      color: C.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    viewerImage: {
+      width: "100%",
+      height: 280,
+      borderRadius: 14,
+      marginBottom: 14,
+    },
+    viewerBody: {
+      color: C.textPrimary,
+      fontSize: 16,
+      lineHeight: 25,
+    },
+    viewerScroll: { flexGrow: 0 },
+    viewerScrollContent: { paddingBottom: 8 },
+    viewerFooter: {
+      flexDirection: "row",
+      gap: 10,
+      marginTop: 14,
+      paddingTop: 14,
+      borderTopWidth: 1,
+      borderTopColor: C.divider,
+    },
+    viewerFooterButton: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 12,
+      borderRadius: 14,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    viewerFooterLabel: {
+      color: C.textSecondary,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+  });
+}

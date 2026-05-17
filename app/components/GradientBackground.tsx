@@ -1,11 +1,7 @@
-import { View, StyleSheet } from "react-native";
+import { useTheme } from "@/hooks/useTheme";
+import { StyleSheet, View } from "react-native";
 
 export default function GradientBackground() {
-  return <View style={[StyleSheet.absoluteFill, styles.bg]} />;
+  const C = useTheme();
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: C.screenBg }]} />;
 }
-
-const styles = StyleSheet.create({
-  bg: {
-    backgroundColor: "#0D0D0D",
-  },
-});

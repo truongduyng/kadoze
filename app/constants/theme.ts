@@ -49,20 +49,100 @@ const tintColorDark = palette.orange;
 
 export const Colors = {
   light: {
+    // nav / tab bar
     text: '#11181C',
-    background: '#fff',
+    background: '#F2F2F7',
     tint: tintColorLight,
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+
+    // semantic surfaces
+    screenBg: '#F2F2F7',
+    heroBg: '#FFFFFF',
+    cardBg: 'rgba(0,0,0,0.04)',
+    cardBorder: 'rgba(0,0,0,0.08)',
+    sheetBg: '#FFFFFF',
+    sheetHandle: 'rgba(0,0,0,0.15)',
+    inputBg: 'rgba(0,0,0,0.05)',
+    inputBorder: 'rgba(0,0,0,0.10)',
+    divider: 'rgba(0,0,0,0.08)',
+    overlayBg: 'rgba(0,0,0,0.35)',
+
+    // text
+    textPrimary: '#0A0A0A',
+    textSecondary: 'rgba(0,0,0,0.55)',
+    textTertiary: 'rgba(0,0,0,0.38)',
+    textQuaternary: 'rgba(0,0,0,0.25)',
+    textPlaceholder: 'rgba(0,0,0,0.30)',
+    textInverse: '#FFFFFF',
+
+    // interactive
+    iconPrimary: '#0A0A0A',
+    iconSecondary: 'rgba(0,0,0,0.55)',
+    iconTertiary: 'rgba(0,0,0,0.35)',
+
+    // accent — orange stays the same in both themes
+    accent: palette.orange,
+    accentBg: 'rgba(251,146,60,0.12)',
+    accentBorder: 'rgba(251,146,60,0.35)',
+    accentBgSubtle: 'rgba(251,146,60,0.08)',
+    accentBorderSubtle: 'rgba(251,146,60,0.25)',
+
+    // heatmap
+    heatIdle: 'rgba(0,0,0,0.06)',
+    heatIdleBorder: 'rgba(0,0,0,0.08)',
+    heatLow: 'rgba(240,136,60,0.28)',
+    heatMid: 'rgba(240,136,60,0.55)',
+    heatHigh: palette.orange,
   },
   dark: {
+    // nav / tab bar
     text: '#ECEDEE',
     background: '#151718',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+
+    // semantic surfaces
+    screenBg: '#0D0D0D',
+    heroBg: '#0D0D0D',
+    cardBg: palette.white06,
+    cardBorder: palette.white08,
+    sheetBg: '#141414',
+    sheetHandle: 'rgba(255,255,255,0.2)',
+    inputBg: palette.white04,
+    inputBorder: palette.white10,
+    divider: palette.white08,
+    overlayBg: 'rgba(0,0,0,0.45)',
+
+    // text
+    textPrimary: palette.white,
+    textSecondary: palette.white55,
+    textTertiary: palette.white35,
+    textQuaternary: palette.white25,
+    textPlaceholder: palette.white25,
+    textInverse: '#0A0A0A',
+
+    // interactive
+    iconPrimary: palette.white,
+    iconSecondary: palette.white70,
+    iconTertiary: palette.white40,
+
+    // accent
+    accent: palette.orange,
+    accentBg: palette.orange12,
+    accentBorder: palette.orange35,
+    accentBgSubtle: palette.orange08,
+    accentBorderSubtle: palette.orange25,
+
+    // heatmap
+    heatIdle: 'rgba(255,255,255,0.04)',
+    heatIdleBorder: 'rgba(255,255,255,0.06)',
+    heatLow: 'rgba(240,136,60,0.28)',
+    heatMid: 'rgba(240,136,60,0.55)',
+    heatHigh: palette.orange,
   },
 };
 

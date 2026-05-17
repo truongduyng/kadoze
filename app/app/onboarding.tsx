@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import GradientBackground from "@/components/GradientBackground";
+import { useTheme } from "@/hooks/useTheme";
 import ProgressBar from "@/components/onboarding/ProgressBar";
 import HookStep from "@/components/onboarding/HookStep";
 import EmpathyStep from "@/components/onboarding/EmpathyStep";
@@ -14,6 +15,8 @@ import KeystoneStep from "@/components/onboarding/KeystoneStep";
 import { STEPS, TOTAL, useOnboarding } from "@/hooks/useOnboarding";
 
 export default function OnboardingScreen() {
+  const C = useTheme();
+  const s = makeStyles(C);
   const {
     currentStep,
     fadeAnim,
@@ -90,28 +93,28 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <GradientBackground />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={s.safeArea}>
         <ProgressBar step={currentStep + 1} total={TOTAL} />
 
-        <View style={styles.topBar}>
+        <View style={s.topBar}>
           {showBack ? (
-            <TouchableOpacity onPress={goBack} hitSlop={12} style={styles.backBtn}>
-              <Text style={styles.backChevron}>‹</Text>
+            <TouchableOpacity onPress={goBack} hitSlop={12} style={s.backBtn}>
+              <Text style={s.backChevron}>‹</Text>
             </TouchableOpacity>
           ) : (
-            <View style={styles.backBtn} />
+            <View style={s.backBtn} />
           )}
           {__DEV__ && (
-            <View style={styles.devBadge}>
-              <Text style={styles.devText}>DEV · {currentStep + 1}/{TOTAL}</Text>
+            <View style={s.devBadge}>
+              <Text style={s.devText}>DEV · {currentStep + 1}/{TOTAL}</Text>
             </View>
           )}
         </View>
 
-        <Animated.View style={[styles.flex, { opacity: fadeAnim }]}>
+        <Animated.View style={[s.flex, { opacity: fadeAnim }]}>
           {renderStep()}
         </Animated.View>
       </SafeAreaView>
@@ -119,46 +122,48 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    zIndex: 10,
-  },
-  flex: {
-    flex: 1,
-  },
-  topBar: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: "center",
-  },
-  backChevron: {
-    fontSize: 32,
-    color: "rgba(255,255,255,0.6)",
-    lineHeight: 36,
-  },
-  devBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: "rgba(255,80,80,0.2)",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,80,80,0.4)",
-  },
-  devText: {
-    color: "#ff6060",
-    fontSize: 10,
-    fontWeight: "600",
-  },
-});
+function makeStyles(C: ReturnType<typeof useTheme>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    safeArea: {
+      flex: 1,
+      zIndex: 10,
+    },
+    flex: {
+      flex: 1,
+    },
+    topBar: {
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 4,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    backBtn: {
+      width: 36,
+      height: 36,
+      justifyContent: "center",
+    },
+    backChevron: {
+      fontSize: 32,
+      color: C.textSecondary,
+      lineHeight: 36,
+    },
+    devBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      backgroundColor: "rgba(255,80,80,0.2)",
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "rgba(255,80,80,0.4)",
+    },
+    devText: {
+      color: "#ff6060",
+      fontSize: 10,
+      fontWeight: "600",
+    },
+  });
+}

@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from "react-native";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 interface PromiseStepProps {
   onNext: () => void;
@@ -25,27 +26,25 @@ const FOCUS_ITEM = "One small daily habit of your choice";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
-// Dot config — all values are deterministic so no re-render jitter
 const DOT_COUNT = 28;
 const DOTS = Array.from({ length: DOT_COUNT }, (_, i) => {
-  const seed = i * 137.508; // golden-angle spread
+  const seed = i * 137.508;
   return {
     x: (Math.sin(seed) * 0.5 + 0.5) * SW,
     y: (Math.cos(seed * 1.3) * 0.5 + 0.5) * SH * 0.65,
-    size: 3 + ((i * 7) % 5),           // 3–7 px
+    size: 3 + ((i * 7) % 5),
     delay: (i * 60) % 600,
-    opacity: 0.15 + ((i * 13) % 10) / 30, // 0.15–0.48
+    opacity: 0.15 + ((i * 13) % 10) / 30,
   };
 });
 
 function ParticleDots({
-  collapseProgress, // Animated.Value 0→1 drives converge
-  burstProgress,    // Animated.Value 0→1 drives fade-out after focus appears
+  collapseProgress,
+  burstProgress,
 }: {
   collapseProgress: Animated.Value;
   burstProgress: Animated.Value;
 }) {
-  // Each dot has its own native-driven opacity for the stagger-in
   const dotOpacity = useRef(DOTS.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
@@ -63,7 +62,6 @@ function ParticleDots({
     ).start();
   }, [dotOpacity]);
 
-  // Center of the listArea (approximate)
   const CX = SW / 2;
   const CY = SH * 0.28;
 
@@ -73,7 +71,6 @@ function ParticleDots({
         const dx = CX - dot.x;
         const dy = CY - dot.y;
 
-        // translateX/Y driven by collapseProgress (native)
         const translateX = collapseProgress.interpolate({
           inputRange: [0, 1],
           outputRange: [0, dx * 0.85],
@@ -90,8 +87,6 @@ function ParticleDots({
           inputRange: [0, 0.7, 1],
           outputRange: [1, 0.9, 0],
         });
-
-        // burstProgress fades dots out after focus item appears
         const burstOpacity = burstProgress.interpolate({
           inputRange: [0, 1],
           outputRange: [1, 0],
@@ -122,21 +117,19 @@ function ParticleDots({
 }
 
 export default function PromiseStep({ onNext }: PromiseStepProps) {
-  // JS-driver only: color interpolations
+  const C = useTheme();
+  const s = makeStyles(C);
+
   const itemOpacity = useRef(LIST_ITEMS.map(() => new Animated.Value(0))).current;
-  // Native-driver only: transforms
   const itemTranslateY = useRef(LIST_ITEMS.map(() => new Animated.Value(0))).current;
   const itemScaleX = useRef(LIST_ITEMS.map(() => new Animated.Value(1))).current;
 
-  // Particle dot drivers (native)
   const collapseProgress = useRef(new Animated.Value(0)).current;
   const burstProgress = useRef(new Animated.Value(0)).current;
 
-  // Focus item (native)
   const focusOpacity = useRef(new Animated.Value(0)).current;
   const focusScale = useRef(new Animated.Value(0.7)).current;
 
-  // Text block (native)
   const textOpacity = useRef(new Animated.Value(0)).current;
   const textTranslateY = useRef(new Animated.Value(16)).current;
 
@@ -182,7 +175,6 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
       })
     );
 
-    // Dots converge in sync with list collapse
     const dotsCollapse = Animated.timing(collapseProgress, {
       toValue: 1,
       duration: 420,
@@ -203,7 +195,6 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
         friction: 7,
         useNativeDriver: true,
       }),
-      // dots fade out as focus item pops in
       Animated.timing(burstProgress, {
         toValue: 1,
         duration: 500,
@@ -250,14 +241,14 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
   ]);
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <ParticleDots
         collapseProgress={collapseProgress}
         burstProgress={burstProgress}
       />
 
-      <View style={styles.content}>
-        <View style={styles.listArea}>
+      <View style={s.content}>
+        <View style={s.listArea}>
           {LIST_ITEMS.map((item, i) => {
             const bgColor = itemOpacity[i].interpolate({
               inputRange: [0, 1],
@@ -276,7 +267,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
               <Animated.View
                 key={item}
                 style={[
-                  styles.listRow,
+                  s.listRow,
                   {
                     transform: [
                       { translateY: itemTranslateY[i] },
@@ -285,8 +276,8 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
                   },
                 ]}
               >
-                <Animated.View style={[styles.rowInner, { backgroundColor: bgColor, borderColor }]}>
-                  <Animated.Text style={[styles.listText, { color: textColor }]}>
+                <Animated.View style={[s.rowInner, { backgroundColor: bgColor, borderColor }]}>
+                  <Animated.Text style={[s.listText, { color: textColor }]}>
                     {item}
                   </Animated.Text>
                 </Animated.View>
@@ -296,144 +287,130 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
 
           <Animated.View
             style={[
-              styles.focusRow,
+              s.focusRow,
               {
                 opacity: focusOpacity,
                 transform: [{ scale: focusScale }],
               },
             ]}
           >
-            <View style={styles.focusCheck}>
-              <Text style={styles.focusCheckMark}>✓</Text>
+            <View style={s.focusCheck}>
+              <Text style={s.focusCheckMark}>✓</Text>
             </View>
-            <Text style={styles.focusText}>{FOCUS_ITEM}</Text>
+            <Text style={s.focusText}>{FOCUS_ITEM}</Text>
           </Animated.View>
         </View>
 
         <Animated.View
           style={[
-            styles.textBlock,
+            s.textBlock,
             { opacity: textOpacity, transform: [{ translateY: textTranslateY }] },
           ]}
         >
-          <Text style={styles.headline}>
+          <Text style={s.headline}>
             Most apps want you to{"\n"}track everything.
           </Text>
-          <Text style={styles.highlight}>
+          <Text style={s.highlight}>
             We want you to focus on{"\n"}almost nothing.
           </Text>
-          <Text style={styles.body}>
+          <Text style={s.body}>
             True momentum comes from doing one small thing, consistently.
           </Text>
         </Animated.View>
       </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.btn} onPress={onNext} activeOpacity={0.85}>
-          <Text style={styles.btnText}>Let&apos;s build your foundation.</Text>
+      <View style={s.footer}>
+        <TouchableOpacity style={s.btn} onPress={onNext} activeOpacity={0.85}>
+          <Text style={s.btnText}>Let&apos;s build your foundation.</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: "space-between",
-    paddingBottom: 32,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 20,
-    paddingBottom: 40,
-  },
-  listArea: {
-    height: 240,
-    justifyContent: "center",
-    overflow: "visible",
-  },
-  listRow: {
-    marginBottom: 8,
-  },
-  rowInner: {
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  listText: {
-    fontSize: 14,
-  },
-  focusRow: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "50%",
-    marginTop: -26,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "rgba(251,146,60,0.15)",
-    borderWidth: 1.5,
-    borderColor: palette.orange,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
-  },
-  focusCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  focusCheckMark: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  focusText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "700",
-    flex: 1,
-  },
-  textBlock: {
-    gap: 12,
-  },
-  headline: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "rgba(255,255,255,0.75)",
-    lineHeight: 34,
-  },
-  highlight: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: palette.orange,
-    lineHeight: 34,
-  },
-  body: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.45)",
-    lineHeight: 24,
-  },
-  footer: {
-    gap: 12,
-  },
-  btn: {
-    backgroundColor: palette.orange,
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: "center",
-  },
-  btnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: 24,
+      justifyContent: "space-between",
+      paddingBottom: 32,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      gap: 20,
+      paddingBottom: 40,
+    },
+    listArea: {
+      height: 240,
+      justifyContent: "center",
+      overflow: "visible",
+    },
+    listRow: { marginBottom: 8 },
+    rowInner: {
+      borderRadius: 10,
+      borderWidth: 1,
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+    },
+    listText: { fontSize: 14 },
+    focusRow: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: "50%",
+      marginTop: -26,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: C.accentBg,
+      borderWidth: 1.5,
+      borderColor: palette.orange,
+      borderRadius: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 13,
+    },
+    focusCheck: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+      backgroundColor: palette.orange,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    focusCheckMark: { color: "#fff", fontSize: 13, fontWeight: "800" },
+    focusText: {
+      color: C.textPrimary,
+      fontSize: 15,
+      fontWeight: "700",
+      flex: 1,
+    },
+    textBlock: { gap: 12 },
+    headline: {
+      fontSize: 26,
+      fontWeight: "700",
+      color: C.textSecondary,
+      lineHeight: 34,
+    },
+    highlight: {
+      fontSize: 26,
+      fontWeight: "800",
+      color: palette.orange,
+      lineHeight: 34,
+    },
+    body: {
+      fontSize: 16,
+      color: C.textTertiary,
+      lineHeight: 24,
+    },
+    footer: { gap: 12 },
+    btn: {
+      backgroundColor: palette.orange,
+      borderRadius: 14,
+      paddingVertical: 18,
+      alignItems: "center",
+    },
+    btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  });
+}

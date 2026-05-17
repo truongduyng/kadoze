@@ -1,6 +1,7 @@
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useTheme } from "@/hooks/useTheme";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,6 +20,7 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
   onDelete,
   onEdit,
 }) => {
+  const C = useTheme();
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
 
@@ -69,7 +71,7 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
             onPress={onEdit}
             activeOpacity={0.8}
           >
-            <Ionicons name="create-outline" size={20} color="#fff" />
+            <Ionicons name="create-outline" size={20} color={C.iconPrimary} />
           </TouchableOpacity>
         </Animated.View>
       ) : null}

@@ -2,6 +2,7 @@ import GradientBackground from "@/components/GradientBackground";
 import { db, habits, habitCompletions, dailyFocus, todos, completionOps, todoOps, dailyFocusOps } from "@/lib/db";
 import { getTodayInLocalTimezone, getLocalDateString } from "@/lib/timezone";
 import { useProfile } from "@/hooks/useProfile";
+import { useTheme } from "@/hooks/useTheme";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq, desc } from "drizzle-orm";
 import * as Haptics from "expo-haptics";
@@ -34,6 +35,7 @@ function getGreeting(): string {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const C = useTheme();
   const { userProfile } = useProfile();
   const today = useMemo(() => getTodayInLocalTimezone(), []);
   const todayKey = getLocalDateString(today);
@@ -53,7 +55,6 @@ export default function HomeScreen() {
     [focusRows, todayKey]
   );
 
-  // Goal editing
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
   const goalInputRef = useRef<TextInput>(null);
@@ -70,7 +71,6 @@ export default function HomeScreen() {
     await dailyFocusOps.upsertGoal(goalDraft);
   };
 
-  // Habits
   const todayHabits = useMemo(() => {
     const list = allHabits ?? [];
     return list.filter((h) => (h.daysOfWeek as string[]).includes(todayName));
@@ -94,7 +94,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Todos
   const [inputText, setInputText] = useState("");
   const inputRef = useRef<TextInput>(null);
 
@@ -119,69 +118,70 @@ export default function HomeScreen() {
   };
 
   const sortedTodos = todayTodos ?? [];
-
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
   const goalText = (todayFocus?.goal ?? "").trim();
 
+  const s = makeStyles(C);
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={s.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <GradientBackground />
       <ScrollView
         contentContainerStyle={[
-          styles.content,
+          s.content,
           { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 96 },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.topHero}>
-          <View style={styles.sunDisc} />
-          <View style={styles.horizonShape} />
-          <Text style={[styles.bird, styles.birdOne]}>⌒</Text>
-          <Text style={[styles.bird, styles.birdTwo]}>⌒</Text>
-          <Text style={[styles.bird, styles.birdThree]}>⌒</Text>
+        <View style={s.topHero}>
+          <View style={s.sunDisc} />
+          <View style={s.horizonShape} />
+          <Text style={[s.bird, s.birdOne]}>⌒</Text>
+          <Text style={[s.bird, s.birdTwo]}>⌒</Text>
+          <Text style={[s.bird, s.birdThree]}>⌒</Text>
 
-          <View style={styles.header}>
-            <View style={styles.greetingRow}>
+          <View style={s.header}>
+            <View style={s.greetingRow}>
               <Ionicons name="sunny" size={26} color={palette.orange} />
-              <Text style={styles.greeting}>
+              <Text style={s.greeting}>
                 {getGreeting()}, {firstName}
               </Text>
             </View>
-            <Text style={styles.date}>{"Let's make today count."}</Text>
+            <Text style={s.date}>{"Let's make today count."}</Text>
           </View>
 
-          <Text style={styles.heroSectionLabel}>{"TODAY'S MAIN GOAL"}</Text>
-          <View style={styles.goalCard}>
-            <View style={styles.goalTopRow}>
-              <View style={styles.goalRing}>
-                <View style={styles.ringOuter}>
-                  <View style={styles.ringInner} />
+          <Text style={s.heroSectionLabel}>{"TODAY'S MAIN GOAL"}</Text>
+          <View style={s.goalCard}>
+            <View style={s.goalTopRow}>
+              <View style={s.goalRing}>
+                <View style={s.ringOuter}>
+                  <View style={s.ringInner} />
                 </View>
               </View>
 
-              <View style={styles.goalContent}>
+              <View style={s.goalContent}>
                 {editingGoal ? (
                   <TextInput
                     ref={goalInputRef}
-                    style={styles.goalInput}
+                    style={s.goalInput}
                     value={goalDraft}
                     onChangeText={setGoalDraft}
                     onBlur={saveGoal}
                     placeholder="What's your main goal today?"
-                    placeholderTextColor={palette.white25}
+                    placeholderTextColor={C.textPlaceholder}
                     multiline
                   />
                 ) : (
                   <Pressable onPress={openGoalEditor} hitSlop={10}>
-                    <Text style={goalText ? styles.goalText : styles.goalPlaceholderTitle}>
+                    <Text style={goalText ? s.goalText : s.goalPlaceholderTitle}>
                       {goalText || "Set one clear target"}
                     </Text>
                     {!goalText && (
-                      <Text style={styles.goalPlaceholderBody}>
+                      <Text style={s.goalPlaceholderBody}>
                         Choose the main outcome you want this day to revolve around.
                       </Text>
                     )}
@@ -191,44 +191,43 @@ export default function HomeScreen() {
             </View>
 
             <Pressable
-              style={[styles.focusButton, !goalText && styles.focusButtonDisabled]}
+              style={[s.focusButton, !goalText && s.focusButtonDisabled]}
               onPress={() => (goalText ? router.push("/focus" as any) : openGoalEditor())}
             >
               <Ionicons name="play" size={19} color={palette.white} />
-              <Text style={styles.focusButtonText}>Start Focus</Text>
+              <Text style={s.focusButtonText}>Start Focus</Text>
             </Pressable>
           </View>
         </View>
 
-        {/* Today's Habits */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{"HABITS"}</Text>
-          <View style={styles.card}>
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>{"HABITS"}</Text>
+          <View style={s.card}>
             {todayHabits.length === 0 ? (
-              <View style={styles.emptyRow}>
-                <Text style={styles.emptyText}>No habits scheduled for today</Text>
+              <View style={s.emptyRow}>
+                <Text style={s.emptyText}>No habits scheduled for today</Text>
               </View>
             ) : (
               todayHabits.map((habit, i) => {
                 const done = doneIds.has(habit.id);
                 return (
                   <View key={habit.id}>
-                    {i > 0 && <View style={styles.divider} />}
+                    {i > 0 && <View style={s.divider} />}
                     <Pressable
-                      style={styles.row}
+                      style={s.row}
                       onPress={() => toggleHabit(habit.id, done)}
                     >
-                      <Text style={styles.habitIcon}>{habit.icon ?? "⭐"}</Text>
-                      <View style={styles.rowInfo}>
-                        <Text style={[styles.rowTitle, done && styles.rowTitleDone]}>
+                      <Text style={s.habitIcon}>{habit.icon ?? "⭐"}</Text>
+                      <View style={s.rowInfo}>
+                        <Text style={[s.rowTitle, done && s.rowTitleDone]}>
                           {habit.title}
                         </Text>
                         {habit.subtitle && (
-                          <Text style={styles.rowSubtitle}>{habit.subtitle}</Text>
+                          <Text style={s.rowSubtitle}>{habit.subtitle}</Text>
                         )}
                       </View>
-                      <View style={[styles.checkbox, done && styles.checkboxDone]}>
-                        {done && <Text style={styles.checkmark}>✓</Text>}
+                      <View style={[s.checkbox, done && s.checkboxDone]}>
+                        {done && <Text style={s.checkmark}>✓</Text>}
                       </View>
                     </Pressable>
                   </View>
@@ -238,23 +237,22 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Today's To-Do */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{"TO-DO"}</Text>
-          <View style={styles.card}>
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>{"TO-DO"}</Text>
+          <View style={s.card}>
             {sortedTodos.map((todo, i) => (
               <View key={todo.id}>
-                {i > 0 && <View style={styles.divider} />}
+                {i > 0 && <View style={s.divider} />}
                 <SwipeableRow onDelete={() => deleteTodo(todo.id)}>
-                  <View style={styles.row}>
+                  <View style={s.row}>
                     <Pressable
-                      style={[styles.checkbox, styles.todoCheckbox, todo.done && styles.checkboxDone]}
+                      style={[s.checkbox, s.todoCheckbox, todo.done && s.checkboxDone]}
                       onPress={() => toggleTodo(todo.id, todo.done)}
                     >
-                      {todo.done && <Text style={styles.checkmark}>✓</Text>}
+                      {todo.done && <Text style={s.checkmark}>✓</Text>}
                     </Pressable>
                     <Text
-                      style={[styles.rowTitle, styles.todoTitle, todo.done && styles.rowTitleDone]}
+                      style={[s.rowTitle, s.todoTitle, todo.done && s.rowTitleDone]}
                       onPress={() => toggleTodo(todo.id, todo.done)}
                       numberOfLines={3}
                     >
@@ -264,13 +262,13 @@ export default function HomeScreen() {
                 </SwipeableRow>
               </View>
             ))}
-            {sortedTodos.length > 0 && <View style={styles.divider} />}
-            <View style={styles.inputRow}>
+            {sortedTodos.length > 0 && <View style={s.divider} />}
+            <View style={s.inputRow}>
               <TextInput
                 ref={inputRef}
-                style={styles.input}
+                style={s.input}
                 placeholder="Add a task..."
-                placeholderTextColor={palette.white25}
+                placeholderTextColor={C.textPlaceholder}
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
@@ -279,34 +277,34 @@ export default function HomeScreen() {
                 textAlignVertical="top"
               />
               {inputText.trim().length > 0 && (
-                <Pressable style={styles.addBtn} onPress={addTodo}>
-                  <Text style={styles.addBtnText}>+</Text>
+                <Pressable style={s.addBtn} onPress={addTodo}>
+                  <Text style={s.addBtnText}>+</Text>
                 </Pressable>
               )}
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>EVENING RESET</Text>
-          <Pressable style={styles.resetCard} onPress={() => router.push("/evening-reset" as any)}>
-            <View style={styles.resetDecor}>
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>EVENING RESET</Text>
+          <Pressable style={s.resetCard} onPress={() => router.push("/evening-reset" as any)}>
+            <View style={s.resetDecor}>
               <Image
                 source={require("../../assets/evening.jpeg")}
-                style={styles.resetDecorImage}
+                style={s.resetDecorImage}
                 resizeMode="cover"
               />
-              <View style={styles.resetDecorOverlay} />
-              <View style={styles.resetCopy}>
-                <View style={styles.resetBadge}>
-                  <Text style={styles.resetBadgeText}>10 MIN RESET</Text>
+              <View style={s.resetDecorOverlay} />
+              <View style={s.resetCopy}>
+                <View style={s.resetBadge}>
+                  <Text style={s.resetBadgeText}>10 MIN RESET</Text>
                 </View>
-                <Text style={styles.resetTitle}>Declutter before tomorrow</Text>
-                <Text style={styles.resetBody}>
+                <Text style={s.resetTitle}>Declutter before tomorrow</Text>
+                <Text style={s.resetBody}>
                   Clear your space, close the loop on today, and set up tomorrow.
                 </Text>
               </View>
-              <View style={styles.resetAction}>
+              <View style={s.resetAction}>
                 <Ionicons name="chevron-forward" size={18} color={palette.white} />
               </View>
             </View>
@@ -317,307 +315,303 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { paddingHorizontal: 20 },
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    content: { paddingHorizontal: 20 },
 
-  topHero: {
-    marginHorizontal: -20,
-    marginTop: -16,
-    marginBottom: 24,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 22,
-    backgroundColor: "#0D0D0D",
-    overflow: "hidden",
-  },
-  sunDisc: {
-    position: "absolute",
-    width: 158,
-    height: 158,
-    borderRadius: 79,
-    right: 54,
-    top: 126,
-    backgroundColor: "rgba(251,146,60,0.12)",
-  },
-  horizonShape: {
-    position: "absolute",
-    width: 230,
-    height: 98,
-    borderTopLeftRadius: 115,
-    borderTopRightRadius: 115,
-    right: -80,
-    bottom: 116,
-    backgroundColor: "rgba(251,146,60,0.08)",
-  },
-  bird: {
-    position: "absolute",
-    color: "rgba(251,146,60,0.3)",
-    fontSize: 22,
-    fontWeight: "700",
-    transform: [{ rotate: "180deg" }],
-  },
-  birdOne: { right: 96, top: 24 },
-  birdTwo: { right: 74, top: 48 },
-  birdThree: { right: 42, top: 82 },
-  header: {
-    marginBottom: 52,
-  },
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 12,
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: palette.white,
-  },
-  date: {
-    fontSize: 16,
-    color: palette.white55,
-    fontWeight: "600",
-  },
+    topHero: {
+      marginHorizontal: -20,
+      marginTop: -16,
+      marginBottom: 24,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 22,
+      backgroundColor: C.heroBg,
+      overflow: "hidden",
+    },
+    sunDisc: {
+      position: "absolute",
+      width: 158,
+      height: 158,
+      borderRadius: 79,
+      right: 54,
+      top: 126,
+      backgroundColor: C.accentBgSubtle,
+    },
+    horizonShape: {
+      position: "absolute",
+      width: 230,
+      height: 98,
+      borderTopLeftRadius: 115,
+      borderTopRightRadius: 115,
+      right: -80,
+      bottom: 116,
+      backgroundColor: C.accentBgSubtle,
+    },
+    bird: {
+      position: "absolute",
+      color: C.accentBorderSubtle,
+      fontSize: 22,
+      fontWeight: "700",
+      transform: [{ rotate: "180deg" }],
+    },
+    birdOne: { right: 96, top: 24 },
+    birdTwo: { right: 74, top: 48 },
+    birdThree: { right: 42, top: 82 },
+    header: {
+      marginBottom: 52,
+    },
+    greetingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 12,
+    },
+    greeting: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: C.textPrimary,
+    },
+    date: {
+      fontSize: 16,
+      color: C.textSecondary,
+      fontWeight: "600",
+    },
 
-  section: { marginBottom: 24 },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-    color: palette.white35,
-    marginBottom: 10,
-  },
-  heroSectionLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-    color: palette.white60,
-    marginBottom: 12,
-  },
+    section: { marginBottom: 24 },
+    sectionLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1.5,
+      color: C.textTertiary,
+      marginBottom: 10,
+    },
+    heroSectionLabel: {
+      fontSize: 12,
+      fontWeight: "800",
+      letterSpacing: 0.4,
+      color: C.textSecondary,
+      marginBottom: 12,
+    },
 
-  goalCard: {
-    backgroundColor: palette.white06,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: palette.white12,
-    padding: 20,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  goalTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  goalContent: { flex: 1 },
-  goalText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: palette.white,
-    lineHeight: 32,
-  },
-  goalInput: {
-    fontSize: 23,
-    fontWeight: "700",
-    color: palette.white,
-    lineHeight: 31,
-    minHeight: 68,
-    padding: 0,
-  },
-  goalPlaceholderTitle: {
-    fontSize: 23,
-    fontWeight: "600",
-    color: palette.white,
-    lineHeight: 31,
-  },
-  goalPlaceholderBody: {
-    fontSize: 14,
-    color: palette.white45,
-    lineHeight: 20,
-    marginTop: 6,
-  },
-  focusHint: {
-    fontSize: 15,
-    color: palette.white55,
-    fontWeight: "600",
-    marginTop: 16,
-  },
-  goalRing: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ringOuter: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 5,
-    borderColor: palette.orange25,
-    borderTopColor: palette.orange,
-    borderRightColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ringInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: palette.orange08,
-  },
-  focusButton: {
-    height: 58,
-    borderRadius: 16,
-    backgroundColor: "#FF6B22",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    marginTop: 28,
-    shadowColor: "#FF6B22",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.26,
-    shadowRadius: 18,
-    elevation: 6,
-  },
-  focusButtonDisabled: {
-    backgroundColor: palette.orange,
-  },
-  focusButtonText: {
-    color: palette.white,
-    fontSize: 19,
-    fontWeight: "600",
-  },
+    goalCard: {
+      backgroundColor: C.cardBg,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 20,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 0.22,
+      shadowRadius: 24,
+      elevation: 8,
+    },
+    goalTopRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 16,
+    },
+    goalContent: { flex: 1 },
+    goalText: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: C.textPrimary,
+      lineHeight: 32,
+    },
+    goalInput: {
+      fontSize: 23,
+      fontWeight: "700",
+      color: C.textPrimary,
+      lineHeight: 31,
+      minHeight: 68,
+      padding: 0,
+    },
+    goalPlaceholderTitle: {
+      fontSize: 23,
+      fontWeight: "600",
+      color: C.textPrimary,
+      lineHeight: 31,
+    },
+    goalPlaceholderBody: {
+      fontSize: 14,
+      color: C.textTertiary,
+      lineHeight: 20,
+      marginTop: 6,
+    },
+    goalRing: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    ringOuter: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      borderWidth: 5,
+      borderColor: C.accentBorderSubtle,
+      borderTopColor: palette.orange,
+      borderRightColor: palette.orange,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    ringInner: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: C.accentBgSubtle,
+    },
+    focusButton: {
+      height: 58,
+      borderRadius: 16,
+      backgroundColor: "#FF6B22",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+      marginTop: 28,
+      shadowColor: "#FF6B22",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.26,
+      shadowRadius: 18,
+      elevation: 6,
+    },
+    focusButtonDisabled: {
+      backgroundColor: palette.orange,
+    },
+    focusButtonText: {
+      color: palette.white,
+      fontSize: 19,
+      fontWeight: "600",
+    },
 
-  card: {
-    backgroundColor: palette.white06,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: palette.white08,
-    overflow: "hidden",
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: palette.white08,
-    marginHorizontal: 16,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  habitIcon: { fontSize: 22, width: 28, textAlign: "center" },
-  rowInfo: { flex: 1 },
-  rowTitle: { fontSize: 15, fontWeight: "600", color: palette.white },
-  rowTitleDone: { color: palette.white45, textDecorationLine: "line-through" },
-  rowSubtitle: { fontSize: 12, color: palette.white40, marginTop: 2 },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: palette.white30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxDone: { backgroundColor: palette.orange, borderColor: palette.orange },
-  checkmark: { fontSize: 11, color: palette.white, fontWeight: "700" },
-  emptyRow: { paddingVertical: 20, paddingHorizontal: 16 },
-  emptyText: { fontSize: 14, color: palette.white40, textAlign: "center" },
+    card: {
+      backgroundColor: C.cardBg,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      overflow: "hidden",
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: C.divider,
+      marginHorizontal: 16,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      gap: 12,
+    },
+    habitIcon: { fontSize: 22, width: 28, textAlign: "center" },
+    rowInfo: { flex: 1 },
+    rowTitle: { fontSize: 15, fontWeight: "600", color: C.textPrimary },
+    rowTitleDone: { color: C.textTertiary, textDecorationLine: "line-through" },
+    rowSubtitle: { fontSize: 12, color: C.textQuaternary, marginTop: 2 },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: C.iconTertiary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    checkboxDone: { backgroundColor: palette.orange, borderColor: palette.orange },
+    checkmark: { fontSize: 11, color: palette.white, fontWeight: "700" },
+    emptyRow: { paddingVertical: 20, paddingHorizontal: 16 },
+    emptyText: { fontSize: 14, color: C.textQuaternary, textAlign: "center" },
 
-  todoCheckbox: { alignSelf: "flex-start", marginTop: 2 },
-  todoTitle: { flex: 1, lineHeight: 21 },
+    todoCheckbox: { alignSelf: "flex-start", marginTop: 2 },
+    todoTitle: { flex: 1, lineHeight: 21 },
 
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: palette.white,
-    paddingVertical: 6,
-    minHeight: 34,
-    maxHeight: 78,
-  },
-  addBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: palette.orange,
-    borderRadius: 8,
-  },
-  addBtnText: { fontSize: 18, fontWeight: "800", color: palette.white },
-  resetCard: {
-    backgroundColor: "#0d1015",
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "rgba(251,146,60,0.14)",
-    overflow: "hidden",
-  },
-  resetCopy: {
-    position: "absolute",
-    left: 18,
-    right: 18,
-    bottom: 18,
-  },
-  resetDecor: {
-    height: 190,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
-  resetDecorImage: {
-    width: "100%",
-    height: "100%",
-  },
-  resetDecorOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(5,7,10,0.34)",
-  },
-  resetBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(8,10,14,0.5)",
-    borderWidth: 1,
-    borderColor: "rgba(251,146,60,0.26)",
-    marginBottom: 12,
-  },
-  resetBadgeText: {
-    color: palette.orange,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
-  },
-  resetTitle: {
-    color: palette.white,
-    fontSize: 24,
-    fontWeight: "800",
-    lineHeight: 30,
-    marginBottom: 10,
-  },
-  resetBody: {
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 14,
-    lineHeight: 21,
-    maxWidth: 260,
-  },
-  resetAction: {
-    position: "absolute",
-    right: 16,
-    bottom: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: palette.orange,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+    inputRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      gap: 10,
+    },
+    input: {
+      flex: 1,
+      fontSize: 15,
+      color: C.textPrimary,
+      paddingVertical: 6,
+      minHeight: 34,
+      maxHeight: 78,
+    },
+    addBtn: {
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      backgroundColor: palette.orange,
+      borderRadius: 8,
+    },
+    addBtnText: { fontSize: 18, fontWeight: "800", color: palette.white },
+    resetCard: {
+      backgroundColor: C.heroBg,
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: C.accentBorderSubtle,
+      overflow: "hidden",
+    },
+    resetCopy: {
+      position: "absolute",
+      left: 18,
+      right: 18,
+      bottom: 18,
+    },
+    resetDecor: {
+      height: 190,
+      justifyContent: "flex-end",
+      overflow: "hidden",
+    },
+    resetDecorImage: {
+      width: "100%",
+      height: "100%",
+    },
+    resetDecorOverlay: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "rgba(5,7,10,0.34)",
+    },
+    resetBadge: {
+      alignSelf: "flex-start",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: "rgba(8,10,14,0.5)",
+      borderWidth: 1,
+      borderColor: C.accentBorderSubtle,
+      marginBottom: 12,
+    },
+    resetBadgeText: {
+      color: palette.orange,
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 1,
+    },
+    resetTitle: {
+      color: palette.white,
+      fontSize: 24,
+      fontWeight: "800",
+      lineHeight: 30,
+      marginBottom: 10,
+    },
+    resetBody: {
+      color: "rgba(255,255,255,0.78)",
+      fontSize: 14,
+      lineHeight: 21,
+      maxWidth: 260,
+    },
+    resetAction: {
+      position: "absolute",
+      right: 16,
+      bottom: 16,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: palette.orange,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });
+}

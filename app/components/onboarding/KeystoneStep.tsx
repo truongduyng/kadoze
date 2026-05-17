@@ -7,6 +7,7 @@ import {
   type KeystoneHabit,
 } from "@/hooks/useOnboarding";
 import { palette } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 interface KeystoneStepProps {
   focus: string;
@@ -25,50 +26,52 @@ const FOCUS_LABEL: Record<string, string> = {
 };
 
 export default function KeystoneStep({ focus, selected, onSelect, onNext }: KeystoneStepProps) {
+  const C = useTheme();
+  const s = makeStyles(C);
   const habits: KeystoneHabit[] =
     KEYSTONE_HABITS_BY_FOCUS[focus] ?? DEFAULT_KEYSTONE_HABITS;
 
   const focusLabel = FOCUS_LABEL[focus];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <View style={s.container}>
+      <View style={s.content}>
         <View>
-          <Text style={styles.headline}>Pick your keystone habit.</Text>
+          <Text style={s.headline}>Pick your keystone habit.</Text>
           {focusLabel ? (
-            <View style={styles.focusBadge}>
+            <View style={s.focusBadge}>
               <Ionicons name="flag-outline" size={12} color={palette.orange} />
-              <Text style={styles.focusBadgeText}>{focusLabel}</Text>
+              <Text style={s.focusBadgeText}>{focusLabel}</Text>
             </View>
           ) : null}
-          <Text style={styles.subtitle}>
+          <Text style={s.subtitle}>
             One habit done consistently beats ten done randomly.
           </Text>
         </View>
 
-        <View style={styles.list}>
+        <View style={s.list}>
           {habits.map((habit) => {
             const isSelected = selected === habit.id;
             return (
               <TouchableOpacity
                 key={habit.id}
-                style={[styles.row, isSelected && styles.rowSelected]}
+                style={[s.row, isSelected && s.rowSelected]}
                 onPress={() => onSelect(habit.id)}
                 activeOpacity={0.75}
               >
-                <View style={[styles.iconWrap, isSelected && styles.iconWrapSelected]}>
-                  <Text style={styles.habitIcon}>{habit.icon}</Text>
+                <View style={[s.iconWrap, isSelected && s.iconWrapSelected]}>
+                  <Text style={s.habitIcon}>{habit.icon}</Text>
                 </View>
-                <View style={styles.habitInfo}>
-                  <Text style={[styles.habitTitle, isSelected && styles.habitTitleSelected]}>
+                <View style={s.habitInfo}>
+                  <Text style={[s.habitTitle, isSelected && s.habitTitleSelected]}>
                     {habit.title}
                   </Text>
-                  <Text style={styles.habitSubtitle}>{habit.subtitle}</Text>
+                  <Text style={s.habitSubtitle}>{habit.subtitle}</Text>
                 </View>
                 <Ionicons
                   name={isSelected ? "checkmark-circle" : "ellipse-outline"}
                   size={22}
-                  color={isSelected ? palette.orange : "rgba(255,255,255,0.25)"}
+                  color={isSelected ? palette.orange : C.textQuaternary}
                 />
               </TouchableOpacity>
             );
@@ -76,112 +79,96 @@ export default function KeystoneStep({ focus, selected, onSelect, onNext }: Keys
         </View>
       </View>
 
-      <TouchableOpacity style={styles.btn} onPress={onNext} activeOpacity={0.85}>
-        <Text style={styles.btnText}>Next</Text>
+      <TouchableOpacity style={s.btn} onPress={onNext} activeOpacity={0.85}>
+        <Text style={s.btnText}>Next</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: "space-between",
-    paddingBottom: 32,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 24,
-  },
-  headline: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#fff",
-    lineHeight: 38,
-    marginBottom: 8,
-  },
-  focusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(251,146,60,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(251,146,60,0.3)",
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginBottom: 10,
-  },
-  focusBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: palette.orange,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.45)",
-    lineHeight: 20,
-  },
-  list: {
-    gap: 10,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.1)",
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    gap: 14,
-  },
-  rowSelected: {
-    borderColor: palette.orange,
-    backgroundColor: "rgba(251,146,60,0.1)",
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconWrapSelected: {
-    backgroundColor: "rgba(251,146,60,0.18)",
-  },
-  habitIcon: {
-    fontSize: 20,
-  },
-  habitInfo: {
-    flex: 1,
-  },
-  habitTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.75)",
-  },
-  habitTitleSelected: {
-    color: "#fff",
-  },
-  habitSubtitle: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.35)",
-    marginTop: 2,
-  },
-  btn: {
-    backgroundColor: palette.orange,
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: "center",
-  },
-  btnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: 24,
+      justifyContent: "space-between",
+      paddingBottom: 32,
+    },
+    content: { flex: 1, justifyContent: "center", gap: 24 },
+    headline: {
+      fontSize: 30,
+      fontWeight: "800",
+      color: C.textPrimary,
+      lineHeight: 38,
+      marginBottom: 8,
+    },
+    focusBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      alignSelf: "flex-start",
+      backgroundColor: C.accentBg,
+      borderWidth: 1,
+      borderColor: C.accentBorder,
+      borderRadius: 20,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      marginBottom: 10,
+    },
+    focusBadgeText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: palette.orange,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: C.textTertiary,
+      lineHeight: 20,
+    },
+    list: { gap: 10 },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: C.cardBg,
+      borderWidth: 1.5,
+      borderColor: C.cardBorder,
+      borderRadius: 16,
+      paddingVertical: 20,
+      paddingHorizontal: 20,
+      gap: 14,
+    },
+    rowSelected: {
+      borderColor: palette.orange,
+      backgroundColor: C.accentBgSubtle,
+    },
+    iconWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: C.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconWrapSelected: { backgroundColor: C.accentBg },
+    habitIcon: { fontSize: 20 },
+    habitInfo: { flex: 1 },
+    habitTitle: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: C.textSecondary,
+    },
+    habitTitleSelected: { color: C.textPrimary },
+    habitSubtitle: {
+      fontSize: 12,
+      color: C.textTertiary,
+      marginTop: 2,
+    },
+    btn: {
+      backgroundColor: palette.orange,
+      borderRadius: 14,
+      paddingVertical: 18,
+      alignItems: "center",
+    },
+    btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  });
+}
