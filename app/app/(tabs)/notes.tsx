@@ -217,6 +217,20 @@ function NoteListItem({
         >
           <View style={s.cardTopRow}>
             <Text style={s.timeLabel}>{formatTime(note.createdAt ?? null)}</Text>
+            <View style={s.noteActions}>
+              <TouchableOpacity
+                style={s.noteActionButton}
+                onPress={() => onCopy(note)}
+              >
+                <Ionicons name="copy-outline" size={14} color={C.iconSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.noteActionButton}
+                onPress={() => onShare(note)}
+              >
+                <Ionicons name="share-outline" size={14} color={C.iconSecondary} />
+              </TouchableOpacity>
+            </View>
           </View>
           {audioNote && note.mediaUrl ? (
             <AudioNotePlayer uri={note.mediaUrl} compact />
@@ -224,7 +238,7 @@ function NoteListItem({
             <Image
               source={{ uri: note.mediaUrl }}
               style={s.noteImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : null}
           {preview && !audioNote ? (
@@ -235,20 +249,6 @@ function NoteListItem({
               {trimmed ? <Text style={s.trimmedHint}>... more</Text> : null}
             </View>
           ) : null}
-          <View style={s.noteActions}>
-            <TouchableOpacity
-              style={s.noteActionButton}
-              onPress={() => onCopy(note)}
-            >
-              <Ionicons name="copy-outline" size={14} color={C.iconSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={s.noteActionButton}
-              onPress={() => onShare(note)}
-            >
-              <Ionicons name="share-outline" size={14} color={C.iconSecondary} />
-            </TouchableOpacity>
-          </View>
         </AdaptiveBlurView>
       </Pressable>
     </SwipeableRow>
@@ -970,6 +970,8 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     cardTopRow: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
       marginBottom: 12,
     },
     noteImage: {
@@ -997,7 +999,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     noteActions: {
       flexDirection: "row",
       gap: 8,
-      marginTop: 12,
     },
     audioPlayer: {
       flexDirection: "row",
@@ -1037,12 +1038,8 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      paddingHorizontal: 10,
-      paddingVertical: 7,
+      padding: 6,
       borderRadius: 999,
-      backgroundColor: C.cardBg,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
     },
     emptyCard: {
       borderRadius: 14,
