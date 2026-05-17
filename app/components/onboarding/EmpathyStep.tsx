@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Image } from "react-native";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -33,8 +32,12 @@ export default function EmpathyStep({ onNext }: EmpathyStepProps) {
   return (
     <View style={s.container}>
       <View style={s.content}>
-        <Animated.View style={[s.iconWrap, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
-          <Ionicons name="sparkles-outline" size={32} color={palette.orange} />
+        <Animated.View style={[s.illustration, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
+          <Image
+            source={require("../../assets/images/onboarding/empathy-system.png")}
+            style={s.illustrationImage}
+            resizeMode="contain"
+          />
         </Animated.View>
 
         <Text style={s.headline}>You aren&apos;t broken;{"\n"}your system is.</Text>
@@ -66,15 +69,16 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       paddingBottom: 20,
     },
-    iconWrap: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      borderWidth: 2,
-      borderColor: palette.orange,
+    illustration: {
+      width: 240,
+      height: 210,
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: 36,
+      marginBottom: 28,
+    },
+    illustrationImage: {
+      width: "100%",
+      height: "100%",
     },
     headline: {
       fontSize: 30,
