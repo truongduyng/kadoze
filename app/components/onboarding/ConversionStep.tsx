@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -34,7 +35,7 @@ export default function ConversionStep({ onStartFree, onUpgrade }: ConversionSte
       showsVerticalScrollIndicator={false}
     >
       <View style={s.iconWrap}>
-        <Text style={s.icon}>🎉</Text>
+        <Ionicons name="sparkles-outline" size={40} color={palette.orange} />
       </View>
 
       <Text style={s.headline}>Your dashboard is ready.</Text>
@@ -53,7 +54,7 @@ export default function ConversionStep({ onStartFree, onUpgrade }: ConversionSte
           <View style={s.featureList}>
             {FREE_FEATURES.map((f) => (
               <View key={f} style={s.featureRow}>
-                <Text style={s.featureCheck}>✓</Text>
+                <Ionicons name="checkmark" size={14} color={C.textTertiary} />
                 <Text style={s.featureText}>{f}</Text>
               </View>
             ))}
@@ -75,7 +76,7 @@ export default function ConversionStep({ onStartFree, onUpgrade }: ConversionSte
           <View style={s.featureList}>
             {PRO_FEATURES.map((f) => (
               <View key={f} style={s.featureRow}>
-                <Text style={[s.featureCheck, s.featureCheckPro]}>✓</Text>
+                <Ionicons name="checkmark" size={14} color={palette.orange} />
                 <Text style={[s.featureText, s.featureTextPro]}>{f}</Text>
               </View>
             ))}
@@ -100,7 +101,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       gap: 16,
     },
     iconWrap: { alignItems: "center", marginBottom: 4 },
-    icon: { fontSize: 40 },
     headline: {
       fontSize: 26,
       fontWeight: "800",
@@ -175,12 +175,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     featureList: { gap: 6, flex: 1 },
     featureRow: { flexDirection: "row", gap: 6, alignItems: "flex-start" },
-    featureCheck: {
-      fontSize: 11,
-      color: C.textTertiary,
-      lineHeight: 17,
-    },
-    featureCheckPro: { color: palette.orange },
     featureText: {
       fontSize: 12,
       color: C.textSecondary,

@@ -60,7 +60,11 @@ export default function KeystoneStep({ focus, selected, onSelect, onNext }: Keys
                 activeOpacity={0.75}
               >
                 <View style={[s.iconWrap, isSelected && s.iconWrapSelected]}>
-                  <Text style={s.habitIcon}>{habit.icon}</Text>
+                  <Ionicons
+                    name={habit.icon}
+                    size={22}
+                    color={isSelected ? palette.orange : C.iconSecondary}
+                  />
                 </View>
                 <View style={s.habitInfo}>
                   <Text style={[s.habitTitle, isSelected && s.habitTitleSelected]}>
@@ -150,7 +154,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "center",
     },
     iconWrapSelected: { backgroundColor: C.accentBg },
-    habitIcon: { fontSize: 20 },
     habitInfo: { flex: 1 },
     habitTitle: {
       fontSize: 15,

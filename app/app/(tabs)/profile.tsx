@@ -24,6 +24,7 @@ import { DAY_NAMES } from "@/lib/performance";
 import { getTodayInLocalTimezone } from "@/lib/timezone";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
+import { resolveIoniconName } from "@/lib/iconNames";
 
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 const CONSISTENCY_DAYS = 28;
@@ -298,7 +299,7 @@ export default function ProfileScreen() {
       .join("");
   }, [displayName]);
 
-  const displayAvatar = savedAvatar || initials;
+  const displayAvatarIcon = savedAvatar ? resolveIoniconName(savedAvatar, "person-outline") : null;
 
   const trendChart = useMemo(
     () =>
@@ -336,9 +337,11 @@ export default function ProfileScreen() {
           <View style={s.identityTop}>
             <View style={s.identityPrimary}>
               <View style={s.avatar}>
-                <Text selectable style={s.avatarText}>
-                  {displayAvatar}
-                </Text>
+                {displayAvatarIcon ? (
+                  <Ionicons name={displayAvatarIcon} size={30} color={palette.orange} />
+                ) : (
+                  <Text selectable style={s.avatarText}>{initials}</Text>
+                )}
               </View>
               <View style={s.identityMeta}>
                 <Text selectable style={s.name}>

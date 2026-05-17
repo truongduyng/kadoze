@@ -8,6 +8,7 @@ import {
   Easing,
   Dimensions,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -295,7 +296,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
             ]}
           >
             <View style={s.focusCheck}>
-              <Text style={s.focusCheckMark}>✓</Text>
+              <Ionicons name="checkmark" size={16} color={palette.white} />
             </View>
             <Text style={s.focusText}>{FOCUS_ITEM}</Text>
           </Animated.View>
@@ -379,7 +380,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "center",
     },
-    focusCheckMark: { color: "#fff", fontSize: 13, fontWeight: "800" },
     focusText: {
       color: C.textPrimary,
       fontSize: 15,

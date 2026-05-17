@@ -50,7 +50,7 @@ export default function TabLayout() {
             }}
             md="checklist"
           />
-          <NativeTabs.Trigger.Label>Habits</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>Routines</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="profile">
           <NativeTabs.Trigger.Icon

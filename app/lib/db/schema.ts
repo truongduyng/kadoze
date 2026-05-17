@@ -28,7 +28,7 @@ export const habits = sqliteTable('habits', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   title: text('title').notNull(),
   subtitle: text('subtitle'),
-  icon: text('icon'),                            // emoji
+  icon: text('icon'),                            // Ionicon name
   daysOfWeek: text('days_of_week', { mode: 'json' }).$type<string[]>().notNull(), // ['mon','tue',…]
   isLocked: integer('is_locked', { mode: 'boolean' }).notNull().default(false),
   sortOrder: integer('sort_order').notNull().default(0),

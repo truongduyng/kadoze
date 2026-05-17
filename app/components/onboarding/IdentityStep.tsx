@@ -8,18 +8,29 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
+import type { IoniconName } from "@/lib/iconNames";
 
 interface IdentityStepProps {
   name: string;
-  avatar: string;
+  avatar: IoniconName;
   onChangeName: (value: string) => void;
-  onChangeAvatar: (value: string) => void;
+  onChangeAvatar: (value: IoniconName) => void;
   onNext: () => void;
 }
 
-const AVATARS = ["🙂", "😎", "🌿", "🔥", "⚡", "🌙", "🧠", "🦊"];
+const AVATARS: IoniconName[] = [
+  "happy-outline",
+  "glasses-outline",
+  "leaf-outline",
+  "flame-outline",
+  "flash-outline",
+  "moon-outline",
+  "bulb-outline",
+  "person-circle-outline",
+];
 
 export default function IdentityStep({
   name,
@@ -70,7 +81,11 @@ export default function IdentityStep({
                   onPress={() => onChangeAvatar(option)}
                   activeOpacity={0.8}
                 >
-                  <Text style={s.avatarText}>{option}</Text>
+                  <Ionicons
+                    name={option}
+                    size={28}
+                    color={isSelected ? palette.orange : C.textSecondary}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -152,7 +167,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       backgroundColor: C.accentBg,
       borderColor: palette.orange,
     },
-    avatarText: { fontSize: 28 },
     btn: {
       backgroundColor: palette.orange,
       borderRadius: 14,

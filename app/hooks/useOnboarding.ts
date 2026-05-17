@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { router } from "expo-router";
 import { profileOps, habitOps } from "@/lib/db";
+import type { IoniconName } from "@/lib/iconNames";
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -30,7 +31,7 @@ export const TOTAL = STEPS.length;
 
 export interface KeystoneHabit {
   id: string;
-  icon: string;
+  icon: IoniconName;
   title: string;
   subtitle: string;
 }
@@ -39,25 +40,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
   health: [
     {
       id: "walk",
-      icon: "🚶",
+      icon: "walk-outline",
       title: "10-minute walk",
       subtitle: "Move your body every day",
     },
     {
       id: "water",
-      icon: "💧",
+      icon: "water-outline",
       title: "Drink 2L of water",
       subtitle: "Stay consistently hydrated",
     },
     {
       id: "sleep",
-      icon: "😴",
+      icon: "bed-outline",
       title: "7–8 hours of sleep",
       subtitle: "Sleep with intention",
     },
     {
       id: "stretch",
-      icon: "🧘",
+      icon: "body-outline",
       title: "5-min morning stretch",
       subtitle: "Wake up your body gently",
     },
@@ -65,25 +66,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
   mindset: [
     {
       id: "journal",
-      icon: "📓",
+      icon: "journal-outline",
       title: "5-min journaling",
       subtitle: "Reflect on your thoughts",
     },
     {
       id: "quiet",
-      icon: "🧘",
+      icon: "body-outline",
       title: "5 minutes of quiet",
       subtitle: "Meditate or breathe deeply",
     },
     {
       id: "gratitude",
-      icon: "🙏",
+      icon: "heart-outline",
       title: "Gratitude practice",
       subtitle: "3 things you're grateful for",
     },
     {
       id: "read",
-      icon: "📖",
+      icon: "book-outline",
       title: "Read 10 pages",
       subtitle: "Feed your mind daily",
     },
@@ -91,25 +92,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
   work: [
     {
       id: "mit",
-      icon: "🎯",
+      icon: "radio-button-on-outline",
       title: "Pick your MIT",
       subtitle: "One task that moves the needle",
     },
     {
       id: "nophone",
-      icon: "📵",
+      icon: "phone-portrait-outline",
       title: "No phone first hour",
       subtitle: "Start deep, not reactive",
     },
     {
       id: "plan",
-      icon: "📋",
+      icon: "clipboard-outline",
       title: "Plan tomorrow tonight",
       subtitle: "Wake up with clarity",
     },
     {
       id: "pomodoro",
-      icon: "⏱️",
+      icon: "timer-outline",
       title: "One focused sprint",
       subtitle: "25 min of pure deep work",
     },
@@ -117,25 +118,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
   relations: [
     {
       id: "connect",
-      icon: "💬",
+      icon: "chatbubble-ellipses-outline",
       title: "Reach out to someone",
       subtitle: "One genuine message a day",
     },
     {
       id: "listen",
-      icon: "👂",
+      icon: "ear-outline",
       title: "Practice listening",
       subtitle: "Be fully present in conversations",
     },
     {
       id: "gratitude",
-      icon: "🙏",
+      icon: "heart-outline",
       title: "Express gratitude",
       subtitle: "Tell someone you appreciate them",
     },
     {
       id: "offline",
-      icon: "📵",
+      icon: "phone-portrait-outline",
       title: "Phone-free meals",
       subtitle: "Be present with people around you",
     },
@@ -143,25 +144,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
   creative: [
     {
       id: "create",
-      icon: "✏️",
+      icon: "pencil-outline",
       title: "Create something",
       subtitle: "Even 10 min of making",
     },
     {
       id: "capture",
-      icon: "📸",
+      icon: "camera-outline",
       title: "Capture one idea",
       subtitle: "Write, draw, or record it",
     },
     {
       id: "explore",
-      icon: "🌍",
+      icon: "earth-outline",
       title: "Learn something new",
       subtitle: "Fuel curiosity daily",
     },
     {
       id: "noscreen",
-      icon: "🌿",
+      icon: "leaf-outline",
       title: "Nature break",
       subtitle: "Step outside for fresh air",
     },
@@ -169,25 +170,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
   finance: [
     {
       id: "review",
-      icon: "📊",
+      icon: "stats-chart-outline",
       title: "Review your spending",
       subtitle: "Know where your money goes",
     },
     {
       id: "save",
-      icon: "💰",
+      icon: "cash-outline",
       title: "Save before spending",
       subtitle: "Pay yourself first",
     },
     {
       id: "learn",
-      icon: "📖",
+      icon: "book-outline",
       title: "Read about money",
       subtitle: "10 min of financial learning",
     },
     {
       id: "track",
-      icon: "🎯",
+      icon: "radio-button-on-outline",
       title: "Track one financial goal",
       subtitle: "Progress compounds daily",
     },
@@ -198,25 +199,25 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
 export const DEFAULT_KEYSTONE_HABITS: KeystoneHabit[] = [
   {
     id: "walk",
-    icon: "🚶",
+    icon: "walk-outline",
     title: "10-minute walk",
     subtitle: "Move your body every day",
   },
   {
     id: "quiet",
-    icon: "🧘",
+    icon: "body-outline",
     title: "5 minutes of quiet",
     subtitle: "Meditate or reflect",
   },
   {
     id: "gratitude",
-    icon: "🙏",
+    icon: "heart-outline",
     title: "Gratitude practice",
     subtitle: "3 things you're grateful for",
   },
   {
     id: "journal",
-    icon: "📓",
+    icon: "journal-outline",
     title: "5-min journaling",
     subtitle: "Reflect on your thoughts",
   },
@@ -240,7 +241,7 @@ export function useOnboarding() {
   const [mainGoal, setMainGoal] = useState("");
   const [keystoneHabit, setKeystoneHabit] = useState<string>("walk");
   const [name, setName] = useState("");
-  const [avatar, setAvatar] = useState("🙂");
+  const [avatar, setAvatar] = useState<IoniconName>("happy-outline");
 
   const goToStep = useCallback(
     (next: number) => {

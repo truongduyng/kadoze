@@ -25,6 +25,7 @@ import { DAY_NAMES } from "@/lib/performance";
 import { palette } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SwipeableRow } from "@/components/todo/SwipeableRow";
+import { resolveIoniconName } from "@/lib/iconNames";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -217,7 +218,12 @@ export default function HomeScreen() {
                       style={s.row}
                       onPress={() => toggleHabit(habit.id, done)}
                     >
-                      <Text style={s.habitIcon}>{habit.icon ?? "⭐"}</Text>
+                      <Ionicons
+                        name={resolveIoniconName(habit.icon, "star-outline")}
+                        size={22}
+                        color={C.iconSecondary}
+                        style={s.habitIcon}
+                      />
                       <View style={s.rowInfo}>
                         <Text style={[s.rowTitle, done && s.rowTitleDone]}>
                           {habit.title}
@@ -227,7 +233,7 @@ export default function HomeScreen() {
                         )}
                       </View>
                       <View style={[s.checkbox, done && s.checkboxDone]}>
-                        {done && <Text style={s.checkmark}>✓</Text>}
+                        {done && <Ionicons name="checkmark" size={13} color={palette.white} />}
                       </View>
                     </Pressable>
                   </View>
@@ -249,7 +255,7 @@ export default function HomeScreen() {
                       style={[s.checkbox, s.todoCheckbox, todo.done && s.checkboxDone]}
                       onPress={() => toggleTodo(todo.id, todo.done)}
                     >
-                      {todo.done && <Text style={s.checkmark}>✓</Text>}
+                      {todo.done && <Ionicons name="checkmark" size={13} color={palette.white} />}
                     </Pressable>
                     <Text
                       style={[s.rowTitle, s.todoTitle, todo.done && s.rowTitleDone]}
@@ -503,7 +509,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       paddingHorizontal: 16,
       gap: 12,
     },
-    habitIcon: { fontSize: 22, width: 28, textAlign: "center" },
+    habitIcon: { width: 28, textAlign: "center" },
     rowInfo: { flex: 1 },
     rowTitle: { fontSize: 15, fontWeight: "600", color: C.textPrimary },
     rowTitleDone: { color: C.textTertiary, textDecorationLine: "line-through" },
@@ -518,7 +524,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "center",
     },
     checkboxDone: { backgroundColor: palette.orange, borderColor: palette.orange },
-    checkmark: { fontSize: 11, color: palette.white, fontWeight: "700" },
     emptyRow: { paddingVertical: 20, paddingHorizontal: 16 },
     emptyText: { fontSize: 14, color: C.textQuaternary, textAlign: "center" },
 

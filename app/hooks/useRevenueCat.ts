@@ -23,29 +23,29 @@ export function useRevenueCat() {
       if (isMounted.current) {
         setCustomerInfo(info);
       }
-      console.log('✅ Customer info loaded');
+      console.log('Customer info loaded');
     } catch (infoError) {
-      console.error('❌ Error fetching customer info:', infoError);
+      console.error('Error fetching customer info:', infoError);
       // Don't throw - allow app to continue with null customerInfo
     }
 
     // Get offerings
     try {
       const offerings = await Purchases.getOfferings();
-      console.log('📦 Offerings:', {
+      console.log('Offerings:', {
         current: offerings.current?.identifier,
         allCount: Object.keys(offerings.all).length,
       });
 
       if (offerings.current && isMounted.current) {
         setCurrentOffering(offerings.current);
-        console.log('✅ Current offering:', offerings.current.identifier);
-        console.log('📦 Packages:', offerings.current.availablePackages.length);
+        console.log('Current offering:', offerings.current.identifier);
+        console.log('Packages:', offerings.current.availablePackages.length);
       } else {
-        console.warn('⚠️ No current offering - check RevenueCat dashboard');
+        console.warn('No current offering - check RevenueCat dashboard');
       }
     } catch (offeringError) {
-      console.error('❌ Error fetching offerings:', offeringError);
+      console.error('Error fetching offerings:', offeringError);
       // Don't throw - allow app to continue without offerings
     }
   }, []);
@@ -54,9 +54,9 @@ export function useRevenueCat() {
     try {
       // Validate API key
       const apiKey = Platform.OS === 'ios' ? REVENUECAT_IOS_API_KEY : REVENUECAT_ANDROID_API_KEY;
-      console.log('🔑 RevenueCat API Key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
+      console.log('RevenueCat API Key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
       if (!apiKey) {
-        console.error('❌ RevenueCat API key is not configured');
+        console.error('RevenueCat API key is not configured');
         if (isMounted.current) {
           setIsLoading(false);
         }
@@ -65,7 +65,7 @@ export function useRevenueCat() {
 
       // If already configured globally, just fetch data
       if (isRevenueCatConfigured) {
-        console.log('✅ RevenueCat already configured, fetching data...');
+        console.log('RevenueCat already configured, fetching data...');
         await fetchRevenueCatData();
         if (isMounted.current) {
           setIsConfigured(true);
@@ -76,7 +76,7 @@ export function useRevenueCat() {
 
       // If configuration is in progress, wait for it
       if (configurationPromise) {
-        console.log('⏳ Waiting for existing RevenueCat configuration...');
+        console.log('Waiting for existing RevenueCat configuration...');
         await configurationPromise;
         await fetchRevenueCatData();
         if (isMounted.current) {
@@ -87,7 +87,7 @@ export function useRevenueCat() {
       }
 
       // First time configuration
-      console.log('🚀 Initializing RevenueCat for the first time...');
+      console.log('Initializing RevenueCat for the first time...');
       configurationPromise = (async () => {
         try {
           // Set log level for debugging
@@ -99,11 +99,11 @@ export function useRevenueCat() {
 
           // Configure RevenueCat
           Purchases.configure({ apiKey });
-          console.log('✅ RevenueCat SDK configured successfully');
+          console.log('RevenueCat SDK configured successfully');
 
           isRevenueCatConfigured = true;
         } catch (configError) {
-          console.error('❌ Failed to configure RevenueCat:', configError);
+          console.error('Failed to configure RevenueCat:', configError);
           // Don't set isRevenueCatConfigured = true on error
           // This allows the app to continue without crashing
           throw configError;
@@ -119,7 +119,7 @@ export function useRevenueCat() {
       // Fetch customer info and offerings
       await fetchRevenueCatData();
     } catch (error) {
-      console.error('❌ Error initializing RevenueCat:', error);
+      console.error('Error initializing RevenueCat:', error);
       if (isMounted.current) {
         setIsConfigured(false);
       }
@@ -194,7 +194,7 @@ export function useRevenueCat() {
     try {
       // If RevenueCat failed to configure, allow access to prevent blocking users
       if (!isConfigured) {
-        console.warn('⚠️ RevenueCat not configured - granting temporary access');
+        console.warn('RevenueCat not configured - granting temporary access');
         return true;
       }
 

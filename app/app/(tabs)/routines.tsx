@@ -24,6 +24,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAY_NAMES } from "@/lib/performance";
+import { resolveIoniconName } from "@/lib/iconNames";
 
 const FOCUS_LABELS: Record<string, string> = {
   health: "Health & Vitality",
@@ -197,7 +198,11 @@ export default function RoutinesScreen() {
                     onPress={() => toggle(habit.id, doneIds.has(habit.id))}
                   >
                     <View style={s.habitIconWrap}>
-                      <Text style={s.habitIcon}>{habit.icon ?? "⭐"}</Text>
+                      <Ionicons
+                        name={resolveIoniconName(habit.icon, "star-outline")}
+                        size={22}
+                        color={C.iconSecondary}
+                      />
                     </View>
                     <View style={s.habitInfo}>
                       <Text style={s.habitTitle} numberOfLines={1}>
@@ -274,7 +279,11 @@ export default function RoutinesScreen() {
                               status === "available" && s.focusHabitIconWrapAvailable,
                             ]}
                           >
-                            <Text style={s.focusHabitIcon}>{stage.keystone.icon}</Text>
+                            <Ionicons
+                              name={resolveIoniconName(stage.keystone.icon, "star-outline")}
+                              size={18}
+                              color={status === "available" ? palette.orange : C.iconSecondary}
+                            />
                           </View>
                           <View style={s.focusHabitInfo}>
                             <Text style={s.focusHabitTitle}>{stage.keystone.title}</Text>
@@ -338,7 +347,12 @@ export default function RoutinesScreen() {
                       const isOwned = existingHabitMap.has(habitKey(habit.title, habit.subtitle));
                       return (
                         <View key={`${focusKey}-${habit.title}`} style={s.focusGroupItem}>
-                          <Text style={s.focusGroupIcon}>{habit.icon}</Text>
+                          <Ionicons
+                            name={resolveIoniconName(habit.icon, "star-outline")}
+                            size={16}
+                            color={C.iconSecondary}
+                            style={s.focusGroupIcon}
+                          />
                           <Text style={s.focusGroupItemText} numberOfLines={1}>
                             {habit.title}
                           </Text>
@@ -396,7 +410,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "center",
     },
-    habitIcon: { fontSize: 22, textAlign: "center" },
     habitInfo: { flex: 1 },
     habitTitle: { fontSize: 15, fontWeight: "600", color: C.textPrimary },
     habitDuration: {
@@ -491,7 +504,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "center",
     },
     focusHabitIconWrapAvailable: { backgroundColor: C.accentBg },
-    focusHabitIcon: { fontSize: 18 },
     focusHabitInfo: { flex: 1 },
     focusHabitTitle: {
       fontSize: 14,
@@ -560,11 +572,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       gap: 10,
     },
-    focusGroupIcon: {
-      width: 18,
-      fontSize: 15,
-      textAlign: "center",
-    },
+    focusGroupIcon: { width: 18, textAlign: "center" },
     focusGroupItemText: {
       flex: 1,
       fontSize: 13,
