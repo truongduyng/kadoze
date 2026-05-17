@@ -361,7 +361,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     birdTwo: { right: 74, top: 48 },
     birdThree: { right: 42, top: 82 },
     header: {
-      marginBottom: 24,
+      marginBottom: 48,
     },
     greetingRow: {
       flexDirection: "row",
@@ -397,7 +397,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
 
     goalCard: {
-      backgroundColor: C.cardBg,
+      backgroundColor: "rgba(255,255,255,0.2)",
       borderRadius: 16,
       borderWidth: 1,
       borderColor: C.cardBorder,
