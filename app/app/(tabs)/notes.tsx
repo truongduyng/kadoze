@@ -16,6 +16,7 @@ import {
 } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import React, { useMemo, useState } from "react";
@@ -38,6 +39,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const VOICE_NOTE_CONTENT = "Voice note";
+const VOICE_NOTES_DIR = `${FileSystem.documentDirectory ?? ""}voice-notes/`;
 
 type NoteSection = {
   title: string;
@@ -105,6 +107,32 @@ function isAudioNote(note: Pick<Note, "content" | "mediaUrl"> | null): boolean {
   );
 }
 
+async function enablePlaybackAudioMode() {
+  await setAudioModeAsync({
+    allowsRecording: false,
+    playsInSilentMode: true,
+  });
+}
+
+async function persistVoiceNote(sourceUri: string) {
+  if (!FileSystem.documentDirectory) {
+    throw new Error("Document directory unavailable.");
+  }
+
+  await FileSystem.makeDirectoryAsync(VOICE_NOTES_DIR, { intermediates: true });
+
+  const extensionMatch = sourceUri.match(/\.[a-z0-9]+(?=($|\?))/i);
+  const extension = extensionMatch?.[0] ?? ".m4a";
+  const destinationUri = `${VOICE_NOTES_DIR}voice-note-${Date.now()}${extension}`;
+
+  await FileSystem.copyAsync({
+    from: sourceUri,
+    to: destinationUri,
+  });
+
+  return destinationUri;
+}
+
 function AudioNotePlayer({
   uri,
   compact = false,
@@ -120,9 +148,14 @@ function AudioNotePlayer({
     <TouchableOpacity
       style={[s.audioPlayer, compact ? s.audioPlayerCompact : null]}
       onPress={async () => {
-        await Haptics.selectionAsync();
-        player.seekTo(0);
-        player.play();
+        try {
+          await enablePlaybackAudioMode();
+          await Haptics.selectionAsync();
+          await player.seekTo(0);
+          player.play();
+        } catch {
+          Alert.alert("Playback unavailable", "Unable to play this voice note right now.");
+        }
       }}
     >
       <View style={s.audioIcon}>
@@ -136,6 +169,393 @@ function AudioNotePlayer({
   );
 }
 
+type NoteItemProps = {
+  note: Note;
+  index: number;
+  isLast: boolean;
+  onCopy: (note: Note) => void;
+  onDelete: (note: Note) => void;
+  onEdit: (note: Note) => void;
+  onOpenDetail: (note: Note) => void;
+  onShare: (note: Note) => void;
+};
+
+function NoteListItem({
+  note,
+  index,
+  isLast,
+  onCopy,
+  onDelete,
+  onEdit,
+  onOpenDetail,
+  onShare,
+}: NoteItemProps) {
+  const C = useTheme();
+  const s = makeStyles(C);
+  const preview = getPreview(note.content);
+  const trimmed = isTrimmed(note.content);
+  const audioNote = isAudioNote(note);
+  const shouldOpenDetail = !audioNote && (Boolean(note.mediaUrl) || trimmed);
+
+  return (
+    <SwipeableRow
+      onEdit={() => onEdit(note)}
+      onDelete={() => onDelete(note)}
+    >
+      <Pressable
+        disabled={!shouldOpenDetail}
+        onPress={() => {
+          if (shouldOpenDetail) onOpenDetail(note);
+        }}
+      >
+        <AdaptiveBlurView
+          style={[
+            s.card,
+            index === 0 ? s.cardFirst : null,
+            isLast ? s.cardLast : null,
+          ]}
+        >
+          <View style={s.cardTopRow}>
+            <Text style={s.timeLabel}>{formatTime(note.createdAt ?? null)}</Text>
+          </View>
+          {audioNote && note.mediaUrl ? (
+            <AudioNotePlayer uri={note.mediaUrl} compact />
+          ) : note.mediaUrl ? (
+            <Image
+              source={{ uri: note.mediaUrl }}
+              style={s.noteImage}
+              resizeMode="cover"
+            />
+          ) : null}
+          {preview && !audioNote ? (
+            <View>
+              <Text style={s.noteBody} numberOfLines={6}>
+                {preview}
+              </Text>
+              {trimmed ? <Text style={s.trimmedHint}>... more</Text> : null}
+            </View>
+          ) : null}
+          <View style={s.noteActions}>
+            <TouchableOpacity
+              style={s.noteActionButton}
+              onPress={() => onCopy(note)}
+            >
+              <Ionicons name="copy-outline" size={14} color={C.iconSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.noteActionButton}
+              onPress={() => onShare(note)}
+            >
+              <Ionicons name="share-outline" size={14} color={C.iconSecondary} />
+            </TouchableOpacity>
+          </View>
+        </AdaptiveBlurView>
+      </Pressable>
+    </SwipeableRow>
+  );
+}
+
+type AddNoteSheetProps = {
+  bottomInset: number;
+  visible: boolean;
+  onClose: () => void;
+  onOpenCamera: () => void;
+  onPickImage: () => void;
+  onPasteNote: () => void;
+  onTextNote: () => void;
+  onVoiceNote: () => void;
+};
+
+function AddNoteSheet({
+  bottomInset,
+  visible,
+  onClose,
+  onOpenCamera,
+  onPickImage,
+  onPasteNote,
+  onTextNote,
+  onVoiceNote,
+}: AddNoteSheetProps) {
+  const C = useTheme();
+  const s = makeStyles(C);
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <Pressable style={s.sheetOverlay} onPress={onClose}>
+        <Pressable
+          style={[s.sheetWrap, { paddingBottom: bottomInset + 20 }]}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <View style={s.sheetHandle} />
+          <Text style={s.sheetTitle}>Add a note</Text>
+          <Text style={s.sheetSubtitle}>Choose how you want to capture it.</Text>
+
+          <TouchableOpacity style={s.sheetRow} onPress={onTextNote}>
+            <Ionicons name="create-outline" size={20} color={C.textPrimary} />
+            <Text style={s.sheetRowLabel}>Text input</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.sheetRow} onPress={onPasteNote}>
+            <Ionicons name="clipboard-outline" size={20} color={C.textPrimary} />
+            <Text style={s.sheetRowLabel}>Pasted input</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.sheetRow} onPress={onVoiceNote}>
+            <Ionicons name="mic-outline" size={20} color={C.textPrimary} />
+            <Text style={s.sheetRowLabel}>Voice</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.sheetRow} onPress={onPickImage}>
+            <Ionicons name="image-outline" size={20} color={C.textPrimary} />
+            <Text style={s.sheetRowLabel}>Image</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.sheetRow} onPress={onOpenCamera}>
+            <Ionicons name="camera-outline" size={20} color={C.textPrimary} />
+            <Text style={s.sheetRowLabel}>Camera</Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+type TextComposerModalProps = {
+  draft: string;
+  editing: boolean;
+  visible: boolean;
+  onChangeDraft: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+};
+
+function TextComposerModal({
+  draft,
+  editing,
+  visible,
+  onChangeDraft,
+  onClose,
+  onSubmit,
+}: TextComposerModalProps) {
+  const C = useTheme();
+  const s = makeStyles(C);
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={s.keyboardAvoider}
+      >
+        <Pressable style={s.sheetOverlay} onPress={onClose}>
+          <Pressable
+            style={[s.sheetWrap, { paddingBottom: 10 }]}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <View style={s.sheetHandle} />
+            <Text style={s.sheetTitle}>{editing ? "Edit note" : "New note"}</Text>
+            <TextInput
+              value={draft}
+              onChangeText={onChangeDraft}
+              placeholder="Capture a thought, plan, or reminder..."
+              placeholderTextColor={C.textPlaceholder}
+              multiline
+              autoFocus
+              style={s.composerInput}
+            />
+            <TouchableOpacity style={s.primaryButton} onPress={onSubmit}>
+              <Text style={s.primaryButtonLabel}>
+                {editing ? "Update" : "Save"}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+type VoiceComposerModalProps = {
+  bottomInset: number;
+  durationMillis: number;
+  hasRecording: boolean;
+  isPaused: boolean;
+  isRecording: boolean;
+  isSaving: boolean;
+  visible: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+  onToggleRecording: () => void;
+};
+
+function VoiceComposerModal({
+  bottomInset,
+  durationMillis,
+  hasRecording,
+  isPaused,
+  isRecording,
+  isSaving,
+  visible,
+  onCancel,
+  onSave,
+  onToggleRecording,
+}: VoiceComposerModalProps) {
+  const C = useTheme();
+  const s = makeStyles(C);
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={visible}
+      onRequestClose={onCancel}
+    >
+      <Pressable style={s.sheetOverlay} onPress={onCancel}>
+        <Pressable
+          style={[s.sheetWrap, { paddingBottom: bottomInset + 20 }]}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <View style={s.sheetHandle} />
+          <Text style={s.sheetTitle}>Voice note</Text>
+          <Text style={s.recordingTimer}>
+            {formatDuration(durationMillis)}
+          </Text>
+          <View style={s.recordActionWrap}>
+            <TouchableOpacity
+              style={[
+                s.recordButton,
+                isRecording ? s.recordButtonActive : null,
+                isPaused ? s.recordButtonPaused : null,
+              ]}
+              onPress={onToggleRecording}
+              activeOpacity={0.82}
+            >
+              <Ionicons
+                name={isRecording ? "pause" : isPaused ? "play" : "mic"}
+                size={28}
+                color={palette.white}
+              />
+            </TouchableOpacity>
+            <Text style={s.recordActionLabel}>
+              {isRecording
+                ? "Pause recording"
+                : isPaused
+                  ? "Continue recording"
+                  : "Start recording"}
+            </Text>
+          </View>
+          <View style={s.voiceActions}>
+            <TouchableOpacity style={s.secondaryButton} onPress={onCancel}>
+              <Text style={s.secondaryButtonLabel}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                s.primaryButton,
+                s.voicePrimaryButton,
+                !hasRecording ? s.primaryButtonDisabled : null,
+              ]}
+              disabled={!hasRecording || isSaving}
+              onPress={onSave}
+            >
+              <Text style={s.primaryButtonLabel}>
+                {isSaving ? "Saving..." : "Save"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+type NoteViewerModalProps = {
+  bottomInset: number;
+  note: Note | null;
+  onClose: () => void;
+  onCopy: (note: Note) => void;
+  onShare: (note: Note) => void;
+};
+
+function NoteViewerModal({
+  bottomInset,
+  note,
+  onClose,
+  onCopy,
+  onShare,
+}: NoteViewerModalProps) {
+  const C = useTheme();
+  const s = makeStyles(C);
+  const content = note ? getPreview(note.content) : "";
+
+  return (
+    <Modal
+      animationType="fade"
+      transparent
+      visible={note != null}
+      onRequestClose={onClose}
+    >
+      <View style={s.viewerOverlay}>
+        <View style={[s.viewerCard, { marginBottom: bottomInset + 24 }]}>
+          <View style={s.viewerHeader}>
+            <Text style={s.viewerTime}>
+              {formatTime(note?.createdAt ?? null)}
+            </Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={20} color={C.iconSecondary} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            style={s.viewerScroll}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.viewerScrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {note && isAudioNote(note) && note.mediaUrl ? (
+              <AudioNotePlayer uri={note.mediaUrl} />
+            ) : note?.mediaUrl ? (
+              <Image
+                source={{ uri: note.mediaUrl }}
+                style={s.viewerImage}
+                resizeMode="contain"
+              />
+            ) : null}
+            {content && !isAudioNote(note) ? (
+              <Text style={s.viewerBody}>{content}</Text>
+            ) : null}
+          </ScrollView>
+          {note ? (
+            <View style={s.viewerFooter}>
+              <TouchableOpacity
+                style={s.viewerFooterButton}
+                onPress={() => onCopy(note)}
+              >
+                <Ionicons name="copy-outline" size={16} color={C.iconSecondary} />
+                <Text style={s.viewerFooterLabel}>Copy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.viewerFooterButton}
+                onPress={() => onShare(note)}
+              >
+                <Ionicons name="share-outline" size={16} color={C.iconSecondary} />
+                <Text style={s.viewerFooterLabel}>Share</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function NotesScreen() {
   const insets = useSafeAreaInsets();
   const C = useTheme();
@@ -146,6 +566,7 @@ export default function NotesScreen() {
   const [isVoiceComposerVisible, setIsVoiceComposerVisible] = useState(false);
   const [isSavingVoiceNote, setIsSavingVoiceNote] = useState(false);
   const [hasVoiceRecording, setHasVoiceRecording] = useState(false);
+  const [isVoiceRecordingPaused, setIsVoiceRecordingPaused] = useState(false);
   const [draft, setDraft] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -154,7 +575,6 @@ export default function NotesScreen() {
   );
 
   const closeSheet = () => setIsSheetVisible(false);
-  const selectedNoteContent = selectedNote ? getPreview(selectedNote.content) : "";
 
   const copyNote = async (note: Note) => {
     const content = getPreview(note.content);
@@ -265,13 +685,26 @@ export default function NotesScreen() {
       playsInSilentMode: true,
     });
     setHasVoiceRecording(false);
+    setIsVoiceRecordingPaused(false);
     setIsVoiceComposerVisible(true);
   };
 
-  const handleStartRecording = async () => {
+  const handleToggleRecording = async () => {
     try {
-      await audioRecorder.prepareToRecordAsync();
+      if (recorderState.isRecording) {
+        audioRecorder.pause();
+        setIsVoiceRecordingPaused(true);
+        await Haptics.selectionAsync();
+        return;
+      }
+
+      if (!hasVoiceRecording) {
+        await audioRecorder.prepareToRecordAsync();
+        setHasVoiceRecording(true);
+      }
+
       audioRecorder.record();
+      setIsVoiceRecordingPaused(false);
       setHasVoiceRecording(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
@@ -280,9 +713,16 @@ export default function NotesScreen() {
   };
 
   const handleCancelRecording = async () => {
-    if (recorderState.isRecording) {
-      await audioRecorder.stop();
+    if (hasVoiceRecording || recorderState.isRecording) {
+      try {
+        await audioRecorder.stop();
+      } catch {
+        // The recorder may already be stopped after an interruption.
+      }
     }
+    await enablePlaybackAudioMode();
+    setHasVoiceRecording(false);
+    setIsVoiceRecordingPaused(false);
     setIsVoiceComposerVisible(false);
   };
 
@@ -293,6 +733,8 @@ export default function NotesScreen() {
     try {
       if (recorderState.isRecording) {
         await audioRecorder.stop();
+      } else if (hasVoiceRecording) {
+        await audioRecorder.stop();
       }
 
       const uri = audioRecorder.uri;
@@ -301,7 +743,12 @@ export default function NotesScreen() {
         return;
       }
 
-      await createNote(VOICE_NOTE_CONTENT, uri);
+      const persistedUri = await persistVoiceNote(uri);
+
+      await createNote(VOICE_NOTE_CONTENT, persistedUri);
+      await enablePlaybackAudioMode();
+      setHasVoiceRecording(false);
+      setIsVoiceRecordingPaused(false);
       setIsVoiceComposerVisible(false);
     } catch {
       Alert.alert("Save failed", "Unable to save this voice note right now.");
@@ -413,69 +860,18 @@ export default function NotesScreen() {
               <Text style={s.sectionMeta}>{section.data.length} items</Text>
             </View>
           )}
-          renderItem={({ item, index, section }) => {
-            const preview = getPreview(item.content);
-            const trimmed = isTrimmed(item.content);
-            const audioNote = isAudioNote(item);
-            const shouldOpenDetail = Boolean(item.mediaUrl) || trimmed;
-            const cardStyle = {
-              ...s.card,
-              ...(index === 0 ? s.cardFirst : {}),
-              ...(index === section.data.length - 1 ? s.cardLast : {}),
-            };
-            return (
-              <SwipeableRow
-                onEdit={() => handleEditNote(item)}
-                onDelete={() => handleDeleteNote(item)}
-              >
-                <Pressable
-                  disabled={!shouldOpenDetail}
-                  onPress={() => {
-                    if (shouldOpenDetail) setSelectedNote(item);
-                  }}
-                >
-                  <AdaptiveBlurView style={cardStyle}>
-                    <View style={s.cardTopRow}>
-                      <Text style={s.timeLabel}>{formatTime(item.createdAt ?? null)}</Text>
-                    </View>
-                    {audioNote && item.mediaUrl ? (
-                      <AudioNotePlayer uri={item.mediaUrl} compact />
-                    ) : item.mediaUrl ? (
-                      <Image
-                        source={{ uri: item.mediaUrl }}
-                        style={s.noteImage}
-                        resizeMode="cover"
-                      />
-                    ) : null}
-                    {preview && !audioNote ? (
-                      <View>
-                        <Text style={s.noteBody} numberOfLines={6}>
-                          {preview}
-                        </Text>
-                        {trimmed ? (
-                          <Text style={s.trimmedHint}>... more</Text>
-                        ) : null}
-                      </View>
-                    ) : null}
-                    <View style={s.noteActions}>
-                      <TouchableOpacity
-                        style={s.noteActionButton}
-                        onPress={() => copyNote(item)}
-                      >
-                        <Ionicons name="copy-outline" size={14} color={C.iconSecondary} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={s.noteActionButton}
-                        onPress={() => shareNote(item)}
-                      >
-                        <Ionicons name="share-outline" size={14} color={C.iconSecondary} />
-                      </TouchableOpacity>
-                    </View>
-                  </AdaptiveBlurView>
-                </Pressable>
-              </SwipeableRow>
-            );
-          }}
+          renderItem={({ item, index, section }) => (
+            <NoteListItem
+              note={item}
+              index={index}
+              isLast={index === section.data.length - 1}
+              onCopy={copyNote}
+              onDelete={handleDeleteNote}
+              onEdit={handleEditNote}
+              onOpenDetail={setSelectedNote}
+              onShare={shareNote}
+            />
+          )}
           SectionSeparatorComponent={() => <View style={s.sectionSpacer} />}
         />
       </SafeAreaView>
@@ -490,203 +886,46 @@ export default function NotesScreen() {
         </View>
       </TouchableOpacity>
 
-      <Modal
-        animationType="slide"
-        transparent
+      <AddNoteSheet
+        bottomInset={insets.bottom}
         visible={isSheetVisible}
-        onRequestClose={closeSheet}
-      >
-        <Pressable style={s.sheetOverlay} onPress={closeSheet}>
-          <Pressable
-            style={[s.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <View style={s.sheetHandle} />
-            <Text style={s.sheetTitle}>Add a note</Text>
-            <Text style={s.sheetSubtitle}>Choose how you want to capture it.</Text>
+        onClose={closeSheet}
+        onOpenCamera={handleOpenCamera}
+        onPickImage={handlePickImage}
+        onPasteNote={handlePasteNote}
+        onTextNote={handleOpenTextComposer}
+        onVoiceNote={handleVoiceNote}
+      />
 
-            <TouchableOpacity style={s.sheetRow} onPress={handleOpenTextComposer}>
-              <Ionicons name="create-outline" size={20} color={C.textPrimary} />
-              <Text style={s.sheetRowLabel}>Text input</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={s.sheetRow} onPress={handlePasteNote}>
-              <Ionicons name="clipboard-outline" size={20} color={C.textPrimary} />
-              <Text style={s.sheetRowLabel}>Pasted input</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={s.sheetRow} onPress={handleVoiceNote}>
-              <Ionicons name="mic-outline" size={20} color={C.textPrimary} />
-              <Text style={s.sheetRowLabel}>Voice</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={s.sheetRow} onPress={handlePickImage}>
-              <Ionicons name="image-outline" size={20} color={C.textPrimary} />
-              <Text style={s.sheetRowLabel}>Image</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={s.sheetRow} onPress={handleOpenCamera}>
-              <Ionicons name="camera-outline" size={20} color={C.textPrimary} />
-              <Text style={s.sheetRowLabel}>Camera</Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent
+      <TextComposerModal
+        draft={draft}
+        editing={editingNoteId != null}
         visible={isTextComposerVisible}
-        onRequestClose={() => setIsTextComposerVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={s.keyboardAvoider}
-        >
-          <Pressable
-            style={s.sheetOverlay}
-            onPress={() => setIsTextComposerVisible(false)}
-          >
-            <Pressable
-              style={[s.sheetWrap, { paddingBottom: 10 }]}
-              onPress={(event) => event.stopPropagation()}
-            >
-              <View style={s.sheetHandle} />
-              <Text style={s.sheetTitle}>
-                {editingNoteId != null ? "Edit note" : "New note"}
-              </Text>
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="Capture a thought, plan, or reminder..."
-                placeholderTextColor={C.textPlaceholder}
-                multiline
-                autoFocus
-                style={s.composerInput}
-              />
-              <TouchableOpacity style={s.primaryButton} onPress={handleSubmitTextNote}>
-                <Text style={s.primaryButtonLabel}>
-                  {editingNoteId != null ? "Update note" : "Save note"}
-                </Text>
-              </TouchableOpacity>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
+        onChangeDraft={setDraft}
+        onClose={() => setIsTextComposerVisible(false)}
+        onSubmit={handleSubmitTextNote}
+      />
 
-      <Modal
-        animationType="slide"
-        transparent
+      <VoiceComposerModal
+        bottomInset={insets.bottom}
+        durationMillis={recorderState.durationMillis}
+        hasRecording={hasVoiceRecording}
+        isPaused={isVoiceRecordingPaused}
+        isRecording={recorderState.isRecording}
+        isSaving={isSavingVoiceNote}
         visible={isVoiceComposerVisible}
-        onRequestClose={handleCancelRecording}
-      >
-        <Pressable style={s.sheetOverlay} onPress={handleCancelRecording}>
-          <Pressable
-            style={[s.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <View style={s.sheetHandle} />
-            <Text style={s.sheetTitle}>Voice note</Text>
-            <Text style={s.recordingTimer}>
-              {formatDuration(recorderState.durationMillis)}
-            </Text>
-            <TouchableOpacity
-              style={[
-                s.recordButton,
-                recorderState.isRecording ? s.recordButtonActive : null,
-              ]}
-              onPress={
-                recorderState.isRecording
-                  ? async () => {
-                      await audioRecorder.stop();
-                      await Haptics.selectionAsync();
-                    }
-                  : handleStartRecording
-              }
-            >
-              <Ionicons
-                name={recorderState.isRecording ? "stop" : "mic"}
-                size={28}
-                color={palette.white}
-              />
-            </TouchableOpacity>
-            <View style={s.voiceActions}>
-              <TouchableOpacity style={s.secondaryButton} onPress={handleCancelRecording}>
-                <Text style={s.secondaryButtonLabel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  s.primaryButton,
-                  !hasVoiceRecording ? s.primaryButtonDisabled : null,
-                ]}
-                disabled={!hasVoiceRecording || isSavingVoiceNote}
-                onPress={handleSaveRecording}
-              >
-                <Text style={s.primaryButtonLabel}>
-                  {isSavingVoiceNote ? "Saving..." : "Save note"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onCancel={handleCancelRecording}
+        onSave={handleSaveRecording}
+        onToggleRecording={handleToggleRecording}
+      />
 
-      <Modal
-        animationType="fade"
-        transparent
-        visible={selectedNote != null}
-        onRequestClose={() => setSelectedNote(null)}
-      >
-        <View style={s.viewerOverlay}>
-          <View style={[s.viewerCard, { marginBottom: insets.bottom + 24 }]}>
-            <View style={s.viewerHeader}>
-              <Text style={s.viewerTime}>
-                {formatTime(selectedNote?.createdAt ?? null)}
-              </Text>
-              <TouchableOpacity onPress={() => setSelectedNote(null)}>
-                <Ionicons name="close" size={20} color={C.iconSecondary} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              style={s.viewerScroll}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={s.viewerScrollContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              {selectedNote && isAudioNote(selectedNote) && selectedNote.mediaUrl ? (
-                <AudioNotePlayer uri={selectedNote.mediaUrl} />
-              ) : selectedNote?.mediaUrl ? (
-                <Image
-                  source={{ uri: selectedNote.mediaUrl }}
-                  style={s.viewerImage}
-                  resizeMode="contain"
-                />
-              ) : null}
-              {selectedNoteContent && !isAudioNote(selectedNote) ? (
-                <Text style={s.viewerBody}>{selectedNoteContent}</Text>
-              ) : null}
-            </ScrollView>
-            {selectedNote ? (
-              <View style={s.viewerFooter}>
-                <TouchableOpacity
-                  style={s.viewerFooterButton}
-                  onPress={() => copyNote(selectedNote)}
-                >
-                  <Ionicons name="copy-outline" size={16} color={C.iconSecondary} />
-                  <Text style={s.viewerFooterLabel}>Copy</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={s.viewerFooterButton}
-                  onPress={() => shareNote(selectedNote)}
-                >
-                  <Ionicons name="share-outline" size={16} color={C.iconSecondary} />
-                  <Text style={s.viewerFooterLabel}>Share</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+      <NoteViewerModal
+        bottomInset={insets.bottom}
+        note={selectedNote}
+        onClose={() => setSelectedNote(null)}
+        onCopy={copyNote}
+        onShare={shareNote}
+      />
     </View>
   );
 }
@@ -952,13 +1191,24 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       backgroundColor: palette.orange,
       borderWidth: 1,
       borderColor: palette.orange35,
-      marginBottom: 22,
     },
     recordButtonActive: { backgroundColor: "#D94A38" },
+    recordButtonPaused: { backgroundColor: "#2F80ED" },
+    recordActionWrap: {
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 22,
+    },
+    recordActionLabel: {
+      color: C.textSecondary,
+      fontSize: 13,
+      fontWeight: "700",
+    },
     voiceActions: {
       flexDirection: "row",
       gap: 10,
     },
+    voicePrimaryButton: { flex: 1 },
     viewerOverlay: {
       flex: 1,
       justifyContent: "flex-end",
