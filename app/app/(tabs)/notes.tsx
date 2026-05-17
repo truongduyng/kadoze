@@ -22,7 +22,9 @@ import React, { useMemo, useState } from "react";
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   SectionList,
@@ -525,7 +527,7 @@ export default function NotesScreen() {
 
             <TouchableOpacity style={s.sheetRow} onPress={handleOpenCamera}>
               <Ionicons name="camera-outline" size={20} color={C.textPrimary} />
-              <Text style={s.sheetRowLabel}>Cam</Text>
+              <Text style={s.sheetRowLabel}>Camera</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -537,34 +539,39 @@ export default function NotesScreen() {
         visible={isTextComposerVisible}
         onRequestClose={() => setIsTextComposerVisible(false)}
       >
-        <Pressable
-          style={s.sheetOverlay}
-          onPress={() => setIsTextComposerVisible(false)}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={s.keyboardAvoider}
         >
           <Pressable
-            style={[s.sheetWrap, { paddingBottom: insets.bottom + 20 }]}
-            onPress={(event) => event.stopPropagation()}
+            style={s.sheetOverlay}
+            onPress={() => setIsTextComposerVisible(false)}
           >
-            <View style={s.sheetHandle} />
-            <Text style={s.sheetTitle}>
-              {editingNoteId != null ? "Edit note" : "New note"}
-            </Text>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="Capture a thought, plan, or reminder..."
-              placeholderTextColor={C.textPlaceholder}
-              multiline
-              autoFocus
-              style={s.composerInput}
-            />
-            <TouchableOpacity style={s.primaryButton} onPress={handleSubmitTextNote}>
-              <Text style={s.primaryButtonLabel}>
-                {editingNoteId != null ? "Update note" : "Save note"}
+            <Pressable
+              style={[s.sheetWrap, { paddingBottom: 10 }]}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <View style={s.sheetHandle} />
+              <Text style={s.sheetTitle}>
+                {editingNoteId != null ? "Edit note" : "New note"}
               </Text>
-            </TouchableOpacity>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Capture a thought, plan, or reminder..."
+                placeholderTextColor={C.textPlaceholder}
+                multiline
+                autoFocus
+                style={s.composerInput}
+              />
+              <TouchableOpacity style={s.primaryButton} onPress={handleSubmitTextNote}>
+                <Text style={s.primaryButtonLabel}>
+                  {editingNoteId != null ? "Update note" : "Save note"}
+                </Text>
+              </TouchableOpacity>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal
@@ -838,6 +845,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "flex-end",
       backgroundColor: C.overlayBg,
     },
+    keyboardAvoider: { flex: 1 },
     sheetWrap: {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
@@ -906,7 +914,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     primaryButtonDisabled: { opacity: 0.45 },
     primaryButtonLabel: {
-      color: "#121212",
+      color: C.textInverse,
       fontSize: 15,
       fontWeight: "800",
     },

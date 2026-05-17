@@ -1,7 +1,9 @@
 import Constants from "expo-constants";
+import * as StoreReview from "expo-store-review";
 import React from "react";
 import {
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,12 +22,39 @@ import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
+const PRIVACY_POLICY_URL = "https://kado.app/privacy";
+const TERMS_OF_SERVICE_URL = "https://kado.app/terms";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const C = useTheme();
   const version = Constants.expoConfig?.version ?? "1.0.0";
   const { preference, setPreference } = useThemePreference();
+
+  const openExternalUrl = async (url: string) => {
+    const supported = await Linking.canOpenURL(url);
+
+    if (!supported) {
+      Alert.alert("Unable to open link", "Please try again later.");
+      return;
+    }
+
+    await Linking.openURL(url);
+  };
+
+  const handleRate = async () => {
+    const available = await StoreReview.isAvailableAsync();
+
+    if (!available) {
+      Alert.alert(
+        "Rating unavailable",
+        "Store ratings are not available on this device.",
+      );
+      return;
+    }
+
+    await StoreReview.requestReview();
+  };
 
   const handleReset = () => {
     Alert.alert(
@@ -50,7 +79,16 @@ export default function SettingsScreen() {
   return (
     <View style={s.container}>
       <GradientBackground />
-      <Stack.Screen options={{ title: "Settings", headerShown: true }} />
+      <Stack.Screen
+        options={{
+          title: "Settings",
+          headerShown: true,
+          headerStyle: { backgroundColor: C.screenBg },
+          headerTintColor: C.textPrimary,
+          headerTitleStyle: { color: C.textPrimary },
+          headerShadowVisible: false,
+        }}
+      />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
@@ -100,6 +138,39 @@ export default function SettingsScreen() {
             App
           </Text>
           <View style={s.listCard}>
+            <Pressable
+              style={s.actionRow}
+              onPress={() => openExternalUrl(PRIVACY_POLICY_URL)}
+            >
+              <Text selectable style={s.rowLabel}>
+                Privacy Policy
+              </Text>
+              <Text selectable style={s.chevron}>
+                ›
+              </Text>
+            </Pressable>
+            <View style={s.divider} />
+            <Pressable
+              style={s.actionRow}
+              onPress={() => openExternalUrl(TERMS_OF_SERVICE_URL)}
+            >
+              <Text selectable style={s.rowLabel}>
+                Terms of Service
+              </Text>
+              <Text selectable style={s.chevron}>
+                ›
+              </Text>
+            </Pressable>
+            <View style={s.divider} />
+            <Pressable style={s.actionRow} onPress={handleRate}>
+              <Text selectable style={s.rowLabel}>
+                Rate Kado
+              </Text>
+              <Text selectable style={s.chevron}>
+                ›
+              </Text>
+            </Pressable>
+            <View style={s.divider} />
             <View style={s.listRow}>
               <Text selectable style={s.rowLabel}>
                 Version
@@ -109,14 +180,6 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <View style={s.divider} />
-            <View style={s.listRow}>
-              <Text selectable style={s.rowLabel}>
-                Navigation
-              </Text>
-              <Text selectable style={s.rowValue}>
-                Native tabs
-              </Text>
-            </View>
           </View>
         </View>
 

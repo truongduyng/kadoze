@@ -59,7 +59,7 @@ export const Colors = {
 
     // semantic surfaces
     screenBg: '#F2F2F7',
-    heroBg: '#FFFFFF',
+    heroBg: '#F2F2F7',
     cardBg: 'rgba(0,0,0,0.04)',
     cardBorder: 'rgba(0,0,0,0.08)',
     sheetBg: '#FFFFFF',
