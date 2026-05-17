@@ -1,0 +1,30 @@
+<svg width="1002" height="708" viewBox="0 0 1002 708" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1002" height="708" fill="#000000"/>
+  <image href="/Users/truongduyng/workspace/kadoze/app/assets/images/logo_dark.png" x="352" y="46" width="298" height="298" preserveAspectRatio="xMidYMid meet"/>
+
+  <g fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M107 455 V546"/>
+    <path d="M167 455 L111 510"/>
+    <path d="M123 497 L176 546"/>
+
+    <path d="M241 546 L286 456 L333 546"/>
+
+    <path d="M404 456 H453 C480 456 503 477 503 501 C503 525 482 546 453 546 H404 Z"/>
+
+    <circle cx="596" cy="501" r="49"/>
+
+    <path d="M697 456 H771 L704 546 H784"/>
+
+    <path d="M847 456 H918"/>
+    <path d="M847 501 H905"/>
+    <path d="M847 546 H918"/>
+  </g>
+
+  <text x="501" y="637"
+        text-anchor="middle"
+        font-family="sans-serif"
+        font-size="34"
+        font-weight="700"
+        letter-spacing="18"
+        fill="#ff965c">SMALL STEPS - DEEP FOCUS</text>
+</svg>
