@@ -288,7 +288,7 @@ export default function EveningResetScreen() {
                           </View>
                           <View style={[s.stepIcon, isDone && s.stepIconActive]}>
                             {isDone ? (
-                              <Ionicons name="checkmark" size={14} color={palette.orange} />
+                              <Ionicons name="checkmark" size={14} color={palette.white} />
                             ) : null}
                           </View>
                         </Pressable>
@@ -504,8 +504,8 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "center",
     },
     stepIconActive: {
-      borderColor: C.accentBorderSubtle,
-      backgroundColor: C.accentBgSubtle,
+      borderColor: palette.orangeStrong,
+      backgroundColor: palette.orangeStrong,
     },
     planCard: {
       marginTop: 16,

@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 
 export const palette = {
   orange: '#FB923C',
+  orangeStrong: '#F97316',
   white: '#FFFFFF',
   black: '#000000',
 

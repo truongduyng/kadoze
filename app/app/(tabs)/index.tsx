@@ -10,16 +10,14 @@ import { router } from "expo-router";
 import React, { useMemo, useState, useRef } from "react";
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
   Keyboard,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAY_NAMES } from "@/lib/performance";
 import { palette } from "@/constants/theme";
@@ -125,16 +123,14 @@ export default function HomeScreen() {
   const s = makeStyles(C);
 
   return (
-    <KeyboardAvoidingView
-      style={s.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <View style={s.container}>
       <GradientBackground />
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={[
           s.content,
           { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 96 },
         ]}
+        bottomOffset={24}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -152,7 +148,6 @@ export default function HomeScreen() {
                 {getGreeting()}, {firstName}
               </Text>
             </View>
-            <Text style={s.date}>{"Let's make today count."}</Text>
           </View>
 
           <Text style={s.heroSectionLabel}>{"TODAY'S MAIN GOAL"}</Text>
@@ -316,8 +311,8 @@ export default function HomeScreen() {
             </View>
           </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 }
 
@@ -366,7 +361,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     birdTwo: { right: 74, top: 48 },
     birdThree: { right: 42, top: 82 },
     header: {
-      marginBottom: 52,
+      marginBottom: 24,
     },
     greetingRow: {
       flexDirection: "row",
@@ -523,7 +518,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "center",
     },
-    checkboxDone: { backgroundColor: palette.orange, borderColor: palette.orange },
+    checkboxDone: { backgroundColor: palette.orangeStrong, borderColor: palette.orangeStrong },
     emptyRow: { paddingVertical: 20, paddingHorizontal: 16 },
     emptyText: { fontSize: 14, color: C.textQuaternary, textAlign: "center" },
 
