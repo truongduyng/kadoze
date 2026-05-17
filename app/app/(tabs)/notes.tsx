@@ -848,10 +848,43 @@ export default function NotesScreen() {
           ]}
           ListEmptyComponent={
             <AdaptiveBlurView style={s.emptyCard}>
-              <Text style={s.emptyTitle}>No notes yet</Text>
+              <View style={s.emptyIconWrap}>
+                <Ionicons name="journal-outline" size={30} color={C.accentText} />
+              </View>
+              <Text style={s.emptyEyebrow}>NOTES</Text>
+              <Text style={s.emptyTitle}>Capture what matters</Text>
               <Text style={s.emptyBody}>
-                Start writing and your notes will appear here, grouped by day.
+                Save thoughts, images, pasted text, or voice notes. Everything you add here will be
+                grouped by day.
               </Text>
+              <View style={s.emptyActions}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={handleOpenTextComposer}
+                  style={s.emptyPrimaryButton}
+                >
+                  <Ionicons name="create-outline" size={18} color={C.textInverse} />
+                  <Text style={s.emptyPrimaryLabel}>Write note</Text>
+                </TouchableOpacity>
+                <View style={s.emptySecondaryRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={handlePasteNote}
+                    style={s.emptySecondaryButton}
+                  >
+                    <Ionicons name="clipboard-outline" size={17} color={C.iconSecondary} />
+                    <Text style={s.emptySecondaryLabel}>Paste</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={handleVoiceNote}
+                    style={s.emptySecondaryButton}
+                  >
+                    <Ionicons name="mic-outline" size={17} color={C.iconSecondary} />
+                    <Text style={s.emptySecondaryLabel}>Voice</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </AdaptiveBlurView>
           }
           renderSectionHeader={({ section }) => (
@@ -1042,22 +1075,85 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderRadius: 999,
     },
     emptyCard: {
-      borderRadius: 14,
+      alignItems: "center",
+      borderRadius: 18,
       borderWidth: 1,
       borderColor: C.cardBorder,
-      padding: 20,
+      paddingHorizontal: 22,
+      paddingVertical: 28,
       backgroundColor: C.cardBg,
+    },
+    emptyIconWrap: {
+      width: 62,
+      height: 62,
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.accentBg,
+      borderWidth: 1,
+      borderColor: C.accentBorder,
+      marginBottom: 16,
+    },
+    emptyEyebrow: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 1.4,
+      marginBottom: 8,
     },
     emptyTitle: {
       color: C.textPrimary,
-      fontSize: 18,
-      fontWeight: "700",
+      fontSize: 22,
+      fontWeight: "800",
       marginBottom: 8,
+      textAlign: "center",
     },
     emptyBody: {
       color: C.textSecondary,
       fontSize: 14,
       lineHeight: 21,
+      textAlign: "center",
+      maxWidth: 310,
+    },
+    emptyActions: {
+      width: "100%",
+      gap: 10,
+      marginTop: 22,
+    },
+    emptyPrimaryButton: {
+      minHeight: 50,
+      borderRadius: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: palette.orange,
+    },
+    emptyPrimaryLabel: {
+      color: C.textInverse,
+      fontSize: 15,
+      fontWeight: "800",
+    },
+    emptySecondaryRow: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    emptySecondaryButton: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 7,
+    },
+    emptySecondaryLabel: {
+      color: C.textSecondary,
+      fontSize: 14,
+      fontWeight: "700",
     },
     fab: {
       position: "absolute",
