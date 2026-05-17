@@ -60,38 +60,39 @@ export const Colors = {
     // semantic surfaces
     screenBg: '#F2F2F7',
     heroBg: '#F2F2F7',
-    cardBg: 'rgba(0,0,0,0.04)',
-    cardBorder: 'rgba(0,0,0,0.08)',
+    cardBg: '#FFFFFF',
+    cardBorder: 'rgba(15,23,42,0.12)',
     sheetBg: '#FFFFFF',
-    sheetHandle: 'rgba(0,0,0,0.15)',
-    inputBg: 'rgba(0,0,0,0.05)',
-    inputBorder: 'rgba(0,0,0,0.10)',
-    divider: 'rgba(0,0,0,0.08)',
+    sheetHandle: 'rgba(15,23,42,0.22)',
+    inputBg: '#F8FAFC',
+    inputBorder: 'rgba(15,23,42,0.14)',
+    divider: 'rgba(15,23,42,0.12)',
     overlayBg: 'rgba(0,0,0,0.35)',
 
     // text
     textPrimary: '#0A0A0A',
-    textSecondary: 'rgba(0,0,0,0.55)',
-    textTertiary: 'rgba(0,0,0,0.38)',
-    textQuaternary: 'rgba(0,0,0,0.25)',
-    textPlaceholder: 'rgba(0,0,0,0.30)',
+    textSecondary: 'rgba(15,23,42,0.70)',
+    textTertiary: 'rgba(15,23,42,0.56)',
+    textQuaternary: 'rgba(15,23,42,0.44)',
+    textPlaceholder: 'rgba(15,23,42,0.42)',
     textInverse: '#FFFFFF',
 
     // interactive
     iconPrimary: '#0A0A0A',
-    iconSecondary: 'rgba(0,0,0,0.55)',
-    iconTertiary: 'rgba(0,0,0,0.35)',
+    iconSecondary: 'rgba(15,23,42,0.68)',
+    iconTertiary: 'rgba(15,23,42,0.48)',
 
     // accent — orange stays the same in both themes
     accent: palette.orange,
+    accentText: '#C2410C',
     accentBg: 'rgba(251,146,60,0.12)',
     accentBorder: 'rgba(251,146,60,0.35)',
     accentBgSubtle: 'rgba(251,146,60,0.08)',
     accentBorderSubtle: 'rgba(251,146,60,0.25)',
 
     // heatmap
-    heatIdle: 'rgba(0,0,0,0.06)',
-    heatIdleBorder: 'rgba(0,0,0,0.08)',
+    heatIdle: 'rgba(15,23,42,0.08)',
+    heatIdleBorder: 'rgba(15,23,42,0.12)',
     heatLow: 'rgba(240,136,60,0.28)',
     heatMid: 'rgba(240,136,60,0.55)',
     heatHigh: palette.orange,
@@ -132,6 +133,7 @@ export const Colors = {
 
     // accent
     accent: palette.orange,
+    accentText: palette.orange,
     accentBg: palette.orange12,
     accentBorder: palette.orange35,
     accentBgSubtle: palette.orange08,

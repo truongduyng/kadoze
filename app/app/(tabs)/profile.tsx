@@ -290,16 +290,7 @@ export default function ProfileScreen() {
     };
   }, [allCompletions, allFocusRows, allHabits, allNotes, today]);
 
-  const initials = useMemo(() => {
-    if (!displayName || displayName === "User") return "U";
-    return displayName
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("");
-  }, [displayName]);
-
-  const displayAvatarIcon = savedAvatar ? resolveIoniconName(savedAvatar, "person-outline") : null;
+  const displayAvatarIcon = resolveIoniconName(savedAvatar, "person-outline");
 
   const trendChart = useMemo(
     () =>
@@ -337,11 +328,11 @@ export default function ProfileScreen() {
           <View style={s.identityTop}>
             <View style={s.identityPrimary}>
               <View style={s.avatar}>
-                {displayAvatarIcon ? (
-                  <Ionicons name={displayAvatarIcon} size={30} color={palette.orange} />
-                ) : (
-                  <Text selectable style={s.avatarText}>{initials}</Text>
-                )}
+                <Ionicons
+                  name={displayAvatarIcon}
+                  size={30}
+                  color={palette.orange}
+                />
               </View>
               <View style={s.identityMeta}>
                 <Text selectable style={s.name}>
@@ -618,11 +609,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderColor: C.accentBorder,
       alignItems: "center",
       justifyContent: "center",
-    },
-    avatarText: {
-      color: palette.orange,
-      fontSize: 26,
-      fontWeight: "800",
     },
     identityMeta: { flex: 1, gap: 3 },
     name: {

@@ -1,6 +1,5 @@
 import GradientBackground from "@/components/GradientBackground";
 import { Collapsible } from "@/components/ui/collapsible";
-import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import {
   db,
@@ -255,7 +254,7 @@ export default function RoutinesScreen() {
           <View style={s.card}>
             <View style={s.focusHeader}>
               <View style={s.focusBadge}>
-                <Ionicons name="flag-outline" size={12} color={palette.orange} />
+                <Ionicons name="flag-outline" size={12} color={C.accentText} />
                 <Text style={s.focusBadgeText}>
                   {currentFocus ? FOCUS_LABELS[currentFocus] : "Focus not set"}
                 </Text>
@@ -296,7 +295,7 @@ export default function RoutinesScreen() {
                             <Ionicons
                               name={resolveIoniconName(stage.keystone.icon, "star-outline")}
                               size={18}
-                              color={status === "available" ? palette.orange : C.iconSecondary}
+                              color={status === "available" ? C.accentText : C.iconSecondary}
                             />
                           </View>
                           <View style={s.focusHabitInfo}>
@@ -311,7 +310,7 @@ export default function RoutinesScreen() {
                           </View>
                         ) : status === "available" ? (
                           <View style={s.focusHabitRight}>
-                            <Ionicons name="add-circle" size={22} color={palette.orange} />
+                            <Ionicons name="add-circle" size={22} color={C.accentText} />
                             <Text style={s.focusHabitAvailable}>Add</Text>
                           </View>
                         ) : (
@@ -371,7 +370,7 @@ export default function RoutinesScreen() {
                             {habit.title}
                           </Text>
                           {isOwned && (
-                            <Ionicons name="checkmark-circle" size={14} color={palette.orange} />
+                            <Ionicons name="checkmark-circle" size={14} color={C.accentText} />
                           )}
                         </View>
                       );
@@ -447,11 +446,11 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       backgroundColor: C.inputBg,
     },
     streakDotActive: {
-      borderColor: palette.orange35,
-      backgroundColor: palette.orange,
+      borderColor: C.accentBorder,
+      backgroundColor: C.accentText,
     },
     streakBadge: { alignItems: "flex-end" },
-    streakText: { fontSize: 19, fontWeight: "800", color: palette.orange, lineHeight: 20 },
+    streakText: { fontSize: 19, fontWeight: "800", color: C.accentText, lineHeight: 20 },
     streakLabel: { fontSize: 11, color: C.textTertiary, marginTop: 6 },
     focusHeader: {
       flexDirection: "row",
@@ -474,7 +473,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     focusBadgeText: {
       fontSize: 12,
       fontWeight: "600",
-      color: palette.orange,
+      color: C.accentText,
     },
     focusRule: {
       fontSize: 11,
@@ -533,7 +532,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     focusHabitMetric: {
       fontSize: 18,
       fontWeight: "800",
-      color: palette.orange,
+      color: C.accentText,
     },
     focusHabitStatus: {
       fontSize: 10,
@@ -542,7 +541,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     focusHabitAvailable: {
       fontSize: 11,
-      color: palette.orange,
+      color: C.accentText,
       fontWeight: "700",
       marginTop: 2,
     },
