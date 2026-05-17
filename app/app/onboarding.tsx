@@ -107,11 +107,6 @@ export default function OnboardingScreen() {
           ) : (
             <View style={s.backBtn} />
           )}
-          {__DEV__ && (
-            <View style={s.devBadge}>
-              <Text style={s.devText}>DEV · {currentStep + 1}/{TOTAL}</Text>
-            </View>
-          )}
         </View>
 
         <Animated.View style={[s.flex, { opacity: fadeAnim }]}>

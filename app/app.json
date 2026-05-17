@@ -1,18 +1,18 @@
 {
   "expo": {
     "name": "Kadoze",
-    "slug": "kado",
+    "slug": "kadoze",
     "platforms": [
       "ios"
     ],
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "kado",
+    "scheme": "kadoze",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.kado.yikudo",
-      "icon": "./assets/images/kado.icon",
+      "bundleIdentifier": "app.kadoze.yikudo",
+      "icon": "./assets/images/kadoze.icon",
       "appleTeamId": "MVAX6C967A",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -24,12 +24,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon-ref.png",
+          "image": "./assets/images/logo_light.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "image": "./assets/images/icon-ref.png",
-            "backgroundColor": "#ffffff"
+            "image": "./assets/images/logo_dark.png",
+            "backgroundColor": "#000000"
           }
         }
       ],
@@ -38,7 +38,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/logo_light.png",
           "color": "#000000"
         }
       ],
