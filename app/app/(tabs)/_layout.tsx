@@ -27,10 +27,10 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger name="index" disableScrollToTop>
           <NativeTabs.Trigger.Icon
-            sf={{ default: "house", selected: "house.fill" }}
-            md="home"
+            sf={{ default: "target", selected: "target" }}
+            md="filter_center_focus"
           />
-          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="notes">
           <NativeTabs.Trigger.Icon
