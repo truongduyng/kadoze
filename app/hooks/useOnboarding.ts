@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { router } from "expo-router";
 import { profileOps, habitOps } from "@/lib/db";
+import { storage } from "@/lib/storage";
 import type { IoniconName } from "@/lib/iconNames";
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,52 @@ export const STEPS: StepConfig[] = [
 ];
 
 export const TOTAL = STEPS.length;
+
+const ONBOARDING_DRAFT_KEY = "onboarding:draft";
+
+interface OnboardingDraft {
+  version: 1;
+  currentStep: number;
+  coreProblem: string | null;
+  mainGoal: string;
+  keystoneHabit: string;
+  name: string;
+  avatar: IoniconName;
+}
+
+const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
+  version: 1,
+  currentStep: 0,
+  coreProblem: null,
+  mainGoal: "",
+  keystoneHabit: "",
+  name: "",
+  avatar: "happy-outline",
+};
+
+function readOnboardingDraft(): OnboardingDraft {
+  const raw = storage.getString(ONBOARDING_DRAFT_KEY);
+  if (!raw) return DEFAULT_ONBOARDING_DRAFT;
+
+  try {
+    const draft = JSON.parse(raw) as Partial<OnboardingDraft>;
+    return {
+      ...DEFAULT_ONBOARDING_DRAFT,
+      ...draft,
+      currentStep: Math.min(
+        Math.max(Math.trunc(draft.currentStep ?? 0), 0),
+        TOTAL - 1,
+      ),
+      coreProblem: draft.coreProblem ?? null,
+      mainGoal: draft.mainGoal ?? "",
+      keystoneHabit: draft.keystoneHabit ?? "",
+      name: draft.name ?? "",
+      avatar: draft.avatar ?? DEFAULT_ONBOARDING_DRAFT.avatar,
+    };
+  } catch {
+    return DEFAULT_ONBOARDING_DRAFT;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Keystone habits
@@ -235,14 +282,32 @@ export const KEYSTONE_HABITS: KeystoneHabit[] = [
 // ---------------------------------------------------------------------------
 
 export function useOnboarding() {
-  const [currentStep, setCurrentStep] = useState(0);
+  const initialDraft = useRef(readOnboardingDraft()).current;
+  const [currentStep, setCurrentStep] = useState(initialDraft.currentStep);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const [coreProblem, setCoreProblem] = useState<string | null>(null);
-  const [mainGoal, setMainGoal] = useState("");
-  const [keystoneHabit, setKeystoneHabit] = useState<string>("");
-  const [name, setName] = useState("");
-  const [avatar, setAvatar] = useState<IoniconName>("happy-outline");
+  const [coreProblem, setCoreProblem] = useState<string | null>(
+    initialDraft.coreProblem,
+  );
+  const [mainGoal, setMainGoal] = useState(initialDraft.mainGoal);
+  const [keystoneHabit, setKeystoneHabit] = useState<string>(
+    initialDraft.keystoneHabit,
+  );
+  const [name, setName] = useState(initialDraft.name);
+  const [avatar, setAvatar] = useState<IoniconName>(initialDraft.avatar);
+
+  useEffect(() => {
+    const draft: OnboardingDraft = {
+      version: 1,
+      currentStep,
+      coreProblem,
+      mainGoal,
+      keystoneHabit,
+      name,
+      avatar,
+    };
+    storage.set(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
+  }, [avatar, coreProblem, currentStep, keystoneHabit, mainGoal, name]);
 
   const goToStep = useCallback(
     (next: number) => {
@@ -298,6 +363,7 @@ export function useOnboarding() {
     } catch (e) {
       console.error("Error completing onboarding:", e);
     }
+    storage.delete(ONBOARDING_DRAFT_KEY);
     router.replace("/(tabs)");
   }, [avatar, keystoneHabit, name]);
 

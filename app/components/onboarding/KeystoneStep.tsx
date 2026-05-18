@@ -30,6 +30,7 @@ export default function KeystoneStep({ focus, selected, onSelect, onNext }: Keys
   const s = makeStyles(C);
   const habits: KeystoneHabit[] =
     KEYSTONE_HABITS_BY_FOCUS[focus] ?? DEFAULT_KEYSTONE_HABITS;
+  const hasSelectedHabit = habits.some((habit) => habit.id === selected);
 
   const focusLabel = FOCUS_LABEL[focus];
 
@@ -84,8 +85,8 @@ export default function KeystoneStep({ focus, selected, onSelect, onNext }: Keys
       </View>
 
       <TouchableOpacity
-        style={[s.btn, !selected && s.btnDisabled]}
-        onPress={selected ? onNext : undefined}
+        style={[s.btn, !hasSelectedHabit && s.btnDisabled]}
+        onPress={hasSelectedHabit ? onNext : undefined}
         activeOpacity={0.85}
       >
         <Text style={s.btnText}>Next</Text>

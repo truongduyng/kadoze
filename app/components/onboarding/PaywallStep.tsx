@@ -101,10 +101,6 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
       showsVerticalScrollIndicator={false}
     >
       <View style={s.header}>
-        <View style={s.badge}>
-          <Ionicons name="star-outline" size={14} color={palette.orange} />
-          <Text style={s.badgeText}>Kadoze Pro</Text>
-        </View>
         <Text style={s.headline}>Build your best self.</Text>
         <Text style={s.sub}>
           Everything you need to stay focused, consistent, and on track.

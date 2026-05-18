@@ -95,7 +95,10 @@ export default function OnboardingScreen() {
         return (
           <GoalStep
             value={mainGoal}
-            onChange={setMainGoal}
+            onChange={(value) => {
+              setMainGoal(value);
+              setKeystoneHabit("");
+            }}
             onNext={goNext}
           />
         );
