@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 16.18.0",
+    "version": ">= 18.13.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -8,23 +8,19 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zrHhbvLJvHOZJovoAuKpLNFnpuA"      }
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "your_revenuecat_ios_api_key"
+      }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zrHhbvLJvHOZJovoAuKpLNFnpuA"
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "your_revenuecat_ios_api_key"
       }
     },
     "production": {
       "autoIncrement": true,
-      "distribution": "store",
-      "ios": {
-        "simulator": false
-      },
       "env": {
-        "NODE_ENV": "production",
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zrHhbvLJvHOZJovoAuKpLNFnpuA"
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "your_revenuecat_ios_api_key"
       }
     }
   },

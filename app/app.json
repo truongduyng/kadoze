@@ -67,8 +67,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "0f0dc66c-a660-49d6-96bb-668dd710a6cf"
+        "projectId": "eed593e4-1bae-4665-8800-c856579b4bdd"
       }
-    }
+    },
+    "owner": "truongduyng"
   }
 }
