@@ -95,6 +95,8 @@ export default function HomeScreen() {
 
   const [inputText, setInputText] = useState("");
   const inputRef = useRef<TextInput>(null);
+  const isEveningResetUnlocked = useMemo(() => new Date().getHours() >= 21, []);
+  const [showResetLockMessage, setShowResetLockMessage] = useState(false);
 
   const addTodo = async () => {
     const title = inputText.trim();
@@ -288,11 +290,21 @@ export default function HomeScreen() {
 
         <View style={s.section}>
           <Text style={s.sectionLabel}>EVENING RESET</Text>
-          <Pressable style={s.resetCard} onPress={() => router.push("/evening-reset" as any)}>
+          <Pressable
+            style={s.resetCard}
+            onPress={() => {
+              if (isEveningResetUnlocked) {
+                router.push("/evening-reset" as any);
+              } else {
+                setShowResetLockMessage(true);
+                setTimeout(() => setShowResetLockMessage(false), 5000);
+              }
+            }}
+          >
             <View style={s.resetDecor}>
               <Image
                 source={require("../../assets/evening.jpeg")}
-                style={s.resetDecorImage}
+                style={[s.resetDecorImage, !isEveningResetUnlocked && s.resetDecorLocked]}
                 resizeMode="cover"
               />
               <View style={s.resetDecorOverlay} />
@@ -301,9 +313,14 @@ export default function HomeScreen() {
                   <Text style={s.resetBadgeText}>10 MIN RESET</Text>
                 </View>
                 <Text style={s.resetTitle}>Declutter before tomorrow</Text>
-                <Text style={s.resetBody}>
-                  Clear your space, close the loop on today, and set up tomorrow.
-                </Text>
+                <View>
+                  <Text style={[s.resetBody, showResetLockMessage && s.resetBodyHidden]}>
+                    Clear your space, close the loop on today, and set up tomorrow.
+                  </Text>
+                  {showResetLockMessage && (
+                    <Text style={[s.resetLockMessage, StyleSheet.absoluteFill]}>Available after 9 PM</Text>
+                  )}
+                </View>
               </View>
               <View style={s.resetAction}>
                 <Ionicons name="chevron-forward" size={18} color={palette.white} />
@@ -564,6 +581,18 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       height: 190,
       justifyContent: "flex-end",
       overflow: "hidden",
+    },
+    resetDecorLocked: {
+      opacity: 0.4,
+    },
+    resetBodyHidden: {
+      opacity: 0,
+    },
+    resetLockMessage: {
+      color: "rgba(255,179,102,0.85)",
+      fontSize: 14,
+      fontWeight: "600",
+      lineHeight: 21,
     },
     resetDecorImage: {
       width: "100%",
