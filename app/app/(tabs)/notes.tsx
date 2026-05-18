@@ -863,7 +863,7 @@ export default function NotesScreen() {
                   onPress={handleOpenTextComposer}
                   style={s.emptyPrimaryButton}
                 >
-                  <Ionicons name="create-outline" size={18} color={C.textInverse} />
+                  <Ionicons name="create-outline" size={18} color={palette.white} />
                   <Text style={s.emptyPrimaryLabel}>Write note</Text>
                 </TouchableOpacity>
                 <View style={s.emptySecondaryRow}>
@@ -1130,7 +1130,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       backgroundColor: palette.orange,
     },
     emptyPrimaryLabel: {
-      color: C.textInverse,
+      color: palette.white,
       fontSize: 15,
       fontWeight: "800",
     },
@@ -1246,7 +1246,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     primaryButtonDisabled: { opacity: 0.45 },
     primaryButtonLabel: {
-      color: C.textInverse,
+      color: palette.white,
       fontSize: 15,
       fontWeight: "800",
     },
