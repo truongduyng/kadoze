@@ -95,7 +95,7 @@ export default function HomeScreen() {
 
   const [inputText, setInputText] = useState("");
   const inputRef = useRef<TextInput>(null);
-  const isEveningResetUnlocked = useMemo(() => new Date().getHours() >= 21, []);
+  const isEveningResetUnlocked = useMemo(() => __DEV__ || new Date().getHours() >= 21, []);
   const [showResetLockMessage, setShowResetLockMessage] = useState(false);
 
   const addTodo = async () => {
