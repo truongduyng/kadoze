@@ -9,6 +9,8 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useState, useRef } from "react";
 import {
+  Animated,
+  Easing,
   Image,
   Pressable,
   StyleSheet,
@@ -24,6 +26,15 @@ import { palette } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SwipeableRow } from "@/components/todo/SwipeableRow";
 import { resolveIoniconName } from "@/lib/iconNames";
+
+const GOAL_CONFETTI = [
+  { x: -34, y: -34, color: "#FF6B22", rotate: "-28deg" },
+  { x: -12, y: -46, color: "#FFD166", rotate: "18deg" },
+  { x: 24, y: -38, color: "#2EC4B6", rotate: "42deg" },
+  { x: 42, y: -8, color: "#FF9F1C", rotate: "-18deg" },
+  { x: 30, y: 28, color: "#E85D75", rotate: "24deg" },
+  { x: -24, y: 32, color: "#7B61FF", rotate: "-42deg" },
+];
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -122,6 +133,18 @@ export default function HomeScreen() {
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
   const goalText = (todayFocus?.goal ?? "").trim();
   const isGoalComplete = Boolean(todayFocus?.completedAt);
+  const goalConfettiProgress = useRef(new Animated.Value(0)).current;
+
+  const playGoalConfetti = () => {
+    goalConfettiProgress.stopAnimation();
+    goalConfettiProgress.setValue(0);
+    Animated.timing(goalConfettiProgress, {
+      toValue: 1,
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
 
   const toggleGoalComplete = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -131,6 +154,7 @@ export default function HomeScreen() {
     }
 
     await dailyFocusOps.markComplete();
+    playGoalConfetti();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
@@ -208,6 +232,55 @@ export default function HomeScreen() {
                       color={isGoalComplete ? palette.white : palette.orange}
                     />
                   </View>
+                </View>
+                <View pointerEvents="none" style={s.goalConfettiLayer}>
+                  {GOAL_CONFETTI.map((piece, index) => {
+                    const travel = goalConfettiProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 1],
+                    });
+                    return (
+                      <Animated.View
+                        key={`${piece.color}-${index}`}
+                        style={[
+                          s.goalConfettiPiece,
+                          {
+                            backgroundColor: piece.color,
+                            opacity: goalConfettiProgress.interpolate({
+                              inputRange: [0, 0.2, 1],
+                              outputRange: [0, 1, 0],
+                            }),
+                            transform: [
+                              {
+                                translateX: travel.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0, piece.x],
+                                }),
+                              },
+                              {
+                                translateY: travel.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0, piece.y],
+                                }),
+                              },
+                              {
+                                rotate: goalConfettiProgress.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: ["0deg", piece.rotate],
+                                }),
+                              },
+                              {
+                                scale: goalConfettiProgress.interpolate({
+                                  inputRange: [0, 0.2, 1],
+                                  outputRange: [0.4, 1, 0.8],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}
+                      />
+                    );
+                  })}
                 </View>
               </Pressable>
             </View>
@@ -484,6 +557,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     goalRing: {
       alignItems: "center",
       justifyContent: "center",
+      position: "relative",
     },
     ringOuter: {
       width: 64,
@@ -506,6 +580,20 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     ringInnerDone: {
       backgroundColor: palette.orangeStrong,
+    },
+    goalConfettiLayer: {
+      position: "absolute",
+      left: 32,
+      top: 32,
+      width: 1,
+      height: 1,
+      overflow: "visible",
+    },
+    goalConfettiPiece: {
+      position: "absolute",
+      width: 7,
+      height: 12,
+      borderRadius: 2,
     },
     focusButton: {
       height: 46,
