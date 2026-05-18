@@ -14,6 +14,7 @@ import { router, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GradientBackground from "@/components/GradientBackground";
 import { resetDatabase } from "@/lib/db";
+import { insertAllScreenshotData } from "@/utils/generateTestData";
 import {
   ThemePreference,
   useThemePreference,
@@ -24,6 +25,8 @@ import { useTheme } from "@/hooks/useTheme";
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 const PRIVACY_POLICY_URL = "https://kado.app/privacy";
 const TERMS_OF_SERVICE_URL = "https://kado.app/terms";
+const SHOW_SCREENSHOT_DATA_ACTION =
+  __DEV__ || Constants.expoConfig?.extra?.enableScreenshotData === true;
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -68,6 +71,23 @@ export default function SettingsScreen() {
           onPress: async () => {
             await resetDatabase();
             router.replace("/onboarding");
+          },
+        },
+      ],
+    );
+  };
+
+  const handleGenerateScreenshotData = () => {
+    Alert.alert(
+      "Generate screenshot data",
+      "This will replace local data with polished sample content for App Store screenshots.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Generate",
+          onPress: async () => {
+            await insertAllScreenshotData();
+            router.replace("/");
           },
         },
       ],
@@ -201,6 +221,24 @@ export default function SettingsScreen() {
                 ›
               </Text>
             </Pressable>
+            {SHOW_SCREENSHOT_DATA_ACTION ? (
+              <>
+                <View style={s.divider} />
+                <Pressable style={s.actionRow} onPress={handleGenerateScreenshotData}>
+                  <View style={s.actionTextBlock}>
+                    <Text selectable style={s.rowLabel}>
+                      Generate screenshot data
+                    </Text>
+                    <Text selectable style={s.rowCopy}>
+                      Fill Kadoze with sample habits, notes, tasks, and progress.
+                    </Text>
+                  </View>
+                  <Text selectable style={s.chevron}>
+                    ›
+                  </Text>
+                </Pressable>
+              </>
+            ) : null}
           </View>
         </View>
       </ScrollView>
@@ -289,6 +327,11 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: C.textSecondary,
       fontSize: 14,
       fontWeight: "700",
+    },
+    rowCopy: {
+      color: C.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
     },
     divider: {
       height: 1,
