@@ -76,7 +76,6 @@ export default function FocusScreen() {
     if (remainingSeconds <= 0 && !didCompleteSessionRef.current) {
       didCompleteSessionRef.current = true;
       void persistElapsedFocusTime(true);
-      void dailyFocusOps.markComplete();
     }
   }, [remainingSeconds]);
 
@@ -102,6 +101,19 @@ export default function FocusScreen() {
   const progress = remainingSeconds / FOCUS_DURATION_SECONDS;
   const countdownText = formatCountdown(remainingSeconds);
   const progressOffset = -CIRCUMFERENCE * (1 - progress);
+
+  const toggleTimer = () => {
+    if (remainingSeconds === 0) {
+      didCompleteSessionRef.current = false;
+      setRemainingSeconds(FOCUS_DURATION_SECONDS);
+      setIsRunning(true);
+      return;
+    }
+    if (isRunning) {
+      void persistElapsedFocusTime();
+    }
+    setIsRunning((current) => !current);
+  };
 
   const s = makeStyles(C);
 
@@ -160,30 +172,12 @@ export default function FocusScreen() {
             </View>
           </View>
 
-          <Pressable
-            style={s.pauseButton}
-            onPress={() => {
-              if (remainingSeconds === 0) {
-                didCompleteSessionRef.current = false;
-                void dailyFocusOps.markIncomplete();
-                setRemainingSeconds(FOCUS_DURATION_SECONDS);
-                setIsRunning(true);
-                return;
-              }
-              if (isRunning) {
-                void persistElapsedFocusTime();
-              }
-              setIsRunning((current) => !current);
-            }}
-          >
+          <Pressable style={s.timerButton} onPress={toggleTimer}>
             <Ionicons
               name={remainingSeconds === 0 ? "refresh" : isRunning ? "pause" : "play"}
-              size={18}
-              color={C.textPrimary}
+              size={24}
+              color={palette.white}
             />
-            <Text style={s.pauseText}>
-              {remainingSeconds === 0 ? "Restart" : isRunning ? "Pause" : "Resume"}
-            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -226,7 +220,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       fontSize: 16,
       fontWeight: "600",
     },
-    headerSpacer: { width: 36 },
     content: {
       flex: 1,
       alignItems: "center",
@@ -235,11 +228,11 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     goal: {
       color: C.textPrimary,
-      fontSize: 18,
+      fontSize: 24,
       fontWeight: "700",
-      lineHeight: 28,
+      lineHeight: 32,
       textAlign: "center",
-      maxWidth: 260,
+      maxWidth: 320,
     },
     subtitle: {
       color: C.textTertiary,
@@ -270,24 +263,18 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       fontWeight: "300",
       letterSpacing: -2,
     },
-    pauseButton: {
-      marginTop: 38,
-      minWidth: 140,
-      paddingHorizontal: 24,
-      paddingVertical: 15,
+    timerButton: {
+      width: 64,
+      height: 64,
       borderRadius: 999,
-      backgroundColor: C.cardBg,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      flexDirection: "row",
+      marginTop: 32,
+      backgroundColor: palette.orange,
       alignItems: "center",
       justifyContent: "center",
-      gap: 10,
     },
-    pauseText: {
-      color: C.textPrimary,
-      fontSize: 20,
-      fontWeight: "600",
+    headerSpacer: {
+      width: 36,
+      height: 36,
     },
   });
 }

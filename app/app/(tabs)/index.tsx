@@ -121,6 +121,18 @@ export default function HomeScreen() {
   const sortedTodos = todayTodos ?? [];
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
   const goalText = (todayFocus?.goal ?? "").trim();
+  const isGoalComplete = Boolean(todayFocus?.completedAt);
+
+  const toggleGoalComplete = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isGoalComplete) {
+      await dailyFocusOps.markIncomplete();
+      return;
+    }
+
+    await dailyFocusOps.markComplete();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
 
   const s = makeStyles(C);
 
@@ -155,12 +167,6 @@ export default function HomeScreen() {
           <Text style={s.heroSectionLabel}>{"TODAY'S MAIN GOAL"}</Text>
           <View style={s.goalCard}>
             <View style={s.goalTopRow}>
-              <View style={s.goalRing}>
-                <View style={s.ringOuter}>
-                  <View style={s.ringInner} />
-                </View>
-              </View>
-
               <View style={s.goalContent}>
                 {editingGoal ? (
                   <TextInput
@@ -186,13 +192,31 @@ export default function HomeScreen() {
                   </Pressable>
                 )}
               </View>
+
+              <Pressable
+                style={s.goalRing}
+                onPress={toggleGoalComplete}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={isGoalComplete ? "Mark today's goal undone" : "Mark today's goal done"}
+              >
+                <View style={s.ringOuter}>
+                  <View style={[s.ringInner, isGoalComplete && s.ringInnerDone]}>
+                    <Ionicons
+                      name={isGoalComplete ? "checkmark" : "checkmark-outline"}
+                      size={24}
+                      color={isGoalComplete ? palette.white : palette.orange}
+                    />
+                  </View>
+                </View>
+              </Pressable>
             </View>
 
             <Pressable
               style={[s.focusButton, !goalText && s.focusButtonDisabled]}
               onPress={() => (goalText ? router.push("/focus" as any) : openGoalEditor())}
             >
-              <Ionicons name="play" size={19} color={palette.white} />
+              <Ionicons name="play" size={16} color={palette.white} />
               <Text style={s.focusButtonText}>Start Focus</Text>
             </Pressable>
           </View>
@@ -427,7 +451,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     goalTopRow: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: 16,
     },
     goalContent: { flex: 1 },
@@ -477,28 +501,33 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       height: 44,
       borderRadius: 22,
       backgroundColor: C.accentBgSubtle,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    ringInnerDone: {
+      backgroundColor: palette.orangeStrong,
     },
     focusButton: {
-      height: 58,
-      borderRadius: 16,
+      height: 46,
+      borderRadius: 12,
       backgroundColor: "#FF6B22",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 12,
-      marginTop: 28,
+      gap: 8,
+      marginTop: 20,
       shadowColor: "#FF6B22",
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.26,
-      shadowRadius: 18,
-      elevation: 6,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.18,
+      shadowRadius: 10,
+      elevation: 3,
     },
     focusButtonDisabled: {
       backgroundColor: palette.orange,
     },
     focusButtonText: {
       color: palette.white,
-      fontSize: 19,
+      fontSize: 16,
       fontWeight: "600",
     },
 

@@ -214,9 +214,16 @@ export const dailyFocusOps = {
   async markComplete() {
     const key = getLocalDateString(new Date());
     return await withInitializedDb(() =>
-      db.update(dailyFocus)
-        .set({ completedAt: new Date(), updatedAt: new Date() })
-        .where(eq(dailyFocus.date, key))
+      db.insert(dailyFocus)
+        .values({
+          date: key,
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [dailyFocus.date],
+          set: { completedAt: new Date(), updatedAt: new Date() },
+        })
         .returning()
     );
   },
