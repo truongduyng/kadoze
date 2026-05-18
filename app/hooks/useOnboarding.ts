@@ -363,7 +363,7 @@ export function useOnboarding() {
     } catch (e) {
       console.error("Error completing onboarding:", e);
     }
-    storage.delete(ONBOARDING_DRAFT_KEY);
+    storage.remove(ONBOARDING_DRAFT_KEY);
     router.replace("/(tabs)");
   }, [avatar, keystoneHabit, name]);
 

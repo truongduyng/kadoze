@@ -199,7 +199,7 @@ export function useRevenueCat() {
   };
 
   // Check if user has active subscription
-  const hasActiveSubscription = (entitlementIdentifier: string = 'Full Access') => {
+  const hasActiveSubscription = (entitlementIdentifier: string = 'full') => {
     try {
       // If RevenueCat failed to configure, allow access to prevent blocking users
       if (!isConfigured) {

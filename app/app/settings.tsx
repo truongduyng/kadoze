@@ -21,6 +21,7 @@ import {
 } from "@/contexts/ThemeContext";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
+import { useRevenueCat } from "@/hooks/useRevenueCat";
 
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 const PRIVACY_POLICY_URL = "https://kado.app/privacy";
@@ -33,6 +34,7 @@ export default function SettingsScreen() {
   const C = useTheme();
   const version = Constants.expoConfig?.version ?? "1.0.0";
   const { preference, setPreference } = useThemePreference();
+  const { hasActiveSubscription } = useRevenueCat();
 
   const openExternalUrl = async (url: string) => {
     const supported = await Linking.canOpenURL(url);
@@ -158,6 +160,18 @@ export default function SettingsScreen() {
             App
           </Text>
           <View style={s.listCard}>
+            <Pressable
+              style={s.actionRow}
+              onPress={() => openExternalUrl("https://apps.apple.com/account/subscriptions")}
+            >
+              <Text selectable style={s.rowLabel}>
+                {hasActiveSubscription() ? "Manage Subscription" : "Subscribe to Pro"}
+              </Text>
+              <Text selectable style={s.chevron}>
+                ›
+              </Text>
+            </Pressable>
+            <View style={s.divider} />
             <Pressable
               style={s.actionRow}
               onPress={() => openExternalUrl(PRIVACY_POLICY_URL)}

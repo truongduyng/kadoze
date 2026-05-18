@@ -77,7 +77,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
     try {
       const info = await Purchases.restorePurchases();
       const hasAccess =
-        typeof info.entitlements.active["Full Access"] !== "undefined";
+        typeof info.entitlements.active["full"] !== "undefined";
       if (hasAccess) {
         await refreshCustomerInfo();
         onComplete();

@@ -14,6 +14,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import ProfileInitializer from "@/components/ProfileInitializer";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ThemePreferenceProvider } from "@/contexts/ThemeContext";
+import { useRevenueCat } from "@/hooks/useRevenueCat";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,13 +32,14 @@ export default function RootLayout() {
 
 function AppLayout() {
   const colorScheme = useColorScheme();
+  const { isLoading, hasActiveSubscription } = useRevenueCat();
 
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
+    if (!isLoading) SplashScreen.hideAsync();
+  }, [isLoading]);
 
   const handleInitialized = (needsOnboarding: boolean) => {
-    if (needsOnboarding) {
+    if (needsOnboarding || !hasActiveSubscription()) {
       router.replace("/onboarding");
     }
   };
