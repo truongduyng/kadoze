@@ -83,7 +83,11 @@ export default function KeystoneStep({ focus, selected, onSelect, onNext }: Keys
         </View>
       </View>
 
-      <TouchableOpacity style={s.btn} onPress={onNext} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={[s.btn, !selected && s.btnDisabled]}
+        onPress={selected ? onNext : undefined}
+        activeOpacity={0.85}
+      >
         <Text style={s.btnText}>Next</Text>
       </TouchableOpacity>
     </View>
@@ -172,6 +176,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       paddingVertical: 18,
       alignItems: "center",
     },
+    btnDisabled: { opacity: 0.35 },
     btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   });
 }

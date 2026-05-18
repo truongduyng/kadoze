@@ -8,7 +8,7 @@ import type { IoniconName } from "@/lib/iconNames";
 // Step definitions
 // ---------------------------------------------------------------------------
 
-export type StepType = "hook" | "empathy" | "identity" | "promise" | "goal" | "keystone";
+export type StepType = "hook" | "empathy" | "identity" | "promise" | "goal" | "keystone" | "paywall";
 
 export interface StepConfig {
   type: StepType;
@@ -21,6 +21,7 @@ export const STEPS: StepConfig[] = [
   { type: "promise" },
   { type: "goal" },
   { type: "keystone" },
+  { type: "paywall" },
 ];
 
 export const TOTAL = STEPS.length;
@@ -239,7 +240,7 @@ export function useOnboarding() {
 
   const [coreProblem, setCoreProblem] = useState<string | null>(null);
   const [mainGoal, setMainGoal] = useState("");
-  const [keystoneHabit, setKeystoneHabit] = useState<string>("walk");
+  const [keystoneHabit, setKeystoneHabit] = useState<string>("");
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState<IoniconName>("happy-outline");
 

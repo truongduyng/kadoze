@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesOffering, INTRO_ELIGIBILITY_STATUS } from 'react-native-purchases';
 
 const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '';
-const REVENUECAT_ANDROID_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '';
+const REVENUECAT_TEST_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || '';
 
 // Global flag to track if RevenueCat is already configured
 let isRevenueCatConfigured = false;
@@ -52,11 +52,20 @@ export function useRevenueCat() {
 
   const initializePurchases = useCallback(async () => {
     try {
+      if (Platform.OS !== 'ios') {
+        console.log('RevenueCat is only configured for iOS');
+        if (isMounted.current) {
+          setIsConfigured(false);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       // Validate API key
-      const apiKey = Platform.OS === 'ios' ? REVENUECAT_IOS_API_KEY : REVENUECAT_ANDROID_API_KEY;
+      const apiKey = __DEV__ ? REVENUECAT_TEST_API_KEY : REVENUECAT_IOS_API_KEY;
       console.log('RevenueCat API Key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
       if (!apiKey) {
-        console.error('RevenueCat API key is not configured');
+        console.error(`RevenueCat ${__DEV__ ? 'test ' : ''}API key is not configured`);
         if (isMounted.current) {
           setIsLoading(false);
         }

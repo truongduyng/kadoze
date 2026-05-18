@@ -14,6 +14,7 @@ import IdentityStep from "@/components/onboarding/IdentityStep";
 import PromiseStep from "@/components/onboarding/PromiseStep";
 import GoalStep from "@/components/onboarding/GoalStep";
 import KeystoneStep from "@/components/onboarding/KeystoneStep";
+import PaywallStep from "@/components/onboarding/PaywallStep";
 import { STEPS, TOTAL, useOnboarding } from "@/hooks/useOnboarding";
 
 const STEP_META: Record<
@@ -29,6 +30,7 @@ const STEP_META: Record<
   promise: { label: "Choose focus", icon: "radio-button-on-outline" },
   goal: { label: "Set direction", icon: "flag-outline" },
   keystone: { label: "Build the anchor", icon: "flame-outline" },
+  paywall: { label: "Unlock full access", icon: "star-outline" },
 };
 
 export default function OnboardingScreen() {
@@ -104,9 +106,12 @@ export default function OnboardingScreen() {
             focus={mainGoal}
             selected={keystoneHabit}
             onSelect={setKeystoneHabit}
-            onNext={completeOnboarding}
+            onNext={goNext}
           />
         );
+
+      case "paywall":
+        return <PaywallStep onComplete={completeOnboarding} />;
     }
   };
 

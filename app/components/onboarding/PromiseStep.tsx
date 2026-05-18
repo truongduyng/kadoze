@@ -54,7 +54,7 @@ function ParticleDots({
       dotOpacity.map((a, i) =>
         Animated.timing(a, {
           toValue: 1,
-          duration: 400,
+          duration: 600,
           delay: DOTS[i].delay,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
@@ -139,11 +139,11 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
     const CENTER_IDX = 1.5;
 
     const staggerIn = Animated.stagger(
-      160,
+      220,
       itemOpacity.map((anim) =>
         Animated.timing(anim, {
           toValue: 1,
-          duration: 280,
+          duration: 420,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: false,
         })
@@ -156,19 +156,19 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
         return Animated.parallel([
           Animated.timing(itemTranslateY[i], {
             toValue: dy,
-            duration: 380,
+            duration: 560,
             easing: Easing.in(Easing.cubic),
             useNativeDriver: true,
           }),
           Animated.timing(itemScaleX[i], {
             toValue: 0,
-            duration: 340,
+            duration: 520,
             easing: Easing.in(Easing.cubic),
             useNativeDriver: true,
           }),
           Animated.timing(itemOpacity[i], {
             toValue: 0,
-            duration: 260,
+            duration: 380,
             delay: 120,
             useNativeDriver: false,
           }),
@@ -178,7 +178,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
 
     const dotsCollapse = Animated.timing(collapseProgress, {
       toValue: 1,
-      duration: 420,
+      duration: 640,
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
     });
@@ -186,7 +186,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
     const focusBurst = Animated.parallel([
       Animated.timing(focusOpacity, {
         toValue: 1,
-        duration: 320,
+        duration: 480,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -198,7 +198,7 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
       }),
       Animated.timing(burstProgress, {
         toValue: 1,
-        duration: 500,
+        duration: 700,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -207,13 +207,13 @@ export default function PromiseStep({ onNext }: PromiseStepProps) {
     const textIn = Animated.parallel([
       Animated.timing(textOpacity, {
         toValue: 1,
-        duration: 380,
+        duration: 560,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(textTranslateY, {
         toValue: 0,
-        duration: 380,
+        duration: 560,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
