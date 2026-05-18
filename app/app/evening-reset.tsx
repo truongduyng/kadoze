@@ -63,6 +63,7 @@ export default function EveningResetScreen() {
   const [todoDraft, setTodoDraft] = useState("");
   const [plannedTodos, setPlannedTodos] = useState<string[]>([]);
   const [isSavingPlan, setIsSavingPlan] = useState(false);
+  const [todayGoalHint, setTodayGoalHint] = useState("");
 
   useEffect(() => {
     if (!isRunning || remainingSeconds <= 0) return;
@@ -84,16 +85,17 @@ export default function EveningResetScreen() {
     let isActive = true;
 
     const loadTomorrowPlan = async () => {
-      const [focusRow] = await db
-        .select()
-        .from(dailyFocus)
-        .where(eq(dailyFocus.date, tomorrowKey))
-        .limit(1);
-      const todoRows = await todoOps.getByDate(tomorrowKey);
+      const todayKey = getLocalDateString(new Date());
+      const [[focusRow], [todayFocusRow], todoRows] = await Promise.all([
+        db.select().from(dailyFocus).where(eq(dailyFocus.date, tomorrowKey)).limit(1),
+        db.select().from(dailyFocus).where(eq(dailyFocus.date, todayKey)).limit(1),
+        todoOps.getByDate(tomorrowKey),
+      ]);
 
       if (!isActive) return;
 
       setGoalDraft(focusRow?.goal ?? "");
+      setTodayGoalHint(todayFocusRow?.goal ?? "");
       setPlannedTodos(todoRows.map((todo) => todo.title.trim()).filter(Boolean));
     };
 
@@ -307,6 +309,12 @@ export default function EveningResetScreen() {
                         placeholderTextColor={C.textPlaceholder}
                         returnKeyType="next"
                       />
+                      {todayGoalHint && !goalDraft ? (
+                        <Pressable style={s.hintButton} onPress={() => setGoalDraft(todayGoalHint)}>
+                          <Ionicons name="arrow-forward-circle-outline" size={14} color={C.textTertiary} />
+                          <Text style={s.hintButtonText} numberOfLines={1}>{todayGoalHint}</Text>
+                        </Pressable>
+                      ) : null}
 
                       <Text style={s.planSectionLabel}>TO-DO</Text>
                       <View style={s.todoCard}>
@@ -530,6 +538,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       paddingHorizontal: 14,
       paddingVertical: 13,
       fontSize: 15,
+      textAlignVertical: "center",
     },
     todoCard: {
       borderRadius: 14,
@@ -587,6 +596,25 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderRadius: 8,
       alignItems: "center",
       justifyContent: "center",
+    },
+    hintButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      alignSelf: "flex-start",
+      backgroundColor: C.inputBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      maxWidth: "100%",
+    },
+    hintButtonText: {
+      color: C.textSecondary,
+      fontSize: 13,
+      fontWeight: "500",
+      flexShrink: 1,
     },
     planSaving: {
       color: palette.orange,
