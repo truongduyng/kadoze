@@ -7,5 +7,4 @@ build:
 	cd app && bun run build
 
 submit:
-	cd app && eas submit --platform all
-
+	cd app && bun run submit
