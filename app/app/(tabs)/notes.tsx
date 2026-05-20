@@ -11,6 +11,7 @@ import {
   RecordingPresets,
   setAudioModeAsync,
   useAudioPlayer,
+  useAudioPlayerStatus,
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
@@ -46,6 +47,19 @@ type NoteSection = {
   dateKey: string;
   data: Note[];
 };
+
+type NoteKindFilter = "all" | "text" | "image" | "voice";
+
+const NOTE_KIND_FILTERS: {
+  label: string;
+  value: NoteKindFilter;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { label: "All", value: "all", icon: "albums-outline" },
+  { label: "Text", value: "text", icon: "document-text-outline" },
+  { label: "Images", value: "image", icon: "image-outline" },
+  { label: "Voice", value: "voice", icon: "mic-outline" },
+];
 
 function getLocalDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -107,6 +121,12 @@ function isAudioNote(note: Pick<Note, "content" | "mediaUrl"> | null): boolean {
   );
 }
 
+function getNoteKind(note: Pick<Note, "content" | "mediaUrl">): Exclude<NoteKindFilter, "all"> {
+  if (isAudioNote(note)) return "voice";
+  if (note.mediaUrl) return "image";
+  return "text";
+}
+
 async function enablePlaybackAudioMode() {
   await setAudioModeAsync({
     allowsRecording: false,
@@ -141,6 +161,7 @@ function AudioNotePlayer({
   compact?: boolean;
 }) {
   const player = useAudioPlayer({ uri });
+  const playerStatus = useAudioPlayerStatus(player);
   const C = useTheme();
   const s = makeStyles(C);
 
@@ -151,7 +172,16 @@ function AudioNotePlayer({
         try {
           await enablePlaybackAudioMode();
           await Haptics.selectionAsync();
-          await player.seekTo(0);
+
+          if (playerStatus.playing) {
+            player.pause();
+            return;
+          }
+
+          if (playerStatus.isLoaded && playerStatus.currentTime > 0) {
+            await player.seekTo(0);
+          }
+
           player.play();
         } catch {
           Alert.alert("Playback unavailable", "Unable to play this voice note right now.");
@@ -163,7 +193,9 @@ function AudioNotePlayer({
       </View>
       <View style={s.audioTextWrap}>
         <Text style={s.audioTitle}>Voice note</Text>
-        <Text style={s.audioSubtitle}>Tap to play</Text>
+        <Text style={s.audioSubtitle}>
+          {playerStatus.playing ? "Tap to pause" : "Tap to play"}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -568,6 +600,8 @@ export default function NotesScreen() {
   const [hasVoiceRecording, setHasVoiceRecording] = useState(false);
   const [isVoiceRecordingPaused, setIsVoiceRecordingPaused] = useState(false);
   const [draft, setDraft] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [kindFilter, setKindFilter] = useState<NoteKindFilter>("all");
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const { data: liveNotes } = useLiveQuery(
@@ -808,8 +842,22 @@ export default function NotesScreen() {
     }
   };
 
+  const notesCount = liveNotes?.length ?? 0;
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
   const sections = useMemo<NoteSection[]>(() => {
-    const items = (liveNotes ?? []).filter((item) => getPreview(item.content) !== "...");
+    const items = (liveNotes ?? []).filter((item) => {
+      const preview = getPreview(item.content);
+      if (preview === "...") return false;
+      if (kindFilter !== "all" && getNoteKind(item) !== kindFilter) return false;
+      if (!normalizedSearchQuery) return true;
+
+      const searchableKind = getNoteKind(item);
+      return (
+        preview.toLowerCase().includes(normalizedSearchQuery) ||
+        searchableKind.includes(normalizedSearchQuery)
+      );
+    });
     const grouped = new Map<string, Note[]>();
 
     for (const item of items) {
@@ -829,7 +877,7 @@ export default function NotesScreen() {
         dateKey,
         data,
       }));
-  }, [liveNotes]);
+  }, [kindFilter, liveNotes, normalizedSearchQuery]);
 
   const s = makeStyles(C);
 
@@ -886,6 +934,68 @@ export default function NotesScreen() {
                 </View>
               </View>
             </AdaptiveBlurView>
+          }
+          ListHeaderComponent={
+            <View style={s.listHeader}>
+              <View style={s.titleRow}>
+                <View>
+                  <Text style={s.screenTitle}>Notes</Text>
+                </View>
+              </View>
+
+              <View style={s.searchBox}>
+                <Ionicons name="search" size={18} color={C.iconTertiary} />
+                <TextInput
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search notes"
+                  placeholderTextColor={C.textPlaceholder}
+                  style={s.searchInput}
+                  returnKeyType="search"
+                />
+                {searchQuery ? (
+                  <TouchableOpacity
+                    activeOpacity={0.75}
+                    onPress={() => setSearchQuery("")}
+                    style={s.searchClearButton}
+                  >
+                    <Ionicons name="close" size={15} color={C.iconSecondary} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.filterChips}
+              >
+                {NOTE_KIND_FILTERS.map((filter) => {
+                  const selected = filter.value === kindFilter;
+                  return (
+                    <TouchableOpacity
+                      key={filter.value}
+                      activeOpacity={0.82}
+                      onPress={() => setKindFilter(filter.value)}
+                      style={[s.filterChip, selected ? s.filterChipActive : null]}
+                    >
+                      <Ionicons
+                        name={filter.icon}
+                        size={15}
+                        color={selected ? palette.white : C.iconSecondary}
+                      />
+                      <Text
+                        style={[
+                          s.filterChipLabel,
+                          selected ? s.filterChipLabelActive : null,
+                        ]}
+                      >
+                        {filter.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
           }
           renderSectionHeader={({ section }) => (
             <View style={s.sectionHeader}>
@@ -967,6 +1077,92 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
   return StyleSheet.create({
     container: { flex: 1 },
     content: { paddingHorizontal: 20 },
+    listHeader: {
+      gap: 14,
+      marginBottom: 20,
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      gap: 14,
+    },
+    screenEyebrow: {
+      color: C.textTertiary,
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 1.4,
+      textTransform: "uppercase",
+      marginBottom: 4,
+    },
+    screenTitle: {
+      color: C.textPrimary,
+      fontSize: 24,
+      fontWeight: "700",
+      letterSpacing: 0,
+    },
+    notesCount: {
+      color: C.textTertiary,
+      fontSize: 12,
+      fontWeight: "700",
+      marginBottom: 5,
+    },
+    searchBox: {
+      minHeight: 50,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      backgroundColor: C.inputBg,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 14,
+    },
+    searchInput: {
+      flex: 1,
+      color: C.textPrimary,
+      fontSize: 15,
+      fontWeight: "600",
+      paddingVertical: 12,
+    },
+    searchClearButton: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    filterChips: {
+      gap: 9,
+      paddingRight: 20,
+    },
+    filterChip: {
+      minHeight: 30,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.cardBg,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+      paddingHorizontal: 8,
+    },
+    filterChipActive: {
+      backgroundColor: palette.orange,
+      borderColor: palette.orange,
+    },
+    filterChipLabel: {
+      color: C.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+      paddingRight: 4,
+    },
+    filterChipLabelActive: {
+      color: palette.white,
+    },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
