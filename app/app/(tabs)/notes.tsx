@@ -327,30 +327,42 @@ function AddNoteSheet({
           <Text style={s.sheetTitle}>Add a note</Text>
           <Text style={s.sheetSubtitle}>Choose how you want to capture it.</Text>
 
-          <TouchableOpacity style={s.sheetRow} onPress={onTextNote}>
-            <Ionicons name="create-outline" size={20} color={C.textPrimary} />
-            <Text style={s.sheetRowLabel}>Text input</Text>
-          </TouchableOpacity>
+          <View style={s.sheetGrid}>
+            <TouchableOpacity style={s.sheetGridItem} onPress={onTextNote} activeOpacity={0.75}>
+              <View style={s.sheetGridIcon}>
+                <Ionicons name="create-outline" size={26} color={C.textPrimary} />
+              </View>
+              <Text style={s.sheetGridLabel}>Text</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={s.sheetRow} onPress={onPasteNote}>
-            <Ionicons name="clipboard-outline" size={20} color={C.textPrimary} />
-            <Text style={s.sheetRowLabel}>Pasted input</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={s.sheetGridItem} onPress={onPasteNote} activeOpacity={0.75}>
+              <View style={s.sheetGridIcon}>
+                <Ionicons name="clipboard-outline" size={26} color={C.textPrimary} />
+              </View>
+              <Text style={s.sheetGridLabel}>Paste</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={s.sheetRow} onPress={onVoiceNote}>
-            <Ionicons name="mic-outline" size={20} color={C.textPrimary} />
-            <Text style={s.sheetRowLabel}>Voice</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={s.sheetGridItem} onPress={onVoiceNote} activeOpacity={0.75}>
+              <View style={s.sheetGridIcon}>
+                <Ionicons name="mic-outline" size={26} color={C.textPrimary} />
+              </View>
+              <Text style={s.sheetGridLabel}>Voice</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={s.sheetRow} onPress={onPickImage}>
-            <Ionicons name="image-outline" size={20} color={C.textPrimary} />
-            <Text style={s.sheetRowLabel}>Image</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={s.sheetGridItem} onPress={onPickImage} activeOpacity={0.75}>
+              <View style={s.sheetGridIcon}>
+                <Ionicons name="image-outline" size={26} color={C.textPrimary} />
+              </View>
+              <Text style={s.sheetGridLabel}>Image</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={s.sheetRow} onPress={onOpenCamera}>
-            <Ionicons name="camera-outline" size={20} color={C.textPrimary} />
-            <Text style={s.sheetRowLabel}>Camera</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={s.sheetGridItem} onPress={onOpenCamera} activeOpacity={0.75}>
+              <View style={s.sheetGridIcon}>
+                <Ionicons name="camera-outline" size={26} color={C.textPrimary} />
+              </View>
+              <Text style={s.sheetGridLabel}>Camera</Text>
+            </TouchableOpacity>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -1417,6 +1429,39 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: C.textPrimary,
       fontSize: 16,
       fontWeight: "600",
+    },
+    sheetGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+    },
+    sheetGridItem: {
+      width: "30%",
+      flexGrow: 1,
+      minHeight: 90,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.cardBg,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+      paddingVertical: 16,
+    },
+    sheetGridIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.inputBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    sheetGridLabel: {
+      color: C.textPrimary,
+      fontSize: 13,
+      fontWeight: "700",
     },
     composerInput: {
       minHeight: 140,
