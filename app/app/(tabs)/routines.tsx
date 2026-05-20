@@ -14,6 +14,7 @@ import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo } from "react";
+import Svg, { Circle } from "react-native-svg";
 import {
   Pressable,
   ScrollView,
@@ -42,6 +43,10 @@ const FOCUS_ICONS: Record<string, React.ComponentProps<typeof Ionicons>["name"]>
   finance: "cash-outline",
 };
 const UNLOCK_STREAK_DAYS = 14;
+const PROGRESS_RING_SIZE = 148;
+const PROGRESS_RING_STROKE = 12;
+const PROGRESS_RING_RADIUS = (PROGRESS_RING_SIZE - PROGRESS_RING_STROKE) / 2;
+const PROGRESS_RING_CIRCUMFERENCE = 2 * Math.PI * PROGRESS_RING_RADIUS;
 
 function habitKey(title: string, subtitle?: string | null) {
   return `${title}::${subtitle ?? ""}`;
@@ -81,6 +86,14 @@ export default function RoutinesScreen() {
     return set;
   }, [allCompletions, todayKey]);
 
+  const skippedIds = useMemo(() => {
+    const set = new Set<number>();
+    for (const c of allCompletions ?? []) {
+      if (c.date === todayKey && c.status === "skipped") set.add(c.habitId);
+    }
+    return set;
+  }, [allCompletions, todayKey]);
+
   const streakMap = useMemo(() => {
     const map: Record<number, number> = {};
     for (const h of allHabits ?? []) {
@@ -106,6 +119,29 @@ export default function RoutinesScreen() {
     }
     return map;
   }, [allHabits, allCompletions, doneIds, today]);
+
+  const todayProgress = useMemo(() => {
+    const completed = todayHabits.filter((habit) => doneIds.has(habit.id)).length;
+    const skipped = todayHabits.filter((habit) => skippedIds.has(habit.id)).length;
+    const total = todayHabits.length;
+    const ratio = total > 0 ? completed / total : 0;
+    const doneByDate = new Set(
+      (allCompletions ?? [])
+        .filter((item) => item.status === "done")
+        .map((item) => item.date),
+    );
+
+    let dayStreak = 0;
+    const cursor = new Date(today);
+    while (doneByDate.has(getLocalDateString(cursor))) {
+      dayStreak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    return { completed, skipped, total, ratio, dayStreak };
+  }, [allCompletions, doneIds, skippedIds, today, todayHabits]);
+
+  const progressOffset = PROGRESS_RING_CIRCUMFERENCE * (1 - todayProgress.ratio);
 
   const currentFocus = useMemo(() => {
     let best: { key: string; count: number } | null = null;
@@ -197,6 +233,76 @@ export default function RoutinesScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>TODAY&apos;S PROGRESS</Text>
+          <View style={s.progressCard}>
+            <View style={s.progressRingWrap}>
+              <Svg width={PROGRESS_RING_SIZE} height={PROGRESS_RING_SIZE}>
+                <Circle
+                  cx={PROGRESS_RING_SIZE / 2}
+                  cy={PROGRESS_RING_SIZE / 2}
+                  r={PROGRESS_RING_RADIUS}
+                  stroke={C.cardBorder}
+                  strokeWidth={PROGRESS_RING_STROKE}
+                  fill="none"
+                />
+                <Circle
+                  cx={PROGRESS_RING_SIZE / 2}
+                  cy={PROGRESS_RING_SIZE / 2}
+                  r={PROGRESS_RING_RADIUS}
+                  stroke={C.accent}
+                  strokeWidth={PROGRESS_RING_STROKE}
+                  strokeLinecap="round"
+                  strokeDasharray={PROGRESS_RING_CIRCUMFERENCE}
+                  strokeDashoffset={progressOffset}
+                  fill="none"
+                  rotation="-90"
+                  originX={PROGRESS_RING_SIZE / 2}
+                  originY={PROGRESS_RING_SIZE / 2}
+                />
+              </Svg>
+              <View style={s.progressRingCenter}>
+                <Text style={s.progressValue}>
+                  {todayProgress.completed}/{todayProgress.total}
+                </Text>
+                <Text style={s.progressValueLabel}>Completed</Text>
+              </View>
+            </View>
+
+            <View style={s.progressStats}>
+              <View style={s.progressStatRow}>
+                <View style={s.progressStatIconWrap}>
+                  <Ionicons name="checkmark-circle-outline" size={18} color={C.iconSecondary} />
+                </View>
+                <View>
+                  <Text style={s.progressStatValue}>{todayProgress.completed}</Text>
+                  <Text style={s.progressStatLabel}>Completed</Text>
+                </View>
+              </View>
+
+              <View style={s.progressStatRow}>
+                <View style={s.progressStatIconWrap}>
+                  <Ionicons name="play-skip-forward-outline" size={18} color={C.iconSecondary} />
+                </View>
+                <View>
+                  <Text style={s.progressStatValue}>{todayProgress.skipped}</Text>
+                  <Text style={s.progressStatLabel}>Skipped</Text>
+                </View>
+              </View>
+
+              <View style={s.progressStatRow}>
+                <View style={s.progressStatIconWrap}>
+                  <Ionicons name="flame-outline" size={18} color={C.iconSecondary} />
+                </View>
+                <View>
+                  <Text style={s.progressStatValue}>{todayProgress.dayStreak}</Text>
+                  <Text style={s.progressStatLabel}>Day Streak</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {todayHabits.length > 0 && (
           <View style={s.section}>
             <Text style={s.sectionLabel}>ACTIVE HABITS</Text>
@@ -405,6 +511,75 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderWidth: 1,
       borderColor: C.cardBorder,
       padding: 16,
+    },
+    progressCard: {
+      backgroundColor: C.cardBg,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      paddingHorizontal: 18,
+      paddingVertical: 20,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 18,
+    },
+    progressRingWrap: {
+      width: PROGRESS_RING_SIZE,
+      height: PROGRESS_RING_SIZE,
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+    },
+    progressRingCenter: {
+      position: "absolute",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    progressValue: {
+      fontSize: 23,
+      fontWeight: "700",
+      color: C.textPrimary,
+      letterSpacing: -0.4,
+    },
+    progressValueLabel: {
+      marginTop: 4,
+      fontSize: 13,
+      color: C.textSecondary,
+      fontWeight: "500",
+    },
+    progressStats: {
+      flex: 1,
+      minWidth: 116,
+      gap: 18,
+    },
+    progressStatRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    progressStatIconWrap: {
+      width: 28,
+      height: 28,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    progressStatValue: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: C.textPrimary,
+      lineHeight: 20,
+    },
+    progressStatLabel: {
+      marginTop: 2,
+      fontSize: 14,
+      color: C.textSecondary,
+      lineHeight: 18,
     },
     habitList: { gap: 10 },
     habitCard: {

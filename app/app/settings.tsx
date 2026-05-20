@@ -1,15 +1,19 @@
 import Constants from "expo-constants";
 import * as StoreReview from "expo-store-review";
-import React from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Linking,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GradientBackground from "@/components/GradientBackground";
@@ -22,10 +26,11 @@ import {
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useRevenueCat } from "@/hooks/useRevenueCat";
+import { useReminderManager } from "@/hooks/useReminderManager";
 
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
-const PRIVACY_POLICY_URL = "https://kado.app/privacy";
-const TERMS_OF_SERVICE_URL = "https://kado.app/terms";
+const PRIVACY_POLICY_URL = "https://yikudo.xyz/kadoze/privacy";
+const TERMS_OF_SERVICE_URL = "https://yikudo.xyz/kadoze/terms";
 const SHOW_SCREENSHOT_DATA_ACTION =
   __DEV__ || Constants.expoConfig?.extra?.enableScreenshotData === true;
 
@@ -96,7 +101,54 @@ export default function SettingsScreen() {
     );
   };
 
-  const s = makeStyles(C);
+  const {
+    habitState,
+    eveningState,
+    isUpdating,
+    toggleHabitReminder,
+    toggleEveningReminder,
+  } = useReminderManager();
+
+  const [pickerTarget, setPickerTarget] = useState<'habit' | 'evening' | null>(null);
+  const [draftDate, setDraftDate] = useState(new Date());
+
+  const openPicker = (target: 'habit' | 'evening') => {
+    const state = target === 'habit' ? habitState : eveningState;
+    const d = new Date();
+    d.setHours(state.hour, state.minute, 0, 0);
+    setDraftDate(d);
+    setPickerTarget(target);
+  };
+
+  const onPickerChange = (_event: any, selected?: Date) => {
+    if (Platform.OS === 'android') setPickerTarget(null);
+    if (!selected) return;
+    setDraftDate(selected);
+    if (Platform.OS === 'android') {
+      const isHabit = pickerTarget === 'habit';
+      const state = isHabit ? habitState : eveningState;
+      const toggle = isHabit ? toggleHabitReminder : toggleEveningReminder;
+      toggle(state.enabled, selected.getHours(), selected.getMinutes());
+    }
+  };
+
+  const commitPicker = () => {
+    if (!pickerTarget) return;
+    const isHabit = pickerTarget === 'habit';
+    const state = isHabit ? habitState : eveningState;
+    const toggle = isHabit ? toggleHabitReminder : toggleEveningReminder;
+    toggle(state.enabled, draftDate.getHours(), draftDate.getMinutes());
+    setPickerTarget(null);
+  };
+
+  const formatTime = (hour: number, minute: number) => {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const h = hour % 12 || 12;
+    const m = minute.toString().padStart(2, '0');
+    return `${h}:${m} ${ampm}`;
+  };
+
+  const s = makeStyles(C, insets);
 
   return (
     <View style={s.container}>
@@ -152,6 +204,59 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
+          </View>
+        </View>
+
+        <View style={s.section}>
+          <Text selectable style={s.sectionLabel}>
+            Notifications
+          </Text>
+          <View style={s.listCard}>
+            <View style={s.listRow}>
+              <Text selectable style={s.rowLabel}>Daily habit check-in</Text>
+              <Switch
+                value={habitState.enabled}
+                onValueChange={(val) => toggleHabitReminder(val, habitState.hour, habitState.minute)}
+                disabled={isUpdating}
+                trackColor={{ false: C.cardBorder, true: C.accentBorder }}
+                thumbColor={habitState.enabled ? palette.orange : C.textTertiary}
+                ios_backgroundColor={C.cardBorder}
+              />
+            </View>
+            {habitState.enabled && (
+              <>
+                <View style={s.divider} />
+                <Pressable style={s.listRow} onPress={() => openPicker('habit')}>
+                  <Text selectable style={[s.rowLabel, { color: C.textSecondary }]}>Reminder time</Text>
+                  <Text selectable style={[s.rowValue, { color: palette.orange }]}>
+                    {formatTime(habitState.hour, habitState.minute)}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+            <View style={s.divider} />
+            <View style={s.listRow}>
+              <Text selectable style={s.rowLabel}>Evening reset</Text>
+              <Switch
+                value={eveningState.enabled}
+                onValueChange={(val) => toggleEveningReminder(val, eveningState.hour, eveningState.minute)}
+                disabled={isUpdating}
+                trackColor={{ false: C.cardBorder, true: C.accentBorder }}
+                thumbColor={eveningState.enabled ? palette.orange : C.textTertiary}
+                ios_backgroundColor={C.cardBorder}
+              />
+            </View>
+            {eveningState.enabled && (
+              <>
+                <View style={s.divider} />
+                <Pressable style={s.listRow} onPress={() => openPicker('evening')}>
+                  <Text selectable style={[s.rowLabel, { color: C.textSecondary }]}>Reminder time</Text>
+                  <Text selectable style={[s.rowValue, { color: palette.orange }]}>
+                    {formatTime(eveningState.hour, eveningState.minute)}
+                  </Text>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
 
@@ -256,11 +361,37 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {pickerTarget !== null && Platform.OS === 'ios' && (
+        <Modal transparent animationType="slide" visible onRequestClose={() => setPickerTarget(null)}>
+          <Pressable style={s.pickerBackdrop} onPress={() => setPickerTarget(null)} />
+          <View style={s.pickerSheet}>
+            <View style={s.pickerHeader}>
+              <Pressable onPress={() => setPickerTarget(null)}>
+                <Text selectable style={[s.pickerBtn, { color: C.textSecondary }]}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={commitPicker}>
+                <Text selectable style={[s.pickerBtn, { color: palette.orange }]}>Done</Text>
+              </Pressable>
+            </View>
+            <View style={s.pickerBody}>
+              <DateTimePicker
+                value={draftDate}
+                mode="time"
+                display="spinner"
+                onChange={onPickerChange}
+                textColor={C.textPrimary}
+                style={{ width: '100%' }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
 
-function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>, insets: { bottom: number }) {
   return StyleSheet.create({
     container: { flex: 1 },
     section: { gap: 10 },
@@ -376,6 +507,35 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     chevron: {
       color: C.textTertiary,
       fontSize: 22,
+    },
+    pickerBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    pickerSheet: {
+      backgroundColor: C.sheetBg,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderCurve: 'continuous' as const,
+      overflow: 'hidden' as const,
+      paddingBottom: insets.bottom + 16,
+    },
+    pickerHeader: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+    },
+    pickerBtn: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+    },
+    pickerBody: {
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      paddingVertical: 8,
     },
   });
 }

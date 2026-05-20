@@ -317,7 +317,7 @@ export default function ProfileScreen() {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingTop: 20,
+          paddingTop: 8,
           paddingBottom: insets.bottom + 26,
           paddingHorizontal: 20,
           gap: 14,
@@ -379,7 +379,7 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <View style={s.heroCard}>
             <Text selectable style={s.metricEyebrow}>
-              Heat map
+              Consistency
             </Text>
 
             <View style={s.gridWrap}>

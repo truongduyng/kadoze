@@ -9,7 +9,7 @@ import type { IoniconName } from "@/lib/iconNames";
 // Step definitions
 // ---------------------------------------------------------------------------
 
-export type StepType = "hook" | "empathy" | "identity" | "promise" | "goal" | "keystone" | "paywall";
+export type StepType = "hook" | "empathy" | "identity" | "promise" | "goal" | "keystone" | "notifications" | "paywall";
 
 export interface StepConfig {
   type: StepType;
@@ -22,6 +22,7 @@ export const STEPS: StepConfig[] = [
   { type: "promise" },
   { type: "goal" },
   { type: "keystone" },
+  { type: "notifications" },
   { type: "paywall" },
 ];
 

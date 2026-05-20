@@ -13,8 +13,6 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerForPushNotificationsAsync(): Promise<string | undefined> {
-  let token;
-
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -24,31 +22,28 @@ export async function registerForPushNotificationsAsync(): Promise<string | unde
     });
   }
 
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-      console.warn('Push notification permission not granted');
-      return;
-    }
-
-    try {
-      token = (await Notifications.getDevicePushTokenAsync()).data;
-    } catch (e) {
-      console.warn('Push token unavailable (Firebase not configured), using local-only mode:', e);
-      // Permission was granted even if token fetch fails — use a placeholder
-      // so reminder scheduling (local notifications) still works
-      token = 'local-notifications-enabled';
-    }
-  } else {
-    console.warn('Push notifications require a physical device');
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== 'granted') {
+    console.warn('Push notification permission not granted');
+    return;
   }
 
-  return token;
+  if (!Device.isDevice) {
+    // Simulator: permissions granted, local notifications work, but no push token
+    return 'local-notifications-enabled';
+  }
+
+  try {
+    return (await Notifications.getDevicePushTokenAsync()).data;
+  } catch (e) {
+    console.warn('Push token unavailable (Firebase not configured), using local-only mode:', e);
+    return 'local-notifications-enabled';
+  }
 }
 
 export async function scheduleLocalNotification(
