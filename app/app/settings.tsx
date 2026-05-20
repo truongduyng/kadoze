@@ -364,25 +364,27 @@ export default function SettingsScreen() {
 
       {pickerTarget !== null && Platform.OS === 'ios' && (
         <Modal transparent animationType="slide" visible onRequestClose={() => setPickerTarget(null)}>
-          <Pressable style={s.pickerBackdrop} onPress={() => setPickerTarget(null)} />
-          <View style={s.pickerSheet}>
-            <View style={s.pickerHeader}>
-              <Pressable onPress={() => setPickerTarget(null)}>
-                <Text selectable style={[s.pickerBtn, { color: C.textSecondary }]}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={commitPicker}>
-                <Text selectable style={[s.pickerBtn, { color: palette.orange }]}>Done</Text>
-              </Pressable>
-            </View>
-            <View style={s.pickerBody}>
-              <DateTimePicker
-                value={draftDate}
-                mode="time"
-                display="spinner"
-                onChange={onPickerChange}
-                textColor={C.textPrimary}
-                style={{ width: '100%' }}
-              />
+          <View style={s.pickerOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setPickerTarget(null)} />
+            <View style={s.pickerSheet}>
+              <View style={s.pickerHeader}>
+                <Pressable onPress={() => setPickerTarget(null)}>
+                  <Text selectable style={[s.pickerBtn, { color: C.textSecondary }]}>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={commitPicker}>
+                  <Text selectable style={[s.pickerBtn, { color: palette.orange }]}>Done</Text>
+                </Pressable>
+              </View>
+              <View style={s.pickerBody}>
+                <DateTimePicker
+                  value={draftDate}
+                  mode="time"
+                  display="spinner"
+                  onChange={onPickerChange}
+                  textColor={C.textPrimary}
+                  style={{ width: '100%' }}
+                />
+              </View>
             </View>
           </View>
         </Modal>
@@ -508,8 +510,9 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>, i
       color: C.textTertiary,
       fontSize: 22,
     },
-    pickerBackdrop: {
+    pickerOverlay: {
       flex: 1,
+      justifyContent: 'flex-end' as const,
       backgroundColor: 'rgba(0,0,0,0.4)',
     },
     pickerSheet: {
