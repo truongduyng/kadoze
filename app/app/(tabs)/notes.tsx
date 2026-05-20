@@ -1120,10 +1120,12 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     searchInput: {
       flex: 1,
+      height: "100%",
       color: C.textPrimary,
       fontSize: 15,
       fontWeight: "600",
-      paddingVertical: 12,
+      paddingVertical: 0,
+      textAlignVertical: "center",
     },
     searchClearButton: {
       width: 28,
