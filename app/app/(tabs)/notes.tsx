@@ -842,7 +842,6 @@ export default function NotesScreen() {
     }
   };
 
-  const notesCount = liveNotes?.length ?? 0;
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const sections = useMemo<NoteSection[]>(() => {
