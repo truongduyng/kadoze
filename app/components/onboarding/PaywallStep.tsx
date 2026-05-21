@@ -38,6 +38,38 @@ function isAnnualPackage(pkg: PurchasesPackage) {
   );
 }
 
+function packageWeeks(pkg: PurchasesPackage): number {
+  const type = pkg.packageType;
+  if (type === "ANNUAL") return 52;
+  if (type === "SIX_MONTH") return 26;
+  if (type === "THREE_MONTH") return 13;
+  if (type === "TWO_MONTH") return 8.67;
+  if (type === "MONTHLY") return 4.33;
+  if (type === "WEEKLY") return 1;
+  const id = pkg.product.identifier.toLowerCase();
+  if (id.includes("annual") || id.includes("yearly")) return 52;
+  if (id.includes("quarterly")) return 13;
+  if (id.includes("monthly")) return 4.33;
+  return 0;
+}
+
+function packageLabel(pkg: PurchasesPackage): string {
+  const type = pkg.packageType;
+  if (type === "ANNUAL") return "Yearly";
+  if (type === "SIX_MONTH") return "6 Months";
+  if (type === "THREE_MONTH") return "3 Months";
+  if (type === "TWO_MONTH") return "2 Months";
+  if (type === "MONTHLY") return "Monthly";
+  if (type === "WEEKLY") return "Weekly";
+  if (type === "LIFETIME") return "Lifetime";
+  const id = pkg.product.identifier.toLowerCase();
+  if (id.includes("annual") || id.includes("yearly")) return "Yearly";
+  if (id.includes("quarterly")) return "Quarterly";
+  if (id.includes("monthly")) return "Monthly";
+  if (id.includes("weekly")) return "Weekly";
+  return "";
+}
+
 export default function PaywallStep({ onComplete }: PaywallStepProps) {
   const C = useTheme();
   const s = makeStyles(C);
@@ -48,11 +80,13 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
 
   const packages = currentOffering?.availablePackages ?? [];
 
+  const weeklyPkg = packages.find((p) => p.packageType === "WEEKLY");
+  const weeklyPricePerWeek = weeklyPkg ? weeklyPkg.product.price : null;
+
   const annualPkg = packages.find(isAnnualPackage);
   const [selectedPkg, setSelectedPkg] = useState<PurchasesPackage | null>(null);
 
   const effectiveSelected = selectedPkg ?? annualPkg ?? packages[0] ?? null;
-  const selectedIsAnnual = effectiveSelected ? isAnnualPackage(effectiveSelected) : false;
 
   const handlePurchase = async () => {
     if (!effectiveSelected) return;
@@ -92,7 +126,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
   };
 
   const busy = purchasing || restoring;
-  const ctaLabel = selectedIsAnnual ? "Start 3-day free trial" : "Subscribe now";
+  const ctaLabel = "Subscribe now";
 
   return (
     <ScrollView
@@ -140,6 +174,20 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
               const { product } = pkg;
               const isAnnual = isAnnualPackage(pkg);
               const isSelected = effectiveSelected?.identifier === pkg.identifier;
+              const weeks = packageWeeks(pkg);
+              const perWeek = weeks > 1 ? product.price / weeks : null;
+              const perWeekStr = perWeek
+                ? perWeek.toLocaleString("en-US", {
+                    style: "currency",
+                    currency: product.currencyCode,
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : null;
+              const savingsPct =
+                weeklyPricePerWeek && weeks > 1 && pkg.packageType !== "WEEKLY"
+                  ? Math.round((1 - product.price / weeks / weeklyPricePerWeek) * 100)
+                  : null;
               return (
                 <TouchableOpacity
                   key={pkg.identifier}
@@ -150,28 +198,38 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
                 >
                   <View style={s.pkgRow}>
                     <View style={s.pkgInfo}>
+                      <View style={s.pkgTitleRow}>
+                        <Text style={[s.pkgTitle, isSelected && s.pkgTitleSelected]}>
+                          {packageLabel(pkg)}
+                        </Text>
+                        {isAnnual ? (
+                          <View style={s.bestValueBadge}>
+                            <Text style={s.bestValueText}>Best value</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <View style={s.pkgPriceRow}>
+                        <Text style={[s.pkgPrice, isSelected && s.pkgPriceSelected]}>
+                          {product.priceString}
+                        </Text>
+                        {perWeekStr ? (
+                          <Text style={s.pkgPerWeek}>{perWeekStr}/wk</Text>
+                        ) : null}
+                        {savingsPct && savingsPct > 0 ? (
+                          <View style={s.savingsBadge}>
+                            <Text style={s.savingsText}>Save {savingsPct}%</Text>
+                          </View>
+                        ) : null}
+                      </View>
                       {isAnnual ? (
-                        <View style={s.bestValueBadge}>
-                          <Text style={s.bestValueText}>Best value</Text>
-                        </View>
-                      ) : null}
-                      <Text style={[s.pkgTitle, isSelected && s.pkgTitleSelected]}>
-                        {product.title || pkg.packageType}
-                      </Text>
-                      {isAnnual ? (
-                        <Text style={s.pkgTrial}>3-day free trial, then</Text>
+                        <Text style={s.pkgTrial}>3-day free trial</Text>
                       ) : null}
                     </View>
-                    <View style={s.pkgPriceWrap}>
-                      <Text style={[s.pkgPrice, isSelected && s.pkgPriceSelected]}>
-                        {product.priceString}
-                      </Text>
-                      <Ionicons
-                        name={isSelected ? "checkmark-circle" : "ellipse-outline"}
-                        size={22}
-                        color={isSelected ? palette.orange : C.textQuaternary}
-                      />
-                    </View>
+                    <Ionicons
+                      name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                      size={22}
+                      color={isSelected ? palette.orange : C.textQuaternary}
+                    />
                   </View>
                 </TouchableOpacity>
               );
@@ -190,6 +248,9 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
               <Text style={s.ctaBtnText}>{ctaLabel}</Text>
             )}
           </TouchableOpacity>
+          {effectiveSelected && isAnnualPackage(effectiveSelected) ? (
+            <Text style={s.pkgNoPayment}>No payment due today</Text>
+          ) : null}
         </>
       )}
 
@@ -280,7 +341,7 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
     featureText: {
       fontSize: 14,
       fontWeight: "500",
-      color: C.textSecondary,
+      color: C.text,
     },
     packages: { gap: 10 },
     pkgCard: {
@@ -300,7 +361,12 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       justifyContent: "space-between",
       gap: 12,
     },
-    pkgInfo: { flex: 1, gap: 2 },
+    pkgInfo: { flex: 1, gap: 4 },
+    pkgTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
     pkgPriceWrap: {
       alignItems: "flex-end",
       gap: 4,
@@ -333,15 +399,48 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       fontWeight: "700",
       color: C.textSecondary,
     },
+    pkgPriceRow: {
+      flexDirection: "row" as const,
+      alignItems: "baseline" as const,
+      gap: 6,
+    },
     pkgPrice: {
       fontSize: 20,
       fontWeight: "800",
       color: C.textPrimary,
     },
-    pkgTrial: {
+    pkgPerWeek: {
       fontSize: 12,
       color: C.textTertiary,
+    },
+    pkgTrialRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 8,
       marginTop: 2,
+    },
+    savingsBadge: {
+      backgroundColor: "rgba(76,175,80,0.15)",
+      borderRadius: 6,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    savingsText: {
+      fontSize: 11,
+      fontWeight: "700" as const,
+      color: "#4caf50",
+    },
+    pkgTrial: {
+      fontSize: 12,
+      fontWeight: "700" as const,
+      color: palette.orange,
+    },
+    pkgNoPayment: {
+      fontSize: 12,
+      fontWeight: "600" as const,
+      color: C.textTertiary,
+      textAlign: "center" as const,
+      marginTop: -4,
     },
     errorBox: {
       backgroundColor: "rgba(255,60,60,0.1)",
@@ -367,6 +466,13 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       fontSize: 13,
       textAlign: "center",
       lineHeight: 19,
+    },
+    billingDisclosure: {
+      fontSize: 11,
+      color: C.textQuaternary,
+      textAlign: "center",
+      lineHeight: 16,
+      marginTop: -8,
     },
     loader: { alignSelf: "center" },
     restoreBtn: {
