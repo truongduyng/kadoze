@@ -227,7 +227,8 @@ function NoteListItem({
   const preview = getPreview(note.content);
   const trimmed = isTrimmed(note.content);
   const audioNote = isAudioNote(note);
-  const shouldOpenDetail = !audioNote && (Boolean(note.mediaUrl) || trimmed);
+  const imageNote = !audioNote && Boolean(note.mediaUrl);
+  const [expanded, setExpanded] = useState(false);
   const lastSwipeStartedAt = useRef(0);
 
   return (
@@ -239,16 +240,17 @@ function NoteListItem({
       }}
     >
       <Pressable
-        disabled={!shouldOpenDetail}
+        disabled={!imageNote}
         onPress={() => {
           if (Date.now() - lastSwipeStartedAt.current < 400) {
             return;
           }
 
-          if (shouldOpenDetail) onOpenDetail(note);
+          if (imageNote) onOpenDetail(note);
         }}
       >
-        <AdaptiveBlurView
+        <NoteCardSurface
+          audioNote={audioNote}
           style={[
             s.card,
             index === 0 ? s.cardFirst : null,
@@ -283,16 +285,40 @@ function NoteListItem({
           ) : null}
           {preview && !audioNote ? (
             <View>
-              <Text style={s.noteBody} numberOfLines={6}>
+              <Text style={s.noteBody} numberOfLines={trimmed && !expanded ? 6 : undefined}>
                 {preview}
               </Text>
-              {trimmed ? <Text style={s.trimmedHint}>... more</Text> : null}
+              {trimmed ? (
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() => setExpanded((current) => !current)}
+                  style={s.trimmedButton}
+                >
+                  <Text style={s.trimmedHint}>{expanded ? "View less" : "View more"}</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
-        </AdaptiveBlurView>
+        </NoteCardSurface>
       </Pressable>
     </SwipeableRow>
   );
+}
+
+function NoteCardSurface({
+  audioNote,
+  children,
+  style,
+}: {
+  audioNote: boolean;
+  children: React.ReactNode;
+  style: React.ComponentProps<typeof View>["style"];
+}) {
+  if (audioNote) {
+    return <View style={style}>{children}</View>;
+  }
+
+  return <AdaptiveBlurView style={style}>{children}</AdaptiveBlurView>;
 }
 
 type AddNoteSheetProps = {
@@ -529,81 +555,85 @@ function VoiceComposerModal({
   );
 }
 
-type NoteViewerModalProps = {
+type ImageViewerModalProps = {
   bottomInset: number;
+  topInset: number;
   note: Note | null;
   onClose: () => void;
-  onCopy: (note: Note) => void;
   onShare: (note: Note) => void;
 };
 
-function NoteViewerModal({
+function ImageViewerModal({
   bottomInset,
+  topInset,
   note,
   onClose,
-  onCopy,
   onShare,
-}: NoteViewerModalProps) {
+}: ImageViewerModalProps) {
   const C = useTheme();
   const s = makeStyles(C);
-  const content = note ? getPreview(note.content) : "";
+  const imageNote = note && !isAudioNote(note) && note.mediaUrl ? note : null;
+  const caption = imageNote ? getPreview(imageNote.content) : "";
 
   return (
     <Modal
       animationType="fade"
       transparent
-      visible={note != null}
+      visible={imageNote != null}
       onRequestClose={onClose}
     >
-      <View style={s.viewerOverlay}>
-        <View style={[s.viewerCard, { marginBottom: bottomInset + 24 }]}>
-          <View style={s.viewerHeader}>
-            <Text style={s.viewerTime}>
-              {formatTime(note?.createdAt ?? null)}
+      <Pressable style={s.imageViewerOverlay} onPress={onClose}>
+        <Pressable
+          style={[
+            s.imageViewerFrame,
+            { paddingTop: topInset + 12, paddingBottom: bottomInset + 18 },
+          ]}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <View style={s.imageViewerTopBar}>
+            <Text style={s.imageViewerTime}>
+              {formatTime(imageNote?.createdAt ?? null)}
             </Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={20} color={C.iconSecondary} />
-            </TouchableOpacity>
+            <View style={s.imageViewerTopActions}>
+              {imageNote ? (
+                <TouchableOpacity
+                  accessibilityLabel="Share image note"
+                  activeOpacity={0.78}
+                  style={s.imageViewerIconButton}
+                  onPress={() => onShare(imageNote)}
+                >
+                  <Ionicons name="share-outline" size={18} color={palette.white} />
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity
+                accessibilityLabel="Close image viewer"
+                onPress={onClose}
+                style={s.imageViewerIconButton}
+              >
+                <Ionicons name="close" size={20} color={palette.white} />
+              </TouchableOpacity>
+            </View>
           </View>
-          <ScrollView
-            style={s.viewerScroll}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={s.viewerScrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {note && isAudioNote(note) && note.mediaUrl ? (
-              <AudioNotePlayer uri={note.mediaUrl} />
-            ) : note?.mediaUrl ? (
+          <View style={s.imageViewerStage}>
+            {imageNote?.mediaUrl ? (
               <Image
-                source={{ uri: note.mediaUrl }}
-                style={s.viewerImage}
+                source={{ uri: imageNote.mediaUrl }}
+                style={s.imageViewerImage}
                 resizeMode="contain"
               />
             ) : null}
-            {content && !isAudioNote(note) ? (
-              <Text style={s.viewerBody}>{content}</Text>
-            ) : null}
-          </ScrollView>
-          {note ? (
-            <View style={s.viewerFooter}>
-              <TouchableOpacity
-                style={s.viewerFooterButton}
-                onPress={() => onCopy(note)}
-              >
-                <Ionicons name="copy-outline" size={16} color={C.iconSecondary} />
-                <Text style={s.viewerFooterLabel}>Copy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.viewerFooterButton}
-                onPress={() => onShare(note)}
-              >
-                <Ionicons name="share-outline" size={16} color={C.iconSecondary} />
-                <Text style={s.viewerFooterLabel}>Share</Text>
-              </TouchableOpacity>
+          </View>
+          <View style={s.imageViewerBottomBar}>
+            <View style={s.imageViewerMeta}>
+              {caption ? (
+                <Text style={s.imageViewerCaption} numberOfLines={2}>
+                  {caption}
+                </Text>
+              ) : null}
             </View>
-          ) : null}
-        </View>
-      </View>
+          </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -647,6 +677,14 @@ export default function NotesScreen() {
     }
 
     const content = getPreview(note.content);
+    if (note.mediaUrl) {
+      await Share.share({
+        url: note.mediaUrl,
+        message: content || "Image note",
+      });
+      return;
+    }
+
     if (!content) {
       Alert.alert("Nothing to share", "This note does not contain text.");
       return;
@@ -1081,11 +1119,11 @@ export default function NotesScreen() {
         onToggleRecording={handleToggleRecording}
       />
 
-      <NoteViewerModal
+      <ImageViewerModal
         bottomInset={insets.bottom}
+        topInset={insets.top}
         note={selectedNote}
         onClose={() => setSelectedNote(null)}
-        onCopy={copyNote}
         onShare={shareNote}
       />
     </View>
@@ -1243,7 +1281,11 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: palette.orange,
       fontSize: 13,
       fontWeight: "700",
-      marginTop: 6,
+    },
+    trimmedButton: {
+      alignSelf: "flex-start",
+      paddingTop: 8,
+      paddingBottom: 2,
     },
     noteActions: {
       flexDirection: "row",
@@ -1551,69 +1593,74 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       gap: 10,
     },
     voicePrimaryButton: { flex: 1 },
-    viewerOverlay: {
+    imageViewerOverlay: {
       flex: 1,
-      justifyContent: "flex-end",
+      backgroundColor: "rgba(0,0,0,0.94)",
+    },
+    imageViewerFrame: {
+      flex: 1,
       paddingHorizontal: 16,
-      paddingTop: 40,
-      backgroundColor: C.overlayBg,
     },
-    viewerCard: {
-      maxHeight: "85%",
-      borderRadius: 24,
-      backgroundColor: C.sheetBg,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 18,
-    },
-    viewerHeader: {
+    imageViewerTopBar: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: 12,
+      gap: 12,
+      minHeight: 44,
+      marginBottom: 10,
     },
-    viewerTime: {
-      color: C.textSecondary,
+    imageViewerTime: {
+      color: palette.white70,
       fontSize: 13,
-      fontWeight: "600",
+      fontWeight: "700",
     },
-    viewerImage: {
-      width: "100%",
-      height: 280,
-      borderRadius: 14,
-      marginBottom: 14,
-    },
-    viewerBody: {
-      color: C.textPrimary,
-      fontSize: 16,
-      lineHeight: 25,
-    },
-    viewerScroll: { flexGrow: 0 },
-    viewerScrollContent: { paddingBottom: 8 },
-    viewerFooter: {
-      flexDirection: "row",
-      gap: 10,
-      marginTop: 14,
-      paddingTop: 14,
-      borderTopWidth: 1,
-      borderTopColor: C.divider,
-    },
-    viewerFooterButton: {
-      flex: 1,
-      flexDirection: "row",
+    imageViewerIconButton: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
       alignItems: "center",
       justifyContent: "center",
-      gap: 8,
-      paddingVertical: 12,
-      borderRadius: 14,
-      backgroundColor: C.cardBg,
+      backgroundColor: "rgba(255,255,255,0.12)",
       borderWidth: 1,
-      borderColor: C.cardBorder,
+      borderColor: "rgba(255,255,255,0.14)",
     },
-    viewerFooterLabel: {
-      color: C.textSecondary,
-      fontSize: 14,
-      fontWeight: "700",
+    imageViewerTopActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    imageViewerStage: {
+      flex: 1,
+      minHeight: 240,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    imageViewerImage: {
+      width: "100%",
+      height: "100%",
+    },
+    imageViewerBottomBar: {
+      minHeight: 76,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingTop: 14,
+    },
+    imageViewerMeta: {
+      flex: 1,
+      gap: 3,
+    },
+    imageViewerTitle: {
+      color: palette.white,
+      fontSize: 16,
+      fontWeight: "800",
+    },
+    imageViewerCaption: {
+      color: palette.white70,
+      fontSize: 13,
+      lineHeight: 18,
     },
   });
 }
