@@ -1188,7 +1188,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: 10,
     },
     sectionTitle: {
       color: C.textPrimary,
@@ -1202,7 +1201,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       fontSize: 11,
       fontWeight: "600",
     },
-    sectionSpacer: { height: 20 },
+    sectionSpacer: { height: 12 },
     card: {
       borderRadius: 14,
       borderWidth: 1,
