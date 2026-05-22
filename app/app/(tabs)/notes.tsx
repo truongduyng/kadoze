@@ -20,13 +20,12 @@ import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
 import {
   Alert,
   Image,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   SectionList,
@@ -100,6 +99,44 @@ function formatTime(date: Date | null): string {
 function getPreview(content: string): string {
   const normalized = content.replace(/\s+/g, " ").trim();
   return normalized === "Image note" ? "" : normalized;
+}
+
+function renderFormattedText(content: string) {
+  const parts: React.ReactNode[] = [];
+  const markerPattern = /(\*\*[^*\n]+\*\*|_[^_\n]+_)/g;
+  const displayContent = content.replace(/^-\s+/gm, "\u2022 ");
+  let lastIndex = 0;
+
+  for (const match of displayContent.matchAll(markerPattern)) {
+    const value = match[0];
+    const index = match.index ?? 0;
+
+    if (index > lastIndex) {
+      parts.push(displayContent.slice(lastIndex, index));
+    }
+
+    if (value.startsWith("**")) {
+      parts.push(
+        <Text key={`${index}-bold`} style={{ fontWeight: "800" }}>
+          {value.slice(2, -2)}
+        </Text>,
+      );
+    } else {
+      parts.push(
+        <Text key={`${index}-italic`} style={{ fontStyle: "italic" }}>
+          {value.slice(1, -1)}
+        </Text>,
+      );
+    }
+
+    lastIndex = index + value.length;
+  }
+
+  if (lastIndex < displayContent.length) {
+    parts.push(displayContent.slice(lastIndex));
+  }
+
+  return parts.length ? parts : displayContent;
 }
 
 function isTrimmed(content: string, maxLength = 220): boolean {
@@ -286,7 +323,7 @@ function NoteListItem({
           {preview && !audioNote ? (
             <View>
               <Text style={s.noteBody} numberOfLines={trimmed && !expanded ? 6 : undefined}>
-                {preview}
+                {renderFormattedText(note.content.trim())}
               </Text>
               {trimmed ? (
                 <TouchableOpacity
@@ -399,65 +436,6 @@ function AddNoteSheet({
           </View>
         </Pressable>
       </Pressable>
-    </Modal>
-  );
-}
-
-type TextComposerModalProps = {
-  draft: string;
-  editing: boolean;
-  visible: boolean;
-  onChangeDraft: (value: string) => void;
-  onClose: () => void;
-  onSubmit: () => void;
-};
-
-function TextComposerModal({
-  draft,
-  editing,
-  visible,
-  onChangeDraft,
-  onClose,
-  onSubmit,
-}: TextComposerModalProps) {
-  const C = useTheme();
-  const s = makeStyles(C);
-
-  return (
-    <Modal
-      animationType="slide"
-      transparent
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={s.keyboardAvoider}
-      >
-        <Pressable style={s.sheetOverlay} onPress={onClose}>
-          <Pressable
-            style={[s.sheetWrap, { paddingBottom: 10 }]}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <View style={s.sheetHandle} />
-            <Text style={s.sheetTitle}>{editing ? "Edit note" : "New note"}</Text>
-            <TextInput
-              value={draft}
-              onChangeText={onChangeDraft}
-              placeholder="Capture a thought, plan, or reminder..."
-              placeholderTextColor={C.textPlaceholder}
-              multiline
-              autoFocus
-              style={s.composerInput}
-            />
-            <TouchableOpacity style={s.primaryButton} onPress={onSubmit}>
-              <Text style={s.primaryButtonLabel}>
-                {editing ? "Update" : "Save"}
-              </Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -644,15 +622,12 @@ export default function NotesScreen() {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
   const [isSheetVisible, setIsSheetVisible] = useState(false);
-  const [isTextComposerVisible, setIsTextComposerVisible] = useState(false);
   const [isVoiceComposerVisible, setIsVoiceComposerVisible] = useState(false);
   const [isSavingVoiceNote, setIsSavingVoiceNote] = useState(false);
   const [hasVoiceRecording, setHasVoiceRecording] = useState(false);
   const [isVoiceRecordingPaused, setIsVoiceRecordingPaused] = useState(false);
-  const [draft, setDraft] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<NoteKindFilter>("all");
-  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const { data: liveNotes } = useLiveQuery(
     db.select().from(notes).orderBy(desc(notes.createdAt)),
@@ -705,34 +680,17 @@ export default function NotesScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleSubmitTextNote = async () => {
-    if (!draft.trim()) return;
-    if (editingNoteId != null) {
-      await noteOps.update(editingNoteId, {
-        content: draft.trim(),
-      });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } else {
-      await createNote(draft);
-    }
-    setDraft("");
-    setEditingNoteId(null);
-    setIsTextComposerVisible(false);
-    closeSheet();
-  };
-
   const handleOpenTextComposer = () => {
     closeSheet();
-    setEditingNoteId(null);
-    setDraft("");
-    setIsTextComposerVisible(true);
+    router.push("/note-composer");
   };
 
   const handleEditNote = (note: Note) => {
     setIsSheetVisible(false);
-    setEditingNoteId(note.id);
-    setDraft(note.content);
-    setIsTextComposerVisible(true);
+    router.push({
+      pathname: "/note-composer",
+      params: { noteId: String(note.id) },
+    });
   };
 
   const handleDeleteNote = (note: Note) => {
@@ -1097,15 +1055,6 @@ export default function NotesScreen() {
         onVoiceNote={handleVoiceNote}
       />
 
-      <TextComposerModal
-        draft={draft}
-        editing={editingNoteId != null}
-        visible={isTextComposerVisible}
-        onChangeDraft={setDraft}
-        onClose={() => setIsTextComposerVisible(false)}
-        onSubmit={handleSubmitTextNote}
-      />
-
       <VoiceComposerModal
         bottomInset={insets.bottom}
         durationMillis={recorderState.durationMillis}
@@ -1435,7 +1384,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "flex-end",
       backgroundColor: C.overlayBg,
     },
-    keyboardAvoider: { flex: 1 },
     sheetWrap: {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
@@ -1511,22 +1459,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: C.textPrimary,
       fontSize: 13,
       fontWeight: "700",
-    },
-    composerInput: {
-      minHeight: 140,
-      maxHeight: 240,
-      borderRadius: 18,
-      backgroundColor: C.inputBg,
-      borderWidth: 1,
-      borderColor: C.inputBorder,
-      color: C.textPrimary,
-      fontSize: 16,
-      lineHeight: 24,
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      textAlignVertical: "top",
-      marginTop: 10,
-      marginBottom: 14,
     },
     primaryButton: {
       borderRadius: 14,
