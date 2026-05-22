@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useTheme } from "@/hooks/useTheme";
 import Animated, {
+  runOnJS,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -13,12 +14,14 @@ interface SwipeableRowProps {
   children: React.ReactNode;
   onDelete: () => void;
   onEdit?: () => void;
+  onSwipeStart?: () => void;
 }
 
 export const SwipeableRow: React.FC<SwipeableRowProps> = ({
   children,
   onDelete,
   onEdit,
+  onSwipeStart,
 }) => {
   const C = useTheme();
   const translateX = useSharedValue(0);
@@ -27,6 +30,11 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
   const gesture = Gesture.Pan()
     .activeOffsetX([-10, 10]) // Only activate when horizontal movement is significant
     .failOffsetY([-10, 10]) // Fail gesture if vertical movement is significant
+    .onStart(() => {
+      if (onSwipeStart) {
+        runOnJS(onSwipeStart)();
+      }
+    })
     .onUpdate((event) => {
       // Only allow left swipe (negative values)
       translateX.value = Math.min(0, event.translationX);
@@ -70,8 +78,12 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
             style={styles.editButtonTouchable}
             onPress={onEdit}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Edit"
           >
-            <Ionicons name="create-outline" size={20} color={C.iconPrimary} />
+            <View style={[styles.actionIcon, { backgroundColor: C.cardBg }]}>
+              <Ionicons name="pencil" size={18} color={C.iconPrimary} />
+            </View>
           </TouchableOpacity>
         </Animated.View>
       ) : null}
@@ -80,8 +92,12 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
           style={styles.deleteButtonTouchable}
           onPress={handleDeletePress}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Delete"
         >
-          <Ionicons name="close" size={24} color="#ff4444" />
+          <View style={styles.deleteIcon}>
+            <Ionicons name="trash-outline" size={19} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
       </Animated.View>
       <GestureDetector gesture={gesture}>
@@ -127,6 +143,23 @@ const styles = StyleSheet.create({
   editButtonTouchable: {
     width: "100%",
     height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  actionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    backgroundColor: "#E5484D",
     justifyContent: "center",
     alignItems: "center",
   },

@@ -20,7 +20,7 @@ import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -228,15 +228,23 @@ function NoteListItem({
   const trimmed = isTrimmed(note.content);
   const audioNote = isAudioNote(note);
   const shouldOpenDetail = !audioNote && (Boolean(note.mediaUrl) || trimmed);
+  const lastSwipeStartedAt = useRef(0);
 
   return (
     <SwipeableRow
       onEdit={() => onEdit(note)}
       onDelete={() => onDelete(note)}
+      onSwipeStart={() => {
+        lastSwipeStartedAt.current = Date.now();
+      }}
     >
       <Pressable
         disabled={!shouldOpenDetail}
         onPress={() => {
+          if (Date.now() - lastSwipeStartedAt.current < 400) {
+            return;
+          }
+
           if (shouldOpenDetail) onOpenDetail(note);
         }}
       >
