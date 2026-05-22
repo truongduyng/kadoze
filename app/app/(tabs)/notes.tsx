@@ -45,12 +45,32 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const VOICE_NOTES_DIR = `${FileSystem.documentDirectory ?? ""}voice-notes/`;
+const IMAGE_NOTES_DIR = `${FileSystem.documentDirectory ?? ""}image-notes/`;
 
 async function enablePlaybackAudioMode() {
   await setAudioModeAsync({
     allowsRecording: false,
     playsInSilentMode: true,
   });
+}
+
+async function persistImage(sourceUri: string) {
+  if (!FileSystem.documentDirectory) {
+    throw new Error("Document directory unavailable.");
+  }
+
+  await FileSystem.makeDirectoryAsync(IMAGE_NOTES_DIR, { intermediates: true });
+
+  const extensionMatch = sourceUri.match(/\.[a-z0-9]+(?=($|\?))/i);
+  const extension = extensionMatch?.[0] ?? ".jpg";
+  const destinationUri = `${IMAGE_NOTES_DIR}image-note-${Date.now()}${extension}`;
+
+  await FileSystem.copyAsync({
+    from: sourceUri,
+    to: destinationUri,
+  });
+
+  return destinationUri;
 }
 
 async function persistVoiceNote(sourceUri: string) {
@@ -160,6 +180,9 @@ export default function NotesScreen() {
           style: "destructive",
           onPress: async () => {
             await noteOps.delete(note.id);
+            if (note.mediaUrl?.startsWith(IMAGE_NOTES_DIR)) {
+              await FileSystem.deleteAsync(note.mediaUrl, { idempotent: true });
+            }
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           },
         },
@@ -280,7 +303,8 @@ export default function NotesScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      await createNote("", result.assets[0].uri);
+      const persistedUri = await persistImage(result.assets[0].uri);
+      await createNote("", persistedUri);
     }
   };
 
@@ -303,7 +327,8 @@ export default function NotesScreen() {
       });
 
       if (!result.canceled && result.assets.length > 0) {
-        await createNote("", result.assets[0].uri);
+        const persistedUri = await persistImage(result.assets[0].uri);
+        await createNote("", persistedUri);
       }
     } catch (error) {
       const message =
