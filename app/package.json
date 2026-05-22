@@ -1,13 +1,14 @@
 {
   "name": "kadoze",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios --device 'iPhone 17'",
     "web": "expo start --web",
     "lint": "expo lint",
+    "bump-version": "node ./scripts/bump-version.js",
     "build": "eas build --platform ios --profile production --local",
     "submit": "eas submit --platform ios --profile production"
   },

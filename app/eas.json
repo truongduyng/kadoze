@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "your_revenuecat_test_api_key",
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "test_LJvSQyjcvfapybgfNhHshigKOCN",
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zXvGPLzdVNUztRkdgzRQbsbOWyu"
       }
     },

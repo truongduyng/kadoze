@@ -1,4 +1,6 @@
-.PHONY: dev build submit
+BUMP ?= patch
+
+.PHONY: dev build submit bump
 
 dev:
 	cd app && bun run ios
@@ -8,3 +10,8 @@ build:
 
 submit:
 	cd app && bun run submit
+
+bump:
+	cd app && bun run bump-version $(BUMP)
+	$(MAKE) build
+	$(MAKE) submit
