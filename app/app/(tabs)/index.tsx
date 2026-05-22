@@ -698,7 +698,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     addBtnText: { fontSize: 18, fontWeight: "800", color: palette.white },
     resetCard: {
-      backgroundColor: C.heroBg,
+      backgroundColor: "#05070A",
       borderRadius: 22,
       borderWidth: 1,
       borderColor: C.accentBorderSubtle,
