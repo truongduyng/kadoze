@@ -286,11 +286,27 @@ export default function HomeScreen() {
             </View>
 
             <Pressable
-              style={[s.focusButton, !goalText && s.focusButtonDisabled]}
-              onPress={() => (goalText ? router.push("/focus" as any) : openGoalEditor())}
+              style={[s.focusButton, !editingGoal && !goalText && s.focusButtonDisabled]}
+              onPress={() => {
+                if (editingGoal) {
+                  saveGoal();
+                  return;
+                }
+
+                if (goalText) {
+                  router.push("/focus" as any);
+                  return;
+                }
+
+                openGoalEditor();
+              }}
             >
-              <Ionicons name="play" size={16} color={palette.white} />
-              <Text style={s.focusButtonText}>Start Focus</Text>
+              <Ionicons
+                name={editingGoal ? "save-outline" : "play"}
+                size={16}
+                color={palette.white}
+              />
+              <Text style={s.focusButtonText}>{editingGoal ? "Save" : "Start Focus"}</Text>
             </Pressable>
           </View>
         </View>
