@@ -204,6 +204,7 @@ function AudioNotePlayer({
 
   return (
     <TouchableOpacity
+      activeOpacity={0.82}
       style={[s.audioPlayer, compact ? s.audioPlayerCompact : null]}
       onPress={async () => {
         try {
@@ -226,7 +227,11 @@ function AudioNotePlayer({
       }}
     >
       <View style={s.audioIcon}>
-        <Ionicons name="play" size={compact ? 14 : 16} color={palette.white} />
+        <Ionicons
+          name={playerStatus.playing ? "pause" : "play"}
+          size={compact ? 14 : 16}
+          color={palette.white}
+        />
       </View>
       <View style={s.audioTextWrap}>
         <Text style={s.audioTitle}>Voice note</Text>
@@ -1258,9 +1263,9 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderRadius: 18,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: palette.orange30,
+      backgroundColor: C.accent,
       borderWidth: 1,
-      borderColor: palette.orange35,
+      borderColor: C.accent,
     },
     audioTextWrap: { flex: 1 },
     audioTitle: {
