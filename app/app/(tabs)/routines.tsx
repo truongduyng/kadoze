@@ -1,4 +1,5 @@
 import GradientBackground from "@/components/GradientBackground";
+import { HabitHeatmap } from "@/components/HabitHeatmap";
 import { Collapsible } from "@/components/ui/collapsible";
 import { useTheme } from "@/hooks/useTheme";
 import {
@@ -13,7 +14,7 @@ import { getTodayInLocalTimezone, getLocalDateString } from "@/lib/timezone";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Svg, { Circle } from "react-native-svg";
 import {
   Pressable,
@@ -58,6 +59,7 @@ export default function RoutinesScreen() {
   const today = useMemo(() => getTodayInLocalTimezone(), []);
   const todayKey = getLocalDateString(today);
   const todayName = DAY_NAMES[today.getDay()];
+  const [expandedHabitId, setExpandedHabitId] = useState<number | null>(null);
 
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
@@ -119,6 +121,39 @@ export default function RoutinesScreen() {
     }
     return map;
   }, [allHabits, allCompletions, doneIds, today]);
+
+  const bestStreakMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    for (const h of allHabits ?? []) {
+      const dates = (allCompletions ?? [])
+        .filter((c) => c.habitId === h.id && c.status === "done")
+        .map((c) => c.date)
+        .sort();
+
+      let best = 0;
+      let current = 0;
+      for (let i = 0; i < dates.length; i++) {
+        if (i === 0) {
+          current = 1;
+        } else {
+          const prev = new Date(dates[i - 1]);
+          prev.setDate(prev.getDate() + 1);
+          current = getLocalDateString(prev) === dates[i] ? current + 1 : 1;
+        }
+        if (current > best) best = current;
+      }
+      map[h.id] = Math.max(best, streakMap[h.id] ?? 0);
+    }
+    return map;
+  }, [allHabits, allCompletions, streakMap]);
+
+  const totalDoneMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    for (const c of allCompletions ?? []) {
+      if (c.status === "done") map[c.habitId] = (map[c.habitId] ?? 0) + 1;
+    }
+    return map;
+  }, [allCompletions]);
 
   const todayProgress = useMemo(() => {
     const completed = todayHabits.filter((habit) => doneIds.has(habit.id)).length;
@@ -310,45 +345,64 @@ export default function RoutinesScreen() {
               {todayHabits.map((habit) => {
                 const streak = streakMap[habit.id] ?? 0;
                 const streakDots = Math.min(streak, 10);
+                const isExpanded = expandedHabitId === habit.id;
                 return (
-                  <Pressable
-                    key={habit.id}
-                    style={s.habitCard}
-                    onPress={() => toggle(habit.id, doneIds.has(habit.id))}
-                  >
-                    <View style={s.habitIconWrap}>
-                      <Ionicons
-                        name={resolveIoniconName(habit.icon, "star-outline")}
-                        size={22}
-                        color={C.iconSecondary}
-                      />
-                    </View>
-                    <View style={s.habitInfo}>
-                      <Text style={s.habitTitle} numberOfLines={1}>
-                        {habit.title}
-                      </Text>
-                      {habit.subtitle ? (
-                        <Text style={s.habitDuration} numberOfLines={1}>
-                          {habit.subtitle}
-                        </Text>
-                      ) : null}
-                      <View style={s.streakDotsRow}>
-                        {Array.from({ length: 10 }).map((_, index) => (
-                          <View
-                            key={`${habit.id}-dot-${index}`}
-                            style={[
-                              s.streakDot,
-                              index < streakDots && s.streakDotActive,
-                            ]}
-                          />
-                        ))}
+                  <View key={habit.id} style={s.habitCard}>
+                    <Pressable
+                      style={s.habitCardRow}
+                      onPress={() => toggle(habit.id, doneIds.has(habit.id))}
+                      onLongPress={() => setExpandedHabitId(isExpanded ? null : habit.id)}
+                    >
+                      <View style={s.habitIconWrap}>
+                        <Ionicons
+                          name={resolveIoniconName(habit.icon, "star-outline")}
+                          size={22}
+                          color={C.iconSecondary}
+                        />
                       </View>
-                    </View>
-                    <View style={s.streakBadge}>
-                      <Text style={s.streakText}>{streak}</Text>
-                      <Text style={s.streakLabel}>day streak</Text>
-                    </View>
-                  </Pressable>
+                      <View style={s.habitInfo}>
+                        <Text style={s.habitTitle} numberOfLines={1}>
+                          {habit.title}
+                        </Text>
+                        {habit.subtitle ? (
+                          <Text style={s.habitDuration} numberOfLines={1}>
+                            {habit.subtitle}
+                          </Text>
+                        ) : null}
+                        <View style={s.streakDotsRow}>
+                          {Array.from({ length: 10 }).map((_, index) => (
+                            <View
+                              key={`${habit.id}-dot-${index}`}
+                              style={[
+                                s.streakDot,
+                                index < streakDots && s.streakDotActive,
+                              ]}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                      <View style={s.streakBadge}>
+                        <Text style={s.streakText}>{streak}</Text>
+                        <Text style={s.streakLabel}>day streak</Text>
+                        <Ionicons
+                          name={isExpanded ? "chevron-up" : "chevron-down"}
+                          size={12}
+                          color={C.textQuaternary}
+                          style={{ marginTop: 4 }}
+                        />
+                      </View>
+                    </Pressable>
+                    {isExpanded && (
+                      <HabitHeatmap
+                        habitId={habit.id}
+                        daysOfWeek={habit.daysOfWeek as string[]}
+                        completions={allCompletions ?? []}
+                        today={today}
+                        bestStreak={bestStreakMap[habit.id] ?? 0}
+                        totalDone={totalDoneMap[habit.id] ?? 0}
+                      />
+                    )}
+                  </View>
                 );
               })}
             </View>
@@ -583,15 +637,17 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     habitList: { gap: 10 },
     habitCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      gap: 12,
       backgroundColor: C.cardBg,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: C.cardBorder,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    habitCardRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
     },
     habitIconWrap: {
       width: 28,
