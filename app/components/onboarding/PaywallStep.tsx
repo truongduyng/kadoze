@@ -15,8 +15,8 @@ import { trackOnboardingEvent } from "@/hooks/useOnboarding";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
-const PRIVACY_URL = "https://kado.app/privacy";
-const TERMS_URL = "https://kado.app/terms";
+const PRIVACY_URL = "https://yikudo.xyz/kadoze/privacy";
+const TERMS_URL = "https://yikudo.xyz/kadoze/terms";
 
 const FEATURES = [
   { icon: "infinite-outline" as const, text: "Unlimited custom habits" },
@@ -35,6 +35,13 @@ function isAnnualPackage(pkg: PurchasesPackage) {
     pkg.packageType === "ANNUAL" ||
     pkg.product.identifier.toLowerCase().includes("annual") ||
     pkg.product.identifier.toLowerCase().includes("yearly")
+  );
+}
+
+function isLifetimePackage(pkg: PurchasesPackage) {
+  return (
+    pkg.packageType === "LIFETIME" ||
+    pkg.product.identifier.toLowerCase().includes("lifetime")
   );
 }
 
@@ -138,10 +145,13 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
   };
 
   const busy = purchasing || restoring;
-  const isSelectedAnnual = effectiveSelected
-    ? isAnnualPackage(effectiveSelected)
-    : false;
-  const ctaLabel = isSelectedAnnual ? "Start trial" : "Subscribe now";
+  const isSelectedAnnual = effectiveSelected ? isAnnualPackage(effectiveSelected) : false;
+  const isSelectedLifetime = effectiveSelected ? isLifetimePackage(effectiveSelected) : false;
+  const ctaLabel = isSelectedLifetime
+    ? "Buy lifetime access"
+    : isSelectedAnnual
+    ? "Start trial"
+    : "Subscribe now";
 
   return (
     <ScrollView
@@ -188,9 +198,10 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
             {packages.map((pkg) => {
               const { product } = pkg;
               const isAnnual = isAnnualPackage(pkg);
+              const isLifetime = isLifetimePackage(pkg);
               const isSelected = effectiveSelected?.identifier === pkg.identifier;
               const weeks = packageWeeks(pkg);
-              const perWeek = weeks > 1 ? product.price / weeks : null;
+              const perWeek = !isLifetime && weeks > 1 ? product.price / weeks : null;
               const perWeekStr = perWeek
                 ? perWeek.toLocaleString("en-US", {
                     style: "currency",
@@ -200,7 +211,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
                   })
                 : null;
               const savingsPct =
-                weeklyPricePerWeek && weeks > 1 && pkg.packageType !== "WEEKLY"
+                !isLifetime && weeklyPricePerWeek && weeks > 1 && pkg.packageType !== "WEEKLY"
                   ? Math.round((1 - product.price / weeks / weeklyPricePerWeek) * 100)
                   : null;
               return (
@@ -217,9 +228,9 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
                         <Text style={[s.pkgTitle, isSelected && s.pkgTitleSelected]}>
                           {packageLabel(pkg)}
                         </Text>
-                        {isAnnual ? (
+                        {isLifetime || isAnnual ? (
                           <View style={s.bestValueBadge}>
-                            <Text style={s.bestValueText}>Best value</Text>
+                            <Text style={s.bestValueText}>{isLifetime ? "One-time" : "Best value"}</Text>
                           </View>
                         ) : null}
                       </View>
@@ -236,7 +247,9 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
                           </View>
                         ) : null}
                       </View>
-                      {isAnnual ? (
+                      {isLifetime ? (
+                        <Text style={s.pkgTrial}>Pay once, yours forever</Text>
+                      ) : isAnnual ? (
                         <Text style={s.pkgTrial}>3-day free trial</Text>
                       ) : null}
                     </View>
@@ -263,7 +276,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
               <Text style={s.ctaBtnText}>{ctaLabel}</Text>
             )}
           </TouchableOpacity>
-          {isSelectedAnnual ? (
+          {isSelectedAnnual && !isSelectedLifetime ? (
             <Text style={s.pkgNoPayment}>No payment due now</Text>
           ) : null}
         </>
