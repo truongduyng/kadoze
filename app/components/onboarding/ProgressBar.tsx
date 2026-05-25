@@ -6,12 +6,13 @@ import { useTheme } from "@/hooks/useTheme";
 interface ProgressBarProps {
   step: number;
   total: number;
+  compact?: boolean;
 }
 
-export default function ProgressBar({ step, total }: ProgressBarProps) {
+export default function ProgressBar({ step, total, compact = false }: ProgressBarProps) {
   const C = useTheme();
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
       {Array.from({ length: total }).map((_, i) => {
         const filled = i < step;
         return (
@@ -36,6 +37,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 4,
+  },
+  rowCompact: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   segment: {
     height: 3,

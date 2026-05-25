@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Purchases, { type PurchasesPackage } from "react-native-purchases";
 import { useRevenueCat } from "@/hooks/useRevenueCat";
+import { trackOnboardingEvent } from "@/hooks/useOnboarding";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -18,12 +19,11 @@ const PRIVACY_URL = "https://kado.app/privacy";
 const TERMS_URL = "https://kado.app/terms";
 
 const FEATURES = [
-  { icon: "flame-outline" as const, text: "Unlimited habits & routines" },
-  { icon: "flag-outline" as const, text: "Daily focus & goal tracking" },
-  { icon: "moon-outline" as const, text: "Evening reset & reflection" },
-  { icon: "timer-outline" as const, text: "Deep work focus timer" },
-  { icon: "stats-chart-outline" as const, text: "Progress analytics" },
-  { icon: "lock-open-outline" as const, text: "All future features" },
+  { icon: "sparkles-outline" as const, text: "AI focus guidance" },
+  { icon: "analytics-outline" as const, text: "Advanced insights" },
+  { icon: "infinite-outline" as const, text: "Unlimited habits" },
+  { icon: "stats-chart-outline" as const, text: "Deep focus analytics" },
+  { icon: "calendar-outline" as const, text: "Weekly reflections" },
 ];
 
 interface PaywallStepProps {
@@ -88,13 +88,25 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
 
   const effectiveSelected = selectedPkg ?? annualPkg ?? packages[0] ?? null;
 
+  React.useEffect(() => {
+    trackOnboardingEvent("paywall_viewed");
+  }, []);
+
   const handlePurchase = async () => {
     if (!effectiveSelected) return;
     setError(null);
     setPurchasing(true);
+    trackOnboardingEvent("trial_started", {
+      package: effectiveSelected.identifier,
+      product: effectiveSelected.product.identifier,
+    });
     try {
       await Purchases.purchasePackage(effectiveSelected);
       await refreshCustomerInfo();
+      trackOnboardingEvent("subscription_purchased", {
+        package: effectiveSelected.identifier,
+        product: effectiveSelected.product.identifier,
+      });
       onComplete();
     } catch (e: any) {
       if (!e.userCancelled) {
@@ -135,9 +147,12 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
       showsVerticalScrollIndicator={false}
     >
       <View style={s.header}>
-        <Text style={s.headline}>Build your best self.</Text>
+        <View style={s.proBadge}>
+          <Text style={s.proBadgeText}>PRO</Text>
+        </View>
+        <Text style={s.headline}>Protect your momentum.</Text>
         <Text style={s.sub}>
-          Everything you need to stay focused, consistent, and on track.
+          Go further with Kadoze Pro.
         </Text>
       </View>
 
@@ -249,7 +264,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
             )}
           </TouchableOpacity>
           {effectiveSelected && isAnnualPackage(effectiveSelected) ? (
-            <Text style={s.pkgNoPayment}>No payment due today</Text>
+            <Text style={s.pkgNoPayment}>No commitment. Cancel anytime.</Text>
           ) : null}
         </>
       )}
@@ -289,6 +304,20 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       gap: 20,
     },
     header: { gap: 10, paddingTop: 8 },
+    proBadge: {
+      alignSelf: "flex-start",
+      backgroundColor: palette.orange,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      marginBottom: 4,
+    },
+    proBadgeText: {
+      color: "#080808",
+      fontSize: 12,
+      fontWeight: "800",
+      letterSpacing: 0,
+    },
     badge: {
       flexDirection: "row",
       alignItems: "center",

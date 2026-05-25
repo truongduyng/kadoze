@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { router } from "expo-router";
-import { profileOps, habitOps } from "@/lib/db";
+import { profileOps, habitOps, dailyFocusOps } from "@/lib/db";
 import { storage } from "@/lib/storage";
 import type { IoniconName } from "@/lib/iconNames";
 
@@ -9,7 +9,19 @@ import type { IoniconName } from "@/lib/iconNames";
 // Step definitions
 // ---------------------------------------------------------------------------
 
-export type StepType = "hook" | "empathy" | "identity" | "promise" | "goal" | "keystone" | "notifications" | "paywall";
+export type StepType =
+  | "hook"
+  | "pain"
+  | "future"
+  | "identity"
+  | "wins"
+  | "system"
+  | "trust"
+  | "goal"
+  | "keystone"
+  | "preview"
+  | "personalization"
+  | "paywall";
 
 export interface StepConfig {
   type: StepType;
@@ -17,12 +29,16 @@ export interface StepConfig {
 
 export const STEPS: StepConfig[] = [
   { type: "hook" },
-  { type: "empathy" },
+  { type: "pain" },
+  { type: "future" },
   { type: "identity" },
-  { type: "promise" },
+  { type: "wins" },
+  { type: "system" },
+  { type: "trust" },
   { type: "goal" },
   { type: "keystone" },
-  { type: "notifications" },
+  { type: "preview" },
+  { type: "personalization" },
   { type: "paywall" },
 ];
 
@@ -31,9 +47,10 @@ export const TOTAL = STEPS.length;
 const ONBOARDING_DRAFT_KEY = "onboarding:draft";
 
 interface OnboardingDraft {
-  version: 1;
+  version: 2;
   currentStep: number;
   coreProblem: string | null;
+  painPoints: string[];
   mainGoal: string;
   keystoneHabit: string;
   name: string;
@@ -41,9 +58,10 @@ interface OnboardingDraft {
 }
 
 const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
-  version: 1,
+  version: 2,
   currentStep: 0,
   coreProblem: null,
+  painPoints: [],
   mainGoal: "",
   keystoneHabit: "",
   name: "",
@@ -64,6 +82,7 @@ function readOnboardingDraft(): OnboardingDraft {
         TOTAL - 1,
       ),
       coreProblem: draft.coreProblem ?? null,
+      painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 3) : [],
       mainGoal: draft.mainGoal ?? "",
       keystoneHabit: draft.keystoneHabit ?? "",
       name: draft.name ?? "",
@@ -91,77 +110,77 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
       id: "walk",
       icon: "walk-outline",
       title: "10-minute walk",
-      subtitle: "Move your body every day",
+      subtitle: "Outside, no headphones — just move and reset",
     },
     {
       id: "water",
       icon: "water-outline",
       title: "Drink 2L of water",
-      subtitle: "Stay consistently hydrated",
+      subtitle: "Most fatigue is just dehydration",
     },
     {
       id: "sleep",
       icon: "bed-outline",
-      title: "7–8 hours of sleep",
-      subtitle: "Sleep with intention",
+      title: "Lights out by 11pm",
+      subtitle: "Sleep is the highest-leverage habit you have",
     },
     {
       id: "stretch",
       icon: "body-outline",
       title: "5-min morning stretch",
-      subtitle: "Wake up your body gently",
+      subtitle: "Tells your body the day has started",
     },
   ],
   mindset: [
     {
       id: "journal",
       icon: "journal-outline",
-      title: "5-min journaling",
-      subtitle: "Reflect on your thoughts",
+      title: "Brain dump journal",
+      subtitle: "5 min — write until your head is clear",
     },
     {
       id: "quiet",
       icon: "body-outline",
-      title: "5 minutes of quiet",
-      subtitle: "Meditate or breathe deeply",
+      title: "5 minutes of stillness",
+      subtitle: "No input, no phone — just breathe",
     },
     {
       id: "gratitude",
       icon: "heart-outline",
-      title: "Gratitude practice",
-      subtitle: "3 things you're grateful for",
+      title: "3 things I'm grateful for",
+      subtitle: "Rewires your brain toward what's working",
     },
     {
       id: "read",
       icon: "book-outline",
       title: "Read 10 pages",
-      subtitle: "Feed your mind daily",
+      subtitle: "Give your attention somewhere worth going",
     },
   ],
   work: [
     {
       id: "mit",
       icon: "radio-button-on-outline",
-      title: "Pick your MIT",
-      subtitle: "One task that moves the needle",
+      title: "Name your one thing",
+      subtitle: "Pick the task that makes today count",
     },
     {
       id: "nophone",
       icon: "phone-portrait-outline",
       title: "No phone first hour",
-      subtitle: "Start deep, not reactive",
+      subtitle: "Own your morning before the world does",
     },
     {
       id: "plan",
       icon: "clipboard-outline",
       title: "Plan tomorrow tonight",
-      subtitle: "Wake up with clarity",
+      subtitle: "Write it down so tomorrow-you doesn't have to decide",
     },
     {
       id: "pomodoro",
       icon: "timer-outline",
       title: "One focused sprint",
-      subtitle: "25 min of pure deep work",
+      subtitle: "25 min deep work — phone flipped, timer set",
     },
   ],
   relations: [
@@ -247,6 +266,45 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
 // Fallback for unknown focus
 export const DEFAULT_KEYSTONE_HABITS: KeystoneHabit[] = [
   {
+    id: "move",
+    icon: "walk-outline",
+    title: "Move my body",
+    subtitle: "A small signal of energy",
+  },
+  {
+    id: "read",
+    icon: "book-outline",
+    title: "Read daily",
+    subtitle: "Give your attention a place to land",
+  },
+  {
+    id: "meditate",
+    icon: "body-outline",
+    title: "Meditate",
+    subtitle: "Practice coming back gently",
+  },
+  {
+    id: "water",
+    icon: "water-outline",
+    title: "Drink water",
+    subtitle: "Start with the body",
+  },
+  {
+    id: "sleep",
+    icon: "moon-outline",
+    title: "Sleep earlier",
+    subtitle: "Protect tomorrow's focus",
+  },
+  {
+    id: "journal",
+    icon: "journal-outline",
+    title: "Journal",
+    subtitle: "Clear one loop from your mind",
+  },
+];
+
+export const LEGACY_DEFAULT_KEYSTONE_HABITS: KeystoneHabit[] = [
+  {
     id: "walk",
     icon: "walk-outline",
     title: "10-minute walk",
@@ -275,8 +333,32 @@ export const DEFAULT_KEYSTONE_HABITS: KeystoneHabit[] = [
 // Keep for backward compat with completeOnboarding
 export const KEYSTONE_HABITS: KeystoneHabit[] = [
   ...DEFAULT_KEYSTONE_HABITS,
+  ...LEGACY_DEFAULT_KEYSTONE_HABITS,
   ...Object.values(KEYSTONE_HABITS_BY_FOCUS).flat(),
 ];
+
+export const ONBOARDING_ANALYTICS_KEY = "onboarding:analytics-events";
+
+export function trackOnboardingEvent(
+  name: string,
+  properties: Record<string, unknown> = {},
+) {
+  try {
+    const raw = storage.getString(ONBOARDING_ANALYTICS_KEY);
+    const events = raw ? (JSON.parse(raw) as unknown[]) : [];
+    events.push({
+      name,
+      properties,
+      createdAt: new Date().toISOString(),
+    });
+    storage.set(ONBOARDING_ANALYTICS_KEY, JSON.stringify(events.slice(-100)));
+  } catch {
+    storage.set(
+      ONBOARDING_ANALYTICS_KEY,
+      JSON.stringify([{ name, properties, createdAt: new Date().toISOString() }]),
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -290,6 +372,7 @@ export function useOnboarding() {
   const [coreProblem, setCoreProblem] = useState<string | null>(
     initialDraft.coreProblem,
   );
+  const [painPoints, setPainPoints] = useState<string[]>(initialDraft.painPoints);
   const [mainGoal, setMainGoal] = useState(initialDraft.mainGoal);
   const [keystoneHabit, setKeystoneHabit] = useState<string>(
     initialDraft.keystoneHabit,
@@ -299,29 +382,42 @@ export function useOnboarding() {
 
   useEffect(() => {
     const draft: OnboardingDraft = {
-      version: 1,
+      version: 2,
       currentStep,
       coreProblem,
+      painPoints,
       mainGoal,
       keystoneHabit,
       name,
       avatar,
     };
     storage.set(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
-  }, [avatar, coreProblem, currentStep, keystoneHabit, mainGoal, name]);
+  }, [avatar, coreProblem, currentStep, keystoneHabit, mainGoal, name, painPoints]);
+
+  useEffect(() => {
+    trackOnboardingEvent("onboarding_started");
+  }, []);
+
+  useEffect(() => {
+    trackOnboardingEvent("onboarding_step_viewed", {
+      index: currentStep,
+      step: STEPS[currentStep]?.type,
+    });
+  }, [currentStep]);
 
   const goToStep = useCallback(
     (next: number) => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 140,
+        duration: 220,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }).start(() => {
         setCurrentStep(next);
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }).start();
       });
@@ -350,6 +446,10 @@ export function useOnboarding() {
         });
       }
 
+      if (mainGoal.trim().length > 0) {
+        await dailyFocusOps.upsertGoal(mainGoal);
+      }
+
       // Save keystone habit
       const selected = KEYSTONE_HABITS.find((h) => h.id === keystoneHabit);
       await habitOps.create({
@@ -365,8 +465,9 @@ export function useOnboarding() {
       console.error("Error completing onboarding:", e);
     }
     storage.remove(ONBOARDING_DRAFT_KEY);
+    trackOnboardingEvent("onboarding_completed");
     router.replace("/(tabs)");
-  }, [avatar, keystoneHabit, name]);
+  }, [avatar, keystoneHabit, mainGoal, name]);
 
   const showBack = currentStep > 0;
 
@@ -375,6 +476,8 @@ export function useOnboarding() {
     fadeAnim,
     coreProblem,
     setCoreProblem,
+    painPoints,
+    setPainPoints,
     mainGoal,
     setMainGoal,
     keystoneHabit,
