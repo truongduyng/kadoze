@@ -17,7 +17,7 @@ const SOURCES = [
   { id: "instagram", label: "Instagram", icon: "logo-instagram" as const, color: "#FF5A8A" },
   { id: "tiktok", label: "TikTok", icon: "logo-tiktok" as const, color: "#F4F7FB" },
   { id: "youtube", label: "YouTube", icon: "logo-youtube" as const, color: "#FF3B30" },
-  { id: "google", label: "Google Search", icon: "logo-google" as const, color: "#cb1812" },
+  { id: "google", label: "Google Search", icon: "logo-google" as const, color: "#4285F4" },
   { id: "friend", label: "Friend or Family", icon: "chatbubble-outline" as const, color: palette.orange },
   { id: "other", label: "Other", icon: "ellipsis-horizontal" as const, color: "#F4F7FB" },
 ];
