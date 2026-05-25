@@ -19,11 +19,11 @@ const PRIVACY_URL = "https://kado.app/privacy";
 const TERMS_URL = "https://kado.app/terms";
 
 const FEATURES = [
-  { icon: "sparkles-outline" as const, text: "AI focus guidance" },
-  { icon: "analytics-outline" as const, text: "Advanced insights" },
-  { icon: "infinite-outline" as const, text: "Unlimited habits" },
-  { icon: "stats-chart-outline" as const, text: "Deep focus analytics" },
-  { icon: "calendar-outline" as const, text: "Weekly reflections" },
+  { icon: "infinite-outline" as const, text: "Unlimited custom habits" },
+  { icon: "grid-outline" as const, text: "Full habit history & heatmap" },
+  { icon: "flag-outline" as const, text: "Daily focus goal tracking" },
+  { icon: "checkmark-done-outline" as const, text: "Daily todos & task lists" },
+  { icon: "moon-outline" as const, text: "Evening reset & routines" },
 ];
 
 interface PaywallStepProps {
