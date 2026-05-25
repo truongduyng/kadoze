@@ -2,11 +2,12 @@ import GradientBackground from "@/components/GradientBackground";
 import { palette } from "@/constants/theme";
 import { usePreventScreenSleep } from "@/hooks/usePreventScreenSleep";
 import { useTheme } from "@/hooks/useTheme";
-import { dailyFocus, db, noteOps, todoOps } from "@/lib/db";
+import { buildEveningReflection } from "@/lib/eveningReflection";
+import { dailyFocus, db, habitCompletions, habits, noteOps, notes, todoOps, todos } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -18,6 +19,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import Svg, { Circle } from "react-native-svg";
 
 const RESET_DURATION_SECONDS = 10 * 60;
@@ -53,6 +55,7 @@ function getTomorrowKey() {
 }
 
 export default function EveningResetScreen() {
+  const todayKey = useMemo(() => getLocalDateString(new Date()), []);
   const tomorrowKey = useMemo(() => getTomorrowKey(), []);
   const C = useTheme();
   const [remainingSeconds, setRemainingSeconds] = useState(RESET_DURATION_SECONDS);
@@ -65,6 +68,17 @@ export default function EveningResetScreen() {
   const [plannedTodos, setPlannedTodos] = useState<string[]>([]);
   const [isSavingPlan, setIsSavingPlan] = useState(false);
   const [todayGoalHint, setTodayGoalHint] = useState("");
+  const { data: focusRows } = useLiveQuery(
+    db.select().from(dailyFocus).orderBy(desc(dailyFocus.date)).limit(14)
+  );
+  const { data: todayTodoRows } = useLiveQuery(
+    db.select().from(todos).where(eq(todos.date, todayKey))
+  );
+  const { data: habitRows } = useLiveQuery(db.select().from(habits));
+  const { data: completionRows } = useLiveQuery(db.select().from(habitCompletions));
+  const { data: noteRows } = useLiveQuery(
+    db.select().from(notes).orderBy(desc(notes.createdAt)).limit(40)
+  );
   usePreventScreenSleep(isRunning && remainingSeconds > 0, "kadoze-evening-reset");
 
   useEffect(() => {
@@ -87,7 +101,6 @@ export default function EveningResetScreen() {
     let isActive = true;
 
     const loadTomorrowPlan = async () => {
-      const todayKey = getLocalDateString(new Date());
       const [[focusRow], [todayFocusRow], todoRows] = await Promise.all([
         db.select().from(dailyFocus).where(eq(dailyFocus.date, tomorrowKey)).limit(1),
         db.select().from(dailyFocus).where(eq(dailyFocus.date, todayKey)).limit(1),
@@ -106,7 +119,7 @@ export default function EveningResetScreen() {
     return () => {
       isActive = false;
     };
-  }, [tomorrowKey]);
+  }, [todayKey, tomorrowKey]);
 
   const progress = remainingSeconds / RESET_DURATION_SECONDS;
   const progressOffset = -CIRCUMFERENCE * (1 - progress);
@@ -118,6 +131,18 @@ export default function EveningResetScreen() {
   const isCompleted = activeStepIndex === -1;
   const currentStepIndex = activeStepIndex === -1 ? RESET_STEPS.length - 1 : activeStepIndex;
   const currentStep = RESET_STEPS[currentStepIndex];
+  const eveningReflection = useMemo(
+    () =>
+      buildEveningReflection({
+        todayKey,
+        focusRows: focusRows ?? [],
+        todayTodos: todayTodoRows ?? [],
+        habits: habitRows ?? [],
+        completions: completionRows ?? [],
+        notes: noteRows ?? [],
+      }),
+    [completionRows, focusRows, habitRows, noteRows, todayKey, todayTodoRows]
+  );
 
   const saveTomorrowPlan = async () => {
     const normalizedGoal = goalDraft.trim();
@@ -279,6 +304,14 @@ export default function EveningResetScreen() {
                     />
                   </Pressable>
                 ) : null}
+
+                <View style={s.aiCard}>
+
+
+                  <Text style={s.aiMessage}>
+                    {eveningReflection.summary} {eveningReflection.pattern}
+                  </Text>
+                </View>
 
                 <View style={s.stepsCard}>
                   <Text style={s.stepsLabel}>RESET STEPS</Text>
@@ -485,6 +518,41 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "center",
       marginTop: 14,
+    },
+    aiCard: {
+      width: "100%",
+      borderRadius: 18,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.accentBorderSubtle,
+      paddingHorizontal: 18,
+      paddingVertical: 18,
+      marginTop: 24,
+      gap: 16,
+    },
+    aiHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    aiIconWrap: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: C.accentBgSubtle,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    aiTitle: {
+      color: C.textPrimary,
+      fontSize: 18,
+      fontWeight: "700",
+    },
+    aiMessage: {
+      color: C.textSecondary,
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: "500",
     },
     stepsCard: {
       width: "100%",
