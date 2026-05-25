@@ -129,10 +129,12 @@ export function getNoteSections(
     const kind = getNoteKind(note);
     const hiddenPlaceholder = preview === "...";
     const filteredByKind = kindFilter !== "all" && kind !== kindFilter;
+    const transcriptText = (note.transcribedText ?? "") + " " + (note.ocrText ?? "");
     const filteredBySearch =
       normalizedSearchQuery &&
       !preview.toLowerCase().includes(normalizedSearchQuery) &&
-      !kind.includes(normalizedSearchQuery);
+      !kind.includes(normalizedSearchQuery) &&
+      !transcriptText.toLowerCase().includes(normalizedSearchQuery);
 
     if (hiddenPlaceholder || filteredByKind || filteredBySearch) {
       continue;

@@ -62,7 +62,13 @@
       ],
       "expo-sharing",
       "expo-sqlite",
-      "expo-asset"
+      "expo-asset",
+      [
+        "whisper.rn",
+        {
+          "coreMLModels": []
+        }
+      ]
     ],
     "extra": {
       "router": {},
