@@ -1,7 +1,8 @@
 import GradientBackground from "@/components/GradientBackground";
 import { palette } from "@/constants/theme";
+import { usePreventScreenSleep } from "@/hooks/usePreventScreenSleep";
 import { useTheme } from "@/hooks/useTheme";
-import { dailyFocus, db, todoOps } from "@/lib/db";
+import { dailyFocus, db, noteOps, todoOps } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,15 +10,13 @@ import { eq } from "drizzle-orm";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
@@ -59,11 +58,14 @@ export default function EveningResetScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState(RESET_DURATION_SECONDS);
   const [isRunning, setIsRunning] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
+  const [mindNoteDraft, setMindNoteDraft] = useState("");
+  const [isSavingMindNote, setIsSavingMindNote] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
   const [todoDraft, setTodoDraft] = useState("");
   const [plannedTodos, setPlannedTodos] = useState<string[]>([]);
   const [isSavingPlan, setIsSavingPlan] = useState(false);
   const [todayGoalHint, setTodayGoalHint] = useState("");
+  usePreventScreenSleep(isRunning && remainingSeconds > 0, "kadoze-evening-reset");
 
   useEffect(() => {
     if (!isRunning || remainingSeconds <= 0) return;
@@ -149,6 +151,25 @@ export default function EveningResetScreen() {
     }
   };
 
+  const saveMindNote = async () => {
+    const content = mindNoteDraft.trim();
+    if (!content) return true;
+
+    setIsSavingMindNote(true);
+    try {
+      await noteOps.create({
+        content,
+        mediaUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      setMindNoteDraft("");
+      return true;
+    } finally {
+      setIsSavingMindNote(false);
+    }
+  };
+
   const handleStepPress = async (index: number) => {
     if (index > currentStepIndex) return;
 
@@ -162,6 +183,11 @@ export default function EveningResetScreen() {
         return next;
       });
       return;
+    }
+
+    if (index === 1) {
+      const saved = await saveMindNote();
+      if (!saved) return;
     }
 
     if (index === 2) {
@@ -196,25 +222,21 @@ export default function EveningResetScreen() {
     <View style={s.container}>
       <GradientBackground />
       <SafeAreaView style={s.safeArea}>
-        <KeyboardAvoidingView
-          style={s.keyboard}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        <KeyboardAwareScrollView
+          bottomOffset={32}
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView
-            contentContainerStyle={s.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-              <View style={s.header}>
-                <Pressable onPress={() => router.back()} hitSlop={10} style={s.headerButton}>
-                  <Ionicons name="chevron-back" size={24} color={C.iconSecondary} />
-                </Pressable>
-                <Text style={s.headerTitle}>Evening Reset</Text>
-                <View style={s.headerSpacer} />
-              </View>
+          <View style={s.header}>
+            <Pressable onPress={() => router.back()} hitSlop={10} style={s.headerButton}>
+              <Ionicons name="chevron-back" size={24} color={C.iconSecondary} />
+            </Pressable>
+            <Text style={s.headerTitle}>Evening Reset</Text>
+            <View style={s.headerSpacer} />
+          </View>
 
-              <View style={s.timerContent}>
+          <View style={s.timerContent}>
                 <View style={s.ringWrap}>
                   <Svg width={RING_SIZE} height={RING_SIZE} style={s.ringSvg}>
                     <Circle
@@ -268,94 +290,112 @@ export default function EveningResetScreen() {
                       const isLocked = index > currentStepIndex;
 
                       return (
-                        <Pressable
-                          key={item.title}
-                          style={[
-                            s.stepRow,
-                            isCurrent && s.stepRowCurrent,
-                            isLocked && s.stepRowLocked,
-                          ]}
-                          onPress={() => handleStepPress(index)}
-                        >
-                          <View style={s.stepCopy}>
-                            <Text style={s.stepKicker}>{index + 1}</Text>
-                            <View style={s.stepTextWrap}>
-                              <Text style={[s.stepText, isDone && s.stepTextActive]}>
-                                {item.title}
-                              </Text>
-                              {isCurrent && !isCompleted ? (
-                                <Text style={s.stepHint}>{currentStep.hint}</Text>
+                        <View key={item.title} style={s.stepBlock}>
+                          <Pressable
+                            style={[
+                              s.stepRow,
+                              isCurrent && s.stepRowCurrent,
+                              isLocked && s.stepRowLocked,
+                            ]}
+                            disabled={isSavingMindNote || isSavingPlan}
+                            onPress={() => handleStepPress(index)}
+                          >
+                            <View style={s.stepCopy}>
+                              <Text style={s.stepKicker}>{index + 1}</Text>
+                              <View style={s.stepTextWrap}>
+                                <Text style={[s.stepText, isDone && s.stepTextActive]}>
+                                  {item.title}
+                                </Text>
+                                {isCurrent && !isCompleted ? (
+                                  <Text style={s.stepHint}>{currentStep.hint}</Text>
+                                ) : null}
+                              </View>
+                            </View>
+                            <View style={[s.stepIcon, isDone && s.stepIconActive]}>
+                              {isDone ? (
+                                <Ionicons name="checkmark" size={14} color={palette.white} />
                               ) : null}
                             </View>
-                          </View>
-                          <View style={[s.stepIcon, isDone && s.stepIconActive]}>
-                            {isDone ? (
-                              <Ionicons name="checkmark" size={14} color={palette.white} />
-                            ) : null}
-                          </View>
-                        </Pressable>
+                          </Pressable>
+
+                          {index === 1 && isCurrent && !isCompleted ? (
+                            <View style={s.mindNoteCard}>
+                              <Text style={s.planSectionLabel}>MIND NOTE</Text>
+                              <TextInput
+                                style={s.mindNoteInput}
+                                value={mindNoteDraft}
+                                onChangeText={setMindNoteDraft}
+                                placeholder="Write down what is still looping..."
+                                placeholderTextColor={C.textPlaceholder}
+                                multiline
+                                textAlignVertical="top"
+                              />
+                              {isSavingMindNote ? <Text style={s.planSaving}>Saving note...</Text> : null}
+                            </View>
+                          ) : null}
+
+                          {index === 2 && isCurrent && !isCompleted ? (
+                            <View style={s.planCard}>
+                              <Text style={s.planSectionLabel}>MAIN GOAL</Text>
+                              <TextInput
+                                style={s.planInput}
+                                value={goalDraft}
+                                onChangeText={setGoalDraft}
+                                placeholder="Tomorrow's main goal"
+                                placeholderTextColor={C.textPlaceholder}
+                                returnKeyType="next"
+                              />
+                              {todayGoalHint && !goalDraft ? (
+                                <Pressable style={s.hintButton} onPress={() => setGoalDraft(todayGoalHint)}>
+                                  <Ionicons name="arrow-forward-circle-outline" size={14} color={C.textTertiary} />
+                                  <Text style={s.hintButtonText} numberOfLines={1}>{todayGoalHint}</Text>
+                                </Pressable>
+                              ) : null}
+
+                              <Text style={s.planSectionLabel}>TO-DO</Text>
+                              <View style={s.todoCard}>
+                                {plannedTodos.map((todo, index) => (
+                                  <View key={`${todo}-${index}`}>
+                                    {index > 0 ? <View style={s.todoDivider} /> : null}
+                                    <View style={s.todoRow}>
+                                      <View style={s.todoBullet} />
+                                      <Text style={s.todoText}>{todo}</Text>
+                                      <Pressable
+                                        style={s.todoDeleteButton}
+                                        onPress={() => removePlannedTodo(index)}
+                                        hitSlop={8}
+                                      >
+                                        <Text style={s.todoDeleteText}>×</Text>
+                                      </Pressable>
+                                    </View>
+                                  </View>
+                                ))}
+                                {plannedTodos.length > 0 ? <View style={s.todoDivider} /> : null}
+                                <View style={s.todoInputRow}>
+                                  <TextInput
+                                    style={s.todoInput}
+                                    value={todoDraft}
+                                    onChangeText={setTodoDraft}
+                                    placeholder="Add a task..."
+                                    placeholderTextColor={C.textPlaceholder}
+                                    returnKeyType="done"
+                                    submitBehavior="submit"
+                                    onSubmitEditing={addPlannedTodo}
+                                  />
+                                  {todoDraft.trim().length > 0 ? (
+                                    <Pressable style={s.todoAddButton} onPress={addPlannedTodo}>
+                                      <Ionicons name="add" size={18} color={palette.white} />
+                                    </Pressable>
+                                  ) : null}
+                                </View>
+                              </View>
+                              {isSavingPlan ? <Text style={s.planSaving}>Saving...</Text> : null}
+                            </View>
+                          ) : null}
+                        </View>
                       );
                     })}
                   </View>
-
-                  {currentStepIndex === 2 && !isCompleted ? (
-                    <View style={s.planCard}>
-                      <Text style={s.planSectionLabel}>MAIN GOAL</Text>
-                      <TextInput
-                        style={s.planInput}
-                        value={goalDraft}
-                        onChangeText={setGoalDraft}
-                        placeholder="Tomorrow's main goal"
-                        placeholderTextColor={C.textPlaceholder}
-                        returnKeyType="next"
-                      />
-                      {todayGoalHint && !goalDraft ? (
-                        <Pressable style={s.hintButton} onPress={() => setGoalDraft(todayGoalHint)}>
-                          <Ionicons name="arrow-forward-circle-outline" size={14} color={C.textTertiary} />
-                          <Text style={s.hintButtonText} numberOfLines={1}>{todayGoalHint}</Text>
-                        </Pressable>
-                      ) : null}
-
-                      <Text style={s.planSectionLabel}>TO-DO</Text>
-                      <View style={s.todoCard}>
-                        {plannedTodos.map((todo, index) => (
-                          <View key={`${todo}-${index}`}>
-                            {index > 0 ? <View style={s.todoDivider} /> : null}
-                            <View style={s.todoRow}>
-                              <View style={s.todoBullet} />
-                              <Text style={s.todoText}>{todo}</Text>
-                              <Pressable
-                                style={s.todoDeleteButton}
-                                onPress={() => removePlannedTodo(index)}
-                                hitSlop={8}
-                              >
-                                <Text style={s.todoDeleteText}>×</Text>
-                              </Pressable>
-                            </View>
-                          </View>
-                        ))}
-                        {plannedTodos.length > 0 ? <View style={s.todoDivider} /> : null}
-                        <View style={s.todoInputRow}>
-                          <TextInput
-                            style={s.todoInput}
-                            value={todoDraft}
-                            onChangeText={setTodoDraft}
-                            placeholder="Add a task..."
-                            placeholderTextColor={C.textPlaceholder}
-                            returnKeyType="done"
-                            submitBehavior="submit"
-                            onSubmitEditing={addPlannedTodo}
-                          />
-                          {todoDraft.trim().length > 0 ? (
-                            <Pressable style={s.todoAddButton} onPress={addPlannedTodo}>
-                              <Ionicons name="add" size={18} color={palette.white} />
-                            </Pressable>
-                          ) : null}
-                        </View>
-                      </View>
-                      {isSavingPlan ? <Text style={s.planSaving}>Saving...</Text> : null}
-                    </View>
-                  ) : null}
 
                   {isCompleted ? (
                     <View style={s.doneInlineCard}>
@@ -375,9 +415,8 @@ export default function EveningResetScreen() {
                     </View>
                   ) : null}
                 </View>
-              </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </View>
   );
@@ -387,7 +426,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
   return StyleSheet.create({
     container: { flex: 1 },
     safeArea: { flex: 1, paddingHorizontal: 24 },
-    keyboard: { flex: 1 },
     scrollContent: { paddingBottom: 28 },
     header: {
       flexDirection: "row",
@@ -466,6 +504,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       marginBottom: 16,
     },
     stepsList: { gap: 10 },
+    stepBlock: { gap: 8 },
     stepRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -516,11 +555,14 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       backgroundColor: palette.orangeStrong,
     },
     planCard: {
-      marginTop: 16,
       gap: 10,
-      paddingTop: 14,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: C.divider,
+      marginLeft: 32,
+      paddingBottom: 2,
+    },
+    mindNoteCard: {
+      gap: 10,
+      marginLeft: 32,
+      paddingBottom: 2,
     },
     planSectionLabel: {
       color: C.textTertiary,
@@ -539,6 +581,18 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       paddingVertical: 13,
       fontSize: 15,
       textAlignVertical: "center",
+    },
+    mindNoteInput: {
+      minHeight: 118,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      backgroundColor: C.inputBg,
+      color: C.textPrimary,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      fontSize: 15,
+      lineHeight: 21,
     },
     todoCard: {
       borderRadius: 14,

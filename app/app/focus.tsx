@@ -1,5 +1,6 @@
 import GradientBackground from "@/components/GradientBackground";
 import { palette } from "@/constants/theme";
+import { usePreventScreenSleep } from "@/hooks/usePreventScreenSleep";
 import { useTheme } from "@/hooks/useTheme";
 import { dailyFocus, dailyFocusOps, db } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
@@ -34,6 +35,7 @@ export default function FocusScreen() {
   const { data: focusRows } = useLiveQuery(
     db.select().from(dailyFocus).where(eq(dailyFocus.date, todayKey)).limit(1)
   );
+  usePreventScreenSleep(isRunning && remainingSeconds > 0, "kadoze-focus-room");
 
   const goalText = useMemo(() => {
     const goal = focusRows?.[0]?.goal?.trim();
@@ -128,9 +130,9 @@ export default function FocusScreen() {
               router.back();
             }}
             hitSlop={10}
-            style={s.closeButton}
+            style={s.backButton}
           >
-            <Ionicons name="close" size={24} color={C.iconSecondary} />
+            <Ionicons name="chevron-back" size={24} color={C.iconSecondary} />
           </Pressable>
           <View style={s.titleWrap}>
             <View style={s.liveDot} />
@@ -198,7 +200,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       justifyContent: "space-between",
       paddingTop: 8,
     },
-    closeButton: {
+    backButton: {
       width: 36,
       height: 36,
       alignItems: "center",
