@@ -138,7 +138,10 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
   };
 
   const busy = purchasing || restoring;
-  const ctaLabel = "Subscribe now";
+  const isSelectedAnnual = effectiveSelected
+    ? isAnnualPackage(effectiveSelected)
+    : false;
+  const ctaLabel = isSelectedAnnual ? "Start trial" : "Subscribe now";
 
   return (
     <ScrollView
@@ -147,10 +150,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
       showsVerticalScrollIndicator={false}
     >
       <View style={s.header}>
-        <View style={s.proBadge}>
-          <Text style={s.proBadgeText}>PRO</Text>
-        </View>
-        <Text style={s.headline}>Protect your momentum.</Text>
+        <Text style={s.headline}>Protect your momentum</Text>
         <Text style={s.sub}>
           Go further with Kadoze Pro.
         </Text>
@@ -263,8 +263,8 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
               <Text style={s.ctaBtnText}>{ctaLabel}</Text>
             )}
           </TouchableOpacity>
-          {effectiveSelected && isAnnualPackage(effectiveSelected) ? (
-            <Text style={s.pkgNoPayment}>No commitment. Cancel anytime.</Text>
+          {isSelectedAnnual ? (
+            <Text style={s.pkgNoPayment}>No payment due now</Text>
           ) : null}
         </>
       )}

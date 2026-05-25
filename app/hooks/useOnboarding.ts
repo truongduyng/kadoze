@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { router } from "expo-router";
 import { profileOps, habitOps, dailyFocusOps } from "@/lib/db";
+import { submitOnboarding } from "@/lib/backend";
 import { storage } from "@/lib/storage";
 import type { IoniconName } from "@/lib/iconNames";
 
@@ -21,6 +22,8 @@ export type StepType =
   | "keystone"
   | "preview"
   | "personalization"
+  | "notification"
+  | "referral"
   | "paywall";
 
 export interface StepConfig {
@@ -39,6 +42,8 @@ export const STEPS: StepConfig[] = [
   { type: "keystone" },
   { type: "preview" },
   { type: "personalization" },
+  { type: "notification" },
+  { type: "referral" },
   { type: "paywall" },
 ];
 
@@ -53,6 +58,7 @@ interface OnboardingDraft {
   painPoints: string[];
   mainGoal: string;
   keystoneHabit: string;
+  referralSource: string;
   name: string;
   avatar: IoniconName;
 }
@@ -64,6 +70,7 @@ const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
   painPoints: [],
   mainGoal: "",
   keystoneHabit: "",
+  referralSource: "",
   name: "",
   avatar: "happy-outline",
 };
@@ -85,6 +92,7 @@ function readOnboardingDraft(): OnboardingDraft {
       painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 3) : [],
       mainGoal: draft.mainGoal ?? "",
       keystoneHabit: draft.keystoneHabit ?? "",
+      referralSource: draft.referralSource ?? "",
       name: draft.name ?? "",
       avatar: draft.avatar ?? DEFAULT_ONBOARDING_DRAFT.avatar,
     };
@@ -377,6 +385,7 @@ export function useOnboarding() {
   const [keystoneHabit, setKeystoneHabit] = useState<string>(
     initialDraft.keystoneHabit,
   );
+  const [referralSource, setReferralSource] = useState(initialDraft.referralSource);
   const [name, setName] = useState(initialDraft.name);
   const [avatar, setAvatar] = useState<IoniconName>(initialDraft.avatar);
 
@@ -388,11 +397,12 @@ export function useOnboarding() {
       painPoints,
       mainGoal,
       keystoneHabit,
+      referralSource,
       name,
       avatar,
     };
     storage.set(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
-  }, [avatar, coreProblem, currentStep, keystoneHabit, mainGoal, name, painPoints]);
+  }, [avatar, coreProblem, currentStep, keystoneHabit, mainGoal, name, painPoints, referralSource]);
 
   useEffect(() => {
     trackOnboardingEvent("onboarding_started");
@@ -461,13 +471,29 @@ export function useOnboarding() {
         sortOrder: 0,
       });
 
+      try {
+        await submitOnboarding({
+          profileId: profile?.id ?? null,
+          name: name.trim() || "User",
+          avatar,
+          painPoints,
+          mainGoal,
+          keystoneHabit,
+          referralSource,
+          completedAt: new Date().toISOString(),
+        });
+        trackOnboardingEvent("onboarding_backend_synced");
+      } catch (syncError) {
+        console.error("Error syncing onboarding to backend:", syncError);
+        trackOnboardingEvent("onboarding_backend_sync_failed");
+      }
     } catch (e) {
       console.error("Error completing onboarding:", e);
     }
     storage.remove(ONBOARDING_DRAFT_KEY);
     trackOnboardingEvent("onboarding_completed");
     router.replace("/(tabs)");
-  }, [avatar, keystoneHabit, mainGoal, name]);
+  }, [avatar, keystoneHabit, mainGoal, name, painPoints, referralSource]);
 
   const showBack = currentStep > 0;
 
@@ -482,6 +508,8 @@ export function useOnboarding() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
+    referralSource,
+    setReferralSource,
     name,
     setName,
     avatar,

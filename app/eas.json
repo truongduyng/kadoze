@@ -15,13 +15,15 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zXvGPLzdVNUztRkdgzRQbsbOWyu"
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zXvGPLzdVNUztRkdgzRQbsbOWyu",
+        "EXPO_PUBLIC_CLOUDFLARE_WORKER_URL": "https://kadoze.truongduyng.workers.dev"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zXvGPLzdVNUztRkdgzRQbsbOWyu"
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_zXvGPLzdVNUztRkdgzRQbsbOWyu",
+        "EXPO_PUBLIC_CLOUDFLARE_WORKER_URL": "https://kadoze.truongduyng.workers.dev"
       }
     }
   },

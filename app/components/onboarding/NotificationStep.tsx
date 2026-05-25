@@ -1,11 +1,9 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
-  Easing,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { palette } from "@/constants/theme";
@@ -17,57 +15,26 @@ interface NotificationStepProps {
 }
 
 const BENEFITS = [
-  { icon: "sunny-outline" as const,    text: "Morning habit check-in" },
-  { icon: "moon-outline" as const,     text: "Evening reset reminder" },
-  { icon: "flame-outline" as const,    text: "Streak protection nudges" },
+  {
+    icon: "notifications-outline" as const,
+    title: "Focus reminders",
+    subtitle: "Stay consistent with gentle nudges.",
+  },
+  {
+    icon: "partly-sunny-outline" as const,
+    title: "Daily motivation",
+    subtitle: "Start your day with clarity.",
+  },
+  {
+    icon: "moon-outline" as const,
+    title: "Evening reflections",
+    subtitle: "End your day with purpose.",
+  },
 ];
 
 export default function NotificationStep({ onNext }: NotificationStepProps) {
   const C = useTheme();
   const s = makeStyles(C);
-
-  const iconScale   = useRef(new Animated.Value(0.6)).current;
-  const iconOpacity = useRef(new Animated.Value(0)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const textTranslateY = useRef(new Animated.Value(20)).current;
-  const rowOpacity = useRef(BENEFITS.map(() => new Animated.Value(0))).current;
-  const rowTranslateY = useRef(BENEFITS.map(() => new Animated.Value(16))).current;
-  const btnOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const iconIn = Animated.parallel([
-      Animated.spring(iconScale, { toValue: 1, tension: 100, friction: 7, useNativeDriver: true }),
-      Animated.timing(iconOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-    ]);
-
-    const textIn = Animated.parallel([
-      Animated.timing(textOpacity, { toValue: 1, duration: 480, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(textTranslateY, { toValue: 0, duration: 480, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]);
-
-    const rowsIn = Animated.stagger(
-      120,
-      BENEFITS.map((_, i) =>
-        Animated.parallel([
-          Animated.timing(rowOpacity[i], { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-          Animated.timing(rowTranslateY[i], { toValue: 0, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        ])
-      )
-    );
-
-    const btnIn = Animated.timing(btnOpacity, { toValue: 1, duration: 360, useNativeDriver: true });
-
-    Animated.sequence([
-      Animated.delay(200),
-      iconIn,
-      Animated.delay(100),
-      textIn,
-      Animated.delay(80),
-      rowsIn,
-      Animated.delay(60),
-      btnIn,
-    ]).start();
-  }, [btnOpacity, iconOpacity, iconScale, rowOpacity, rowTranslateY, textOpacity, textTranslateY]);
 
   const handleEnable = async () => {
     await registerForPushNotificationsAsync();
@@ -77,42 +44,49 @@ export default function NotificationStep({ onNext }: NotificationStepProps) {
   return (
     <View style={s.container}>
       <View style={s.content}>
-        <Animated.View style={[s.iconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
+        <View style={s.iconWrap}>
           <View style={s.iconCircle}>
             <Ionicons name="notifications-outline" size={44} color={palette.orange} />
           </View>
-        </Animated.View>
+        </View>
 
-        <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }] }}>
-          <Text style={s.headline}>Stay on track,{"\n"}every day.</Text>
-          <Text style={s.body}>
-            Short, well-timed reminders help you build the habit of showing up — without overwhelming your phone.
+        <View>
+          <Text style={s.headline}>
+            Stay on track,{"\n"}
+            <Text style={s.highlight}>without</Text> the noise.
           </Text>
-        </Animated.View>
+          <Text style={s.body}>
+            Enable notifications to get gentle reminders, daily focus nudges,
+            and evening reflections.
+          </Text>
+        </View>
 
         <View style={s.benefitList}>
-          {BENEFITS.map((item, i) => (
-            <Animated.View
-              key={item.text}
-              style={[s.benefitRow, { opacity: rowOpacity[i], transform: [{ translateY: rowTranslateY[i] }] }]}
+          {BENEFITS.map((item) => (
+            <View
+              key={item.title}
+              style={s.benefitRow}
             >
               <View style={s.benefitIcon}>
-                <Ionicons name={item.icon} size={18} color={palette.orange} />
+                <Ionicons name={item.icon} size={28} color={palette.orange} />
               </View>
-              <Text style={s.benefitText}>{item.text}</Text>
-            </Animated.View>
+              <View style={s.benefitCopy}>
+                <Text style={s.benefitTitle}>{item.title}</Text>
+                <Text style={s.benefitSubtitle}>{item.subtitle}</Text>
+              </View>
+            </View>
           ))}
         </View>
       </View>
 
-      <Animated.View style={[s.footer, { opacity: btnOpacity }]}>
+      <View style={s.footer}>
         <TouchableOpacity style={s.btn} onPress={handleEnable} activeOpacity={0.85}>
           <Text style={s.btnText}>Enable notifications</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onNext} activeOpacity={0.7} hitSlop={12}>
           <Text style={s.skipText}>Maybe later</Text>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -149,15 +123,15 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       fontSize: 30,
       fontWeight: "800",
       color: C.textPrimary,
-      textAlign: "center",
       lineHeight: 38,
+    },
+    highlight: {
+      color: palette.orange,
     },
     body: {
       fontSize: 16,
       color: C.textSecondary,
-      textAlign: "center",
       lineHeight: 24,
-      paddingHorizontal: 8,
       marginTop: 8,
     },
     benefitList: {
@@ -176,18 +150,26 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       paddingVertical: 14,
     },
     benefitIcon: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
+      width: 54,
+      height: 54,
+      borderRadius: 14,
       borderCurve: "continuous",
-      backgroundColor: C.accentBg,
       alignItems: "center",
       justifyContent: "center",
     },
-    benefitText: {
+    benefitCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    benefitTitle: {
       color: C.textPrimary,
       fontSize: 15,
-      fontWeight: "600",
+      fontWeight: "700",
+    },
+    benefitSubtitle: {
+      color: C.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
     },
     footer: {
       gap: 14,

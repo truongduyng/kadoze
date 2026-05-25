@@ -1,0 +1,8 @@
+name = "kadoze"
+main = "src/index.ts"
+compatibility_date = "2026-05-25"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "kadoze"
+database_id = "d48a71d0-43bf-4ed0-ac16-cb1e6a856b57"
