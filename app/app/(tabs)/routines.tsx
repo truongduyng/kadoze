@@ -17,15 +17,269 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import Svg, { Circle } from "react-native-svg";
 import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAY_NAMES } from "@/lib/performance";
-import { resolveIoniconName } from "@/lib/iconNames";
+import { resolveIoniconName, type IoniconName } from "@/lib/iconNames";
+
+const ALL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+const DAY_LABELS: Record<string, string> = {
+  mon: "M", tue: "T", wed: "W", thu: "T", fri: "F", sat: "S", sun: "S",
+};
+
+const ICON_OPTIONS: IoniconName[] = [
+  "star-outline", "flame-outline", "flash-outline", "leaf-outline", "heart-outline",
+  "walk-outline", "water-outline", "bed-outline", "body-outline", "journal-outline",
+  "book-outline", "pencil-outline", "barbell-outline", "bicycle-outline", "nutrition-outline",
+  "musical-notes-outline", "code-slash-outline", "bulb-outline", "camera-outline",
+  "timer-outline", "cash-outline", "stats-chart-outline", "person-outline", "earth-outline",
+];
+
+function AddCustomHabitModal({
+  visible,
+  onClose,
+  onSave,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (title: string, subtitle: string, icon: IoniconName, days: string[]) => Promise<void>;
+}) {
+  const C = useTheme();
+  const insets = useSafeAreaInsets();
+  const [title, setTitle] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState<IoniconName>("star-outline");
+  const [selectedDays, setSelectedDays] = useState<string[]>([...ALL_DAYS]);
+  const [saving, setSaving] = useState(false);
+
+  const reset = () => {
+    setTitle("");
+    setSubtitle("");
+    setSelectedIcon("star-outline");
+    setSelectedDays([...ALL_DAYS]);
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  const handleSave = async () => {
+    const trimmed = title.trim();
+    if (!trimmed || saving) return;
+    setSaving(true);
+    try {
+      await onSave(trimmed, subtitle.trim(), selectedIcon, selectedDays);
+      reset();
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleDay = (day: string) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    );
+  };
+
+  const ms = makeModalStyles(C);
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <View style={[ms.sheet, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={ms.handle} />
+          <View style={ms.header}>
+            <Pressable onPress={handleClose} style={ms.headerBtn}>
+              <Text style={ms.cancelText}>Cancel</Text>
+            </Pressable>
+            <Text style={ms.headerTitle}>New Habit</Text>
+            <Pressable
+              onPress={handleSave}
+              style={[ms.headerBtn, ms.saveBtn, (!title.trim() || saving) && ms.saveBtnDisabled]}
+              disabled={!title.trim() || saving}
+            >
+              <Text style={[ms.saveText, (!title.trim() || saving) && ms.saveTextDisabled]}>Save</Text>
+            </Pressable>
+          </View>
+
+          <ScrollView style={ms.scroll} showsVerticalScrollIndicator={false}>
+            <View style={ms.section}>
+              <Text style={ms.label}>HABIT NAME</Text>
+              <TextInput
+                style={ms.input}
+                placeholder="e.g. Morning run"
+                placeholderTextColor={C.textQuaternary}
+                value={title}
+                onChangeText={setTitle}
+                maxLength={60}
+                autoFocus
+              />
+            </View>
+
+            <View style={ms.section}>
+              <Text style={ms.label}>DESCRIPTION (OPTIONAL)</Text>
+              <TextInput
+                style={ms.input}
+                placeholder="e.g. 20 minutes"
+                placeholderTextColor={C.textQuaternary}
+                value={subtitle}
+                onChangeText={setSubtitle}
+                maxLength={80}
+              />
+            </View>
+
+            <View style={ms.section}>
+              <Text style={ms.label}>ICON</Text>
+              <View style={ms.iconGrid}>
+                {ICON_OPTIONS.map((icon) => (
+                  <Pressable
+                    key={icon}
+                    style={[ms.iconCell, selectedIcon === icon && ms.iconCellSelected]}
+                    onPress={() => setSelectedIcon(icon)}
+                  >
+                    <Ionicons
+                      name={icon}
+                      size={22}
+                      color={selectedIcon === icon ? C.accentText : C.iconSecondary}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={ms.section}>
+              <Text style={ms.label}>DAYS</Text>
+              <View style={ms.daysRow}>
+                {ALL_DAYS.map((day) => (
+                  <Pressable
+                    key={day}
+                    style={[ms.dayPill, selectedDays.includes(day) && ms.dayPillActive]}
+                    onPress={() => toggleDay(day)}
+                  >
+                    <Text style={[ms.dayPillText, selectedDays.includes(day) && ms.dayPillTextActive]}>
+                      {DAY_LABELS[day]}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+function makeModalStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
+  return StyleSheet.create({
+    sheet: {
+      flex: 1,
+      backgroundColor: C.background,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+    },
+    handle: {
+      width: 36,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: C.cardBorder,
+      alignSelf: "center",
+      marginBottom: 16,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 28,
+    },
+    headerTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.textPrimary,
+    },
+    headerBtn: { minWidth: 60 },
+    cancelText: { fontSize: 15, color: C.textSecondary },
+    saveBtn: { alignItems: "flex-end" },
+    saveText: { fontSize: 15, fontWeight: "700", color: C.accentText },
+    saveBtnDisabled: {},
+    saveTextDisabled: { color: C.textQuaternary },
+    scroll: { flex: 1 },
+    section: { marginBottom: 24 },
+    label: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1.5,
+      color: C.textTertiary,
+      marginBottom: 10,
+    },
+    input: {
+      backgroundColor: C.cardBg,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      fontSize: 15,
+      color: C.textPrimary,
+    },
+    iconGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+    },
+    iconCell: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconCellSelected: {
+      borderColor: C.accentBorder,
+      backgroundColor: C.accentBg,
+    },
+    daysRow: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    dayPill: {
+      flex: 1,
+      height: 40,
+      borderRadius: 10,
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dayPillActive: {
+      borderColor: C.accentBorder,
+      backgroundColor: C.accentBg,
+    },
+    dayPillText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: C.textQuaternary,
+    },
+    dayPillTextActive: {
+      color: C.accentText,
+    },
+  });
+}
 
 const FOCUS_LABELS: Record<string, string> = {
   health: "Health & Vitality",
@@ -60,6 +314,7 @@ export default function RoutinesScreen() {
   const todayKey = getLocalDateString(today);
   const todayName = DAY_NAMES[today.getDay()];
   const [expandedHabitId, setExpandedHabitId] = useState<number | null>(null);
+  const [addModalVisible, setAddModalVisible] = useState(false);
 
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
@@ -240,6 +495,23 @@ export default function RoutinesScreen() {
     }
   };
 
+  const addCustomHabit = async (
+    title: string,
+    subtitle: string,
+    icon: IoniconName,
+    days: string[],
+  ) => {
+    await habitOps.create({
+      title,
+      subtitle: subtitle || null,
+      icon,
+      daysOfWeek: days,
+      isLocked: false,
+      sortOrder: (allHabits?.length ?? 0) + 1,
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
   const addFocusHabit = async (keystone: KeystoneHabit) => {
     const key = habitKey(keystone.title, keystone.subtitle);
     const stage = currentFocusStages.find((item) => habitKey(item.keystone.title, item.keystone.subtitle) === key);
@@ -338,9 +610,15 @@ export default function RoutinesScreen() {
           </View>
         </View>
 
-        {todayHabits.length > 0 && (
-          <View style={s.section}>
+        <View style={s.section}>
+          <View style={s.sectionLabelRow}>
             <Text style={s.sectionLabel}>ACTIVE HABITS</Text>
+            <Pressable style={s.addHabitInlineBtn} onPress={() => setAddModalVisible(true)}>
+              <Ionicons name="add" size={14} color={C.accentText} />
+              <Text style={s.addHabitInlineBtnText}>Add</Text>
+            </Pressable>
+          </View>
+          {todayHabits.length > 0 && (
             <View style={s.habitList}>
               {todayHabits.map((habit) => {
                 const streak = streakMap[habit.id] ?? 0;
@@ -406,8 +684,8 @@ export default function RoutinesScreen() {
                 );
               })}
             </View>
-          </View>
-        )}
+          )}
+        </View>
 
         <View style={s.section}>
           <Text style={s.sectionLabel}>CURRENT FOCUS</Text>
@@ -542,7 +820,14 @@ export default function RoutinesScreen() {
           </View>
         </View>
 
+
       </ScrollView>
+
+      <AddCustomHabitModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onSave={addCustomHabit}
+      />
     </View>
   );
 }
@@ -552,12 +837,33 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     container: { flex: 1 },
     content: { paddingHorizontal: 20 },
     section: { marginBottom: 24 },
+    sectionLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10,
+    },
     sectionLabel: {
       fontSize: 11,
       fontWeight: "700",
       letterSpacing: 1.5,
       color: C.textTertiary,
-      marginBottom: 10,
+    },
+    addHabitInlineBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: C.accentBg,
+      borderWidth: 1,
+      borderColor: C.accentBorder,
+      borderRadius: 20,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    addHabitInlineBtnText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: C.accentText,
     },
     card: {
       backgroundColor: C.cardBg,

@@ -48,6 +48,8 @@ export default function OnboardingScreen() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
+    customHabitTitle,
+    setCustomHabitTitle,
     referralSource,
     setReferralSource,
     goNext,
@@ -139,6 +141,8 @@ export default function OnboardingScreen() {
             onSelect={selectHabit}
             onNext={advance}
             painPoints={painPoints}
+            customHabitTitle={customHabitTitle}
+            onCustomHabitTitleChange={setCustomHabitTitle}
           />
         );
       case "preview":

@@ -783,19 +783,28 @@ export function GoalInputScreen({
   );
 }
 
+export const CUSTOM_HABIT_ID = "custom";
+
 export function KeystoneScreen({
   selected,
   onSelect,
   onNext,
   painPoints,
+  customHabitTitle,
+  onCustomHabitTitleChange,
 }: {
   selected: string;
   onSelect: (habit: KeystoneHabit) => void;
   onNext: () => void;
   painPoints: string[];
+  customHabitTitle: string;
+  onCustomHabitTitleChange: (title: string) => void;
 }) {
   const C = useTheme();
   const s = makeStyles(C);
+  const customInputRef = React.useRef<TextInput>(null);
+  const [customExpanded, setCustomExpanded] = React.useState(selected === CUSTOM_HABIT_ID);
+
   const allHabits = [...Object.values(KEYSTONE_HABITS_BY_FOCUS).flat(), ...DEFAULT_KEYSTONE_HABITS];
   const seen = new Set<string>();
   const mappedHabits = painPoints.reduce<(KeystoneHabit & { reason?: string })[]>((acc, pain) => {
@@ -809,8 +818,27 @@ export function KeystoneScreen({
   const habits: (KeystoneHabit & { reason?: string })[] = mappedHabits.length > 0
     ? mappedHabits
     : DEFAULT_KEYSTONE_HABITS;
+
+  const handleCustomPress = () => {
+    setCustomExpanded(true);
+    setTimeout(() => customInputRef.current?.focus(), 80);
+    if (customHabitTitle.trim()) {
+      onSelect({ id: CUSTOM_HABIT_ID, icon: "star-outline", title: customHabitTitle.trim(), subtitle: "" });
+    }
+  };
+
+  const handleCustomChange = (text: string) => {
+    onCustomHabitTitleChange(text);
+    if (text.trim()) {
+      onSelect({ id: CUSTOM_HABIT_ID, icon: "star-outline", title: text.trim(), subtitle: "" });
+    }
+  };
+
+  const isCustomActive = selected === CUSTOM_HABIT_ID;
+  const isCustomDim = Boolean(selected) && !isCustomActive;
+
   return (
-    <ScreenShell onNext={onNext} disabled={!selected} scroll>
+    <ScreenShell onNext={onNext} disabled={!selected || (isCustomActive && !customHabitTitle.trim())} scroll>
       <View style={s.copyBlock}>
         <Text style={s.headline}>One habit to fix this</Text>
         {painPoints.length > 0 && (
@@ -850,6 +878,43 @@ export function KeystoneScreen({
             </Pressable>
           );
         })}
+
+        <Pressable
+          onPress={handleCustomPress}
+          style={[s.habitCard, isCustomActive && s.habitCardActive, isCustomDim && s.dimmed]}
+        >
+          <View style={[s.habitIconWrap, isCustomActive && s.habitIconWrapActive]}>
+            <Ionicons name="create-outline" size={22} color={isCustomActive ? ORANGE : palette.white70} />
+          </View>
+          <View style={s.flex}>
+            {customExpanded ? (
+              <TextInput
+                ref={customInputRef}
+                value={customHabitTitle}
+                onChangeText={handleCustomChange}
+                placeholder="Type your habit..."
+                placeholderTextColor={palette.white35}
+                style={s.customHabitInput}
+                selectionColor={ORANGE}
+                maxLength={60}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
+              />
+            ) : (
+              <>
+                <Text style={[s.habitTitle, isCustomActive && s.habitTitleActive]}>
+                  {customHabitTitle.trim() || "Create my own"}
+                </Text>
+                <Text style={s.habitSubtitle}>Name a habit that matters to you</Text>
+              </>
+            )}
+          </View>
+          <Ionicons
+            name={isCustomActive ? "checkmark-circle" : "ellipse-outline"}
+            size={22}
+            color={isCustomActive ? ORANGE : palette.white25}
+          />
+        </Pressable>
       </View>
     </ScreenShell>
   );
@@ -1754,6 +1819,12 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       fontSize: 12,
       fontWeight: "500",
       lineHeight: 17,
+    },
+    customHabitInput: {
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: "700",
+      paddingVertical: 0,
     },
   });
 }

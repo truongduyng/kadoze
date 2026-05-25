@@ -58,6 +58,7 @@ interface OnboardingDraft {
   painPoints: string[];
   mainGoal: string;
   keystoneHabit: string;
+  customHabitTitle: string;
   referralSource: string;
   name: string;
   avatar: IoniconName;
@@ -70,6 +71,7 @@ const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
   painPoints: [],
   mainGoal: "",
   keystoneHabit: "",
+  customHabitTitle: "",
   referralSource: "",
   name: "",
   avatar: "happy-outline",
@@ -92,6 +94,7 @@ function readOnboardingDraft(): OnboardingDraft {
       painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 3) : [],
       mainGoal: draft.mainGoal ?? "",
       keystoneHabit: draft.keystoneHabit ?? "",
+      customHabitTitle: draft.customHabitTitle ?? "",
       referralSource: draft.referralSource ?? "",
       name: draft.name ?? "",
       avatar: draft.avatar ?? DEFAULT_ONBOARDING_DRAFT.avatar,
@@ -385,6 +388,7 @@ export function useOnboarding() {
   const [keystoneHabit, setKeystoneHabit] = useState<string>(
     initialDraft.keystoneHabit,
   );
+  const [customHabitTitle, setCustomHabitTitle] = useState(initialDraft.customHabitTitle);
   const [referralSource, setReferralSource] = useState(initialDraft.referralSource);
   const [name, setName] = useState(initialDraft.name);
   const [avatar, setAvatar] = useState<IoniconName>(initialDraft.avatar);
@@ -397,12 +401,13 @@ export function useOnboarding() {
       painPoints,
       mainGoal,
       keystoneHabit,
+      customHabitTitle,
       referralSource,
       name,
       avatar,
     };
     storage.set(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
-  }, [avatar, coreProblem, currentStep, keystoneHabit, mainGoal, name, painPoints, referralSource]);
+  }, [avatar, coreProblem, currentStep, customHabitTitle, keystoneHabit, mainGoal, name, painPoints, referralSource]);
 
   useEffect(() => {
     trackOnboardingEvent("onboarding_started");
@@ -462,10 +467,11 @@ export function useOnboarding() {
 
       // Save keystone habit
       const selected = KEYSTONE_HABITS.find((h) => h.id === keystoneHabit);
+      const isCustom = keystoneHabit === "custom";
       await habitOps.create({
-        title: selected?.title ?? "10-minute walk",
-        subtitle: selected?.subtitle,
-        icon: selected?.icon,
+        title: isCustom ? (customHabitTitle.trim() || "My habit") : (selected?.title ?? "10-minute walk"),
+        subtitle: isCustom ? undefined : selected?.subtitle,
+        icon: isCustom ? "star-outline" : selected?.icon,
         daysOfWeek: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
         isLocked: false,
         sortOrder: 0,
@@ -493,7 +499,7 @@ export function useOnboarding() {
     storage.remove(ONBOARDING_DRAFT_KEY);
     trackOnboardingEvent("onboarding_completed");
     router.replace("/(tabs)");
-  }, [avatar, keystoneHabit, mainGoal, name, painPoints, referralSource]);
+  }, [avatar, customHabitTitle, keystoneHabit, mainGoal, name, painPoints, referralSource]);
 
   const showBack = currentStep > 0;
 
@@ -508,6 +514,8 @@ export function useOnboarding() {
     setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
+    customHabitTitle,
+    setCustomHabitTitle,
     referralSource,
     setReferralSource,
     name,
