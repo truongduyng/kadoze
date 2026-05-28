@@ -417,52 +417,35 @@ export function ImageViewerModal({
   );
 }
 
-type NotesEmptyStateProps = {
-  onPasteNote: () => void;
-  onTextNote: () => void;
-  onVoiceNote: () => void;
-};
-
-export function NotesEmptyState({ onPasteNote, onTextNote, onVoiceNote }: NotesEmptyStateProps) {
+export function NotesEmptyState() {
   const C = useTheme();
   const s = styles(C);
 
   return (
-    <AdaptiveBlurView style={s.emptyCard}>
-      <View style={s.emptyIconWrap}>
-        <Ionicons name="journal-outline" size={30} color={C.accentText} />
-      </View>
-      <Text style={s.emptyEyebrow}>NOTES</Text>
-      <Text style={s.emptyTitle}>Capture what matters</Text>
-      <Text style={s.emptyBody}>
-        Save thoughts, images, pasted text, or voice notes. Everything you add here will be grouped
-        by day.
-      </Text>
-      <View style={s.emptyActions}>
-        <TouchableOpacity activeOpacity={0.85} onPress={onTextNote} style={s.emptyPrimaryButton}>
-          <Ionicons name="create-outline" size={18} color={palette.white} />
-          <Text style={s.emptyPrimaryLabel}>Write note</Text>
-        </TouchableOpacity>
-        <View style={s.emptySecondaryRow}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onPasteNote}
-            style={s.emptySecondaryButton}
-          >
-            <Ionicons name="clipboard-outline" size={17} color={C.iconSecondary} />
-            <Text style={s.emptySecondaryLabel}>Paste</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onVoiceNote}
-            style={s.emptySecondaryButton}
-          >
-            <Ionicons name="mic-outline" size={17} color={C.iconSecondary} />
-            <Text style={s.emptySecondaryLabel}>Voice</Text>
-          </TouchableOpacity>
+    <View style={s.emptyRoot}>
+      <View style={s.emptyIconCluster}>
+        <View style={[s.emptyChip, s.emptyChipTopLeft]}>
+          <Ionicons name="create-outline" size={18} color={C.accentText} />
+        </View>
+        <View style={[s.emptyChip, s.emptyChipTopRight]}>
+          <Ionicons name="image-outline" size={18} color={C.iconSecondary} />
+        </View>
+        <View style={s.emptyIconMain}>
+          <Ionicons name="journal-outline" size={36} color={C.accentText} />
+        </View>
+        <View style={[s.emptyChip, s.emptyChipBottomLeft]}>
+          <Ionicons name="mic-outline" size={18} color={C.iconSecondary} />
+        </View>
+        <View style={[s.emptyChip, s.emptyChipBottomRight]}>
+          <Ionicons name="clipboard-outline" size={18} color={C.iconSecondary} />
         </View>
       </View>
-    </AdaptiveBlurView>
+
+      <Text style={s.emptyTitle}>Capture what matters</Text>
+      <Text style={s.emptyBody}>
+        Jot thoughts, save images, paste text, or record your voice. Everything lands here, grouped by day.
+      </Text>
+    </View>
   );
 }
 
@@ -648,72 +631,60 @@ function styles(C: ReturnType<typeof useTheme>) {
     audioTextWrap: { flex: 1 },
     audioTitle: { color: C.textPrimary, fontSize: 15, fontWeight: "700" },
     audioSubtitle: { color: C.textSecondary, fontSize: 12, fontWeight: "600", marginTop: 2 },
-    emptyCard: {
+    emptyRoot: {
       alignItems: "center",
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      paddingHorizontal: 22,
-      paddingVertical: 28,
-      backgroundColor: C.cardBg,
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 8,
+      gap: 0,
     },
-    emptyIconWrap: {
-      width: 62,
-      height: 62,
-      borderRadius: 20,
+    emptyIconCluster: {
+      width: 140,
+      height: 140,
+      position: "relative",
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 32,
+    },
+    emptyIconMain: {
+      width: 76,
+      height: 76,
+      borderRadius: 24,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: C.accentBg,
       borderWidth: 1,
       borderColor: C.accentBorder,
-      marginBottom: 16,
     },
-    emptyEyebrow: {
-      color: C.textTertiary,
-      fontSize: 11,
-      fontWeight: "800",
-      letterSpacing: 1.4,
-      marginBottom: 8,
+    emptyChip: {
+      position: "absolute",
+      width: 40,
+      height: 40,
+      borderRadius: 13,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
     },
+    emptyChipTopLeft: { top: 0, left: 0 },
+    emptyChipTopRight: { top: 0, right: 0 },
+    emptyChipBottomLeft: { bottom: 0, left: 0 },
+    emptyChipBottomRight: { bottom: 0, right: 0 },
     emptyTitle: {
       color: C.textPrimary,
-      fontSize: 22,
+      fontSize: 24,
       fontWeight: "800",
-      marginBottom: 8,
+      marginBottom: 10,
       textAlign: "center",
     },
     emptyBody: {
       color: C.textSecondary,
-      fontSize: 14,
-      lineHeight: 21,
+      fontSize: 15,
+      lineHeight: 22,
       textAlign: "center",
-      maxWidth: 310,
+      maxWidth: 300,
     },
-    emptyActions: { width: "100%", gap: 10, marginTop: 22 },
-    emptyPrimaryButton: {
-      minHeight: 50,
-      borderRadius: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      backgroundColor: palette.orange,
-    },
-    emptyPrimaryLabel: { color: palette.white, fontSize: 15, fontWeight: "800" },
-    emptySecondaryRow: { flexDirection: "row", gap: 10 },
-    emptySecondaryButton: {
-      flex: 1,
-      minHeight: 46,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      backgroundColor: C.inputBg,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 7,
-    },
-    emptySecondaryLabel: { color: C.textSecondary, fontSize: 14, fontWeight: "700" },
     sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: C.overlayBg },
     sheetWrap: {
       borderTopLeftRadius: 24,

@@ -344,6 +344,8 @@ export default function NotesScreen() {
     [kindFilter, liveNotes, searchQuery],
   );
 
+  const isEmpty = (liveNotes ?? []).length === 0;
+
   const s = makeScreenStyles(C);
 
   return (
@@ -359,13 +361,7 @@ export default function NotesScreen() {
             s.content,
             { paddingTop: 16, paddingBottom: insets.bottom + 96 },
           ]}
-          ListEmptyComponent={
-            <NotesEmptyState
-              onPasteNote={handlePasteNote}
-              onTextNote={handleOpenTextComposer}
-              onVoiceNote={handleVoiceNote}
-            />
-          }
+          ListEmptyComponent={<NotesEmptyState />}
           ListHeaderComponent={
             <NotesListHeader
               kindFilter={kindFilter}
@@ -395,6 +391,13 @@ export default function NotesScreen() {
           SectionSeparatorComponent={() => <View style={s.sectionSpacer} />}
         />
       </SafeAreaView>
+
+      {isEmpty && (
+        <View style={[s.fabHint, { bottom: insets.bottom + 96 }]}>
+          <Text style={s.fabHintText}>Tap to add</Text>
+          <Ionicons name="arrow-down-outline" size={18} color={C.textTertiary} style={s.fabHintArrow} />
+        </View>
+      )}
 
       <TouchableOpacity
         activeOpacity={0.85}
@@ -479,6 +482,19 @@ function makeScreenStyles(C: ReturnType<typeof import("@/hooks/useTheme").useThe
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: palette.orange,
+    },
+    fabHint: {
+      position: "absolute",
+      right: 20,
+      alignItems: "center",
+    },
+    fabHintText: {
+      color: C.textTertiary,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    fabHintArrow: {
+      marginTop: 2,
     },
   });
 }

@@ -9,7 +9,7 @@ import {
   completionOps,
   habitOps,
 } from "@/lib/db";
-import { KEYSTONE_HABITS_BY_FOCUS, type KeystoneHabit } from "@/hooks/useOnboarding";
+import { KEYSTONE_HABITS_BY_FOCUS } from "@/hooks/useOnboarding";
 import { getTodayInLocalTimezone, getLocalDateString } from "@/lib/timezone";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as Haptics from "expo-haptics";
@@ -297,7 +297,6 @@ const FOCUS_ICONS: Record<string, React.ComponentProps<typeof Ionicons>["name"]>
   creative: "sparkles-outline",
   finance: "cash-outline",
 };
-const UNLOCK_STREAK_DAYS = 14;
 const PROGRESS_RING_SIZE = 148;
 const PROGRESS_RING_STROKE = 12;
 const PROGRESS_RING_RADIUS = (PROGRESS_RING_SIZE - PROGRESS_RING_STROKE) / 2;
@@ -433,57 +432,6 @@ export default function RoutinesScreen() {
 
   const progressOffset = PROGRESS_RING_CIRCUMFERENCE * (1 - todayProgress.ratio);
 
-  const currentFocus = useMemo(() => {
-    let best: { key: string; count: number } | null = null;
-    for (const [focusKey, keystones] of focusEntries) {
-      const count = keystones.filter((keystone) =>
-        existingHabitMap.has(habitKey(keystone.title, keystone.subtitle)),
-      ).length;
-      if (count > 0 && (!best || count > best.count)) {
-        best = { key: focusKey, count };
-      }
-    }
-    return best?.key ?? null;
-  }, [existingHabitMap, focusEntries]);
-
-  const currentFocusHabits = useMemo(() => {
-    if (!currentFocus) return [];
-    return KEYSTONE_HABITS_BY_FOCUS[currentFocus] ?? [];
-  }, [currentFocus]);
-
-  const currentFocusStages = useMemo(() => {
-    const currentFocusOwnedHabits = currentFocusHabits
-      .map((keystone) => existingHabitMap.get(habitKey(keystone.title, keystone.subtitle)))
-      .filter((habit): habit is NonNullable<typeof habit> => !!habit);
-    const unlockedHabitSlots =
-      1 +
-      currentFocusOwnedHabits.filter(
-        (habit) => (streakMap[habit.id] ?? 0) >= UNLOCK_STREAK_DAYS,
-      ).length;
-    const hasOpenHabitSlot = currentFocusOwnedHabits.length < unlockedHabitSlots;
-    const nextUnlockStreak = hasOpenHabitSlot
-      ? UNLOCK_STREAK_DAYS
-      : currentFocusOwnedHabits.reduce((best, habit) => {
-          const streak = streakMap[habit.id] ?? 0;
-          return streak < UNLOCK_STREAK_DAYS ? Math.max(best, streak) : best;
-        }, 0);
-
-    return currentFocusHabits.map((keystone, index) => {
-      const existing = existingHabitMap.get(habitKey(keystone.title, keystone.subtitle));
-      const isAvailable =
-        !!existing ||
-        (currentFocusOwnedHabits.length === 0 && index === 0) ||
-        hasOpenHabitSlot;
-
-      return {
-        keystone,
-        existing,
-        streak: existing ? (streakMap[existing.id] ?? 0) : 0,
-        isAvailable,
-        nextUnlockStreak,
-      };
-    });
-  }, [currentFocusHabits, existingHabitMap, streakMap]);
 
   const toggle = async (habitId: number, isDone: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -506,22 +454,6 @@ export default function RoutinesScreen() {
       subtitle: subtitle || null,
       icon,
       daysOfWeek: days,
-      isLocked: false,
-      sortOrder: (allHabits?.length ?? 0) + 1,
-    });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const addFocusHabit = async (keystone: KeystoneHabit) => {
-    const key = habitKey(keystone.title, keystone.subtitle);
-    const stage = currentFocusStages.find((item) => habitKey(item.keystone.title, item.keystone.subtitle) === key);
-    if (!stage || stage.existing || !stage.isAvailable) return;
-
-    await habitOps.create({
-      title: keystone.title,
-      subtitle: keystone.subtitle,
-      icon: keystone.icon,
-      daysOfWeek: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
       isLocked: false,
       sortOrder: (allHabits?.length ?? 0) + 1,
     });
@@ -688,91 +620,6 @@ export default function RoutinesScreen() {
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionLabel}>CURRENT FOCUS</Text>
-          <View style={s.card}>
-            <View style={s.focusHeader}>
-              <View style={s.focusBadge}>
-                <Ionicons name="flag-outline" size={12} color={C.accentText} />
-                <Text style={s.focusBadgeText}>
-                  {currentFocus ? FOCUS_LABELS[currentFocus] : "Focus not set"}
-                </Text>
-              </View>
-              <Text style={s.focusRule}>Unlock next after 14 days</Text>
-            </View>
-            {currentFocus ? (
-              <>
-                <Text style={s.focusText}>
-                  Stay with one keystone long enough for it to become automatic. Each next habit
-                  in this focus path unlocks after the previous one reaches a 14-day streak.
-                </Text>
-                <View style={s.focusTrackList}>
-                  {currentFocusStages.map((stage, index) => {
-                    const status = stage.existing
-                      ? "active"
-                      : stage.isAvailable
-                        ? "available"
-                        : "locked";
-                    return (
-                      <Pressable
-                        key={`${stage.keystone.title}-${index}`}
-                        style={[
-                          s.focusHabitCard,
-                          status === "available" && s.focusHabitCardAvailable,
-                          status === "locked" && s.focusHabitCardLocked,
-                        ]}
-                        disabled={status !== "available"}
-                        onPress={() => addFocusHabit(stage.keystone)}
-                      >
-                        <View style={s.focusHabitLeft}>
-                          <View
-                            style={[
-                              s.focusHabitIconWrap,
-                              status === "available" && s.focusHabitIconWrapAvailable,
-                            ]}
-                          >
-                            <Ionicons
-                              name={resolveIoniconName(stage.keystone.icon, "star-outline")}
-                              size={18}
-                              color={status === "available" ? C.accentText : C.iconSecondary}
-                            />
-                          </View>
-                          <View style={s.focusHabitInfo}>
-                            <Text style={s.focusHabitTitle}>{stage.keystone.title}</Text>
-                            <Text style={s.focusHabitSubtitle}>{stage.keystone.subtitle}</Text>
-                          </View>
-                        </View>
-                        {status === "active" ? (
-                          <View style={s.focusHabitRight}>
-                            <Text style={s.focusHabitMetric}>{stage.streak}</Text>
-                            <Text style={s.focusHabitStatus}>day streak</Text>
-                          </View>
-                        ) : status === "available" ? (
-                          <View style={s.focusHabitRight}>
-                            <Ionicons name="add-circle" size={22} color={C.accentText} />
-                            <Text style={s.focusHabitAvailable}>Add</Text>
-                          </View>
-                        ) : (
-                          <View style={s.focusHabitRight}>
-                            <Ionicons name="lock-closed" size={16} color={C.textQuaternary} />
-                            <Text style={s.focusHabitLockedText}>
-                              {Math.max(UNLOCK_STREAK_DAYS - stage.nextUnlockStreak, 0)} days left
-                            </Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </>
-            ) : (
-              <Text style={s.focusText}>
-                Complete onboarding and choose a keystone habit to start a focus path.
-              </Text>
-            )}
-          </View>
-        </View>
-
-        <View style={s.section}>
           <Text style={s.sectionLabel}>ALL PATHS</Text>
           <View style={s.focusGroupsList}>
             {focusEntries.map(([focusKey, focusHabits]) => (
@@ -883,6 +730,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: 18,
+      marginTop: 12,
     },
     progressRingWrap: {
       width: PROGRESS_RING_SIZE,
@@ -1087,7 +935,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: C.textTertiary,
       marginTop: 4,
     },
-    focusGroupsList: { gap: 10 },
+    focusGroupsList: { gap: 10, marginTop: 12 },
     focusGroupCard: {
       backgroundColor: C.cardBg,
       borderRadius: 16,
