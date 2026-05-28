@@ -18,6 +18,8 @@ export const notes = sqliteTable('notes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   content: text('content').notNull(),
   mediaUrl: text('media_url'),
+  transcribedText: text('transcribed_text'),
+  ocrText: text('ocr_text'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });

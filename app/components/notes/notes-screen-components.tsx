@@ -191,9 +191,25 @@ export function NoteListItem({
             </View>
           </View>
           {audioNote && note.mediaUrl ? (
-            <AudioNotePlayer uri={note.mediaUrl} compact />
+            <>
+              <AudioNotePlayer uri={note.mediaUrl} compact />
+              {note.transcribedText ? (
+                <View style={s.transcriptBox}>
+                  <Ionicons name="text-outline" size={12} color={C.textTertiary} />
+                  <Text style={s.transcriptText}>{note.transcribedText}</Text>
+                </View>
+              ) : null}
+            </>
           ) : note.mediaUrl ? (
-            <Image source={{ uri: note.mediaUrl }} style={s.noteImage} resizeMode="contain" />
+            <>
+              <Image source={{ uri: note.mediaUrl }} style={s.noteImage} resizeMode="contain" />
+              {note.ocrText ? (
+                <View style={s.transcriptBox}>
+                  <Ionicons name="scan-outline" size={12} color={C.textTertiary} />
+                  <Text style={s.transcriptText}>{note.ocrText}</Text>
+                </View>
+              ) : null}
+            </>
           ) : null}
           {preview && !audioNote ? (
             <View>
@@ -359,7 +375,9 @@ export function ImageViewerModal({
   const C = useTheme();
   const s = styles(C);
   const imageNote = note && !isAudioNote(note) && note.mediaUrl ? note : null;
-  const caption = imageNote ? getPreview(imageNote.content) : "";
+  const caption = imageNote
+    ? (getPreview(imageNote.content) || imageNote.ocrText || "")
+    : "";
 
   return (
     <Modal animationType="fade" transparent visible={imageNote != null} onRequestClose={onClose}>
@@ -411,6 +429,69 @@ export function ImageViewerModal({
               ) : null}
             </View>
           </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+type ModelDownloadSheetProps = {
+  bottomInset: number;
+  isDownloading: boolean;
+  progress: number;
+  visible: boolean;
+  onClose: () => void;
+  onDownload: () => void;
+};
+
+export function ModelDownloadSheet({
+  bottomInset,
+  isDownloading,
+  progress,
+  visible,
+  onClose,
+  onDownload,
+}: ModelDownloadSheetProps) {
+  const C = useTheme();
+  const s = styles(C);
+  const pct = Math.round(progress * 100);
+
+  return (
+    <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
+      <Pressable style={s.sheetOverlay} onPress={isDownloading ? undefined : onClose}>
+        <Pressable
+          style={[s.sheetWrap, { paddingBottom: bottomInset + 20 }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={s.sheetHandle} />
+          <View style={s.modelSheetIcon}>
+            <Ionicons name="mic-circle-outline" size={36} color={palette.orange} />
+          </View>
+          <Text style={s.sheetTitle}>Enable transcription</Text>
+          <Text style={s.sheetSubtitle}>
+            Download the Whisper Tiny model (~75 MB) to transcribe voice notes locally on your
+            device — no internet needed after download.
+          </Text>
+          {isDownloading ? (
+            <View style={s.modelProgress}>
+              <View style={s.modelProgressBar}>
+                <View style={[s.modelProgressFill, { width: `${pct}%` }]} />
+              </View>
+              <Text style={s.modelProgressLabel}>Downloading… {pct}%</Text>
+            </View>
+          ) : (
+            <View style={s.voiceActions}>
+              <TouchableOpacity style={s.secondaryButton} onPress={onClose}>
+                <Text style={s.secondaryButtonLabel}>Skip</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.primaryButton, s.voicePrimaryButton]}
+                onPress={onDownload}
+              >
+                <Text style={s.primaryButtonLabel}>Download</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -843,5 +924,47 @@ function styles(C: ReturnType<typeof useTheme>) {
     },
     imageViewerMeta: { flex: 1, gap: 3 },
     imageViewerCaption: { color: palette.white70, fontSize: 13, lineHeight: 18 },
+    transcriptBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 6,
+      marginTop: 10,
+      padding: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+    },
+    transcriptText: {
+      flex: 1,
+      color: C.textSecondary,
+      fontSize: 13,
+      lineHeight: 19,
+    },
+    modelSheetIcon: {
+      alignSelf: "center",
+      marginBottom: 10,
+    },
+    modelProgress: {
+      gap: 10,
+      marginTop: 4,
+    },
+    modelProgressBar: {
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: C.cardBorder,
+      overflow: "hidden",
+    },
+    modelProgressFill: {
+      height: "100%",
+      borderRadius: 3,
+      backgroundColor: palette.orange,
+    },
+    modelProgressLabel: {
+      color: C.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+      textAlign: "center",
+    },
   });
 }

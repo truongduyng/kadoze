@@ -2,6 +2,7 @@ import GradientBackground from "@/components/GradientBackground";
 import {
   AddNoteSheet,
   ImageViewerModal,
+  ModelDownloadSheet,
   NoteListItem,
   NotesEmptyState,
   NotesListHeader,
@@ -17,6 +18,13 @@ import {
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { db, noteOps, notes, type Note } from "@/lib/db";
+import { extractTextFromImage } from "@/lib/ocr";
+import {
+  downloadModel,
+  isModelDownloaded,
+  transcribeAudio,
+  type WhisperDownloadProgress,
+} from "@/lib/whisper";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { desc } from "drizzle-orm";
 import {
@@ -105,6 +113,10 @@ export default function NotesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<NoteKindFilter>("all");
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [isModelSheetVisible, setIsModelSheetVisible] = useState(false);
+  const [modelDownloadProgress, setModelDownloadProgress] = useState(0);
+  const [isDownloadingModel, setIsDownloadingModel] = useState(false);
+  const [pendingVoicePath, setPendingVoicePath] = useState<string | null>(null);
   const { data: liveNotes } = useLiveQuery(
     db.select().from(notes).orderBy(desc(notes.createdAt)),
   );
@@ -143,17 +155,72 @@ export default function NotesScreen() {
     await Share.share({ message: content });
   };
 
-  const createNote = async (content: string, mediaUrl?: string | null) => {
+  const createNote = async (
+    content: string,
+    mediaUrl?: string | null,
+    extra?: { transcribedText?: string; ocrText?: string }
+  ) => {
     const normalizedContent = content.trim();
     if (!normalizedContent && !mediaUrl) return;
 
-    await noteOps.create({
+    const [created] = await noteOps.create({
       content: normalizedContent,
       mediaUrl: mediaUrl ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    return created;
+  };
+
+  const runTranscribeForNote = async (noteId: number, audioPath: string) => {
+    try {
+      const text = await transcribeAudio(audioPath);
+      if (text) {
+        await noteOps.update(noteId, { transcribedText: text });
+      }
+    } catch {
+      // Transcription is best-effort; silently skip on failure.
+    }
+  };
+
+  const runOcrForNote = async (noteId: number, imageUri: string) => {
+    try {
+      const text = await extractTextFromImage(imageUri);
+      if (text) {
+        await noteOps.update(noteId, { ocrText: text });
+      }
+    } catch {
+      // OCR is best-effort; silently skip on failure.
+    }
+  };
+
+  const handleDownloadModel = async () => {
+    setIsDownloadingModel(true);
+    try {
+      await downloadModel((progress: WhisperDownloadProgress) => {
+        const pct =
+          progress.totalBytesExpectedToWrite > 0
+            ? progress.totalBytesWritten / progress.totalBytesExpectedToWrite
+            : 0;
+        setModelDownloadProgress(pct);
+      });
+      setIsModelSheetVisible(false);
+      setModelDownloadProgress(0);
+
+      if (pendingVoicePath) {
+        const path = pendingVoicePath;
+        setPendingVoicePath(null);
+        const created = await createNote(VOICE_NOTE_CONTENT, path);
+        if (created?.id) {
+          runTranscribeForNote(created.id, path);
+        }
+      }
+    } catch {
+      Alert.alert("Download failed", "Could not download Whisper model. Check your connection.");
+    } finally {
+      setIsDownloadingModel(false);
+    }
   };
 
   const handleOpenTextComposer = () => {
@@ -274,11 +341,22 @@ export default function NotesScreen() {
 
       const persistedUri = await persistVoiceNote(uri);
 
-      await createNote(VOICE_NOTE_CONTENT, persistedUri);
       await enablePlaybackAudioMode();
       setHasVoiceRecording(false);
       setIsVoiceRecordingPaused(false);
       setIsVoiceComposerVisible(false);
+
+      const modelReady = await isModelDownloaded();
+      if (!modelReady) {
+        setPendingVoicePath(persistedUri);
+        setIsModelSheetVisible(true);
+        return;
+      }
+
+      const created = await createNote(VOICE_NOTE_CONTENT, persistedUri);
+      if (created?.id) {
+        runTranscribeForNote(created.id, persistedUri);
+      }
     } catch {
       Alert.alert("Save failed", "Unable to save this voice note right now.");
     } finally {
@@ -304,7 +382,10 @@ export default function NotesScreen() {
 
     if (!result.canceled && result.assets.length > 0) {
       const persistedUri = await persistImage(result.assets[0].uri);
-      await createNote("", persistedUri);
+      const created = await createNote("", persistedUri);
+      if (created?.id) {
+        runOcrForNote(created.id, persistedUri);
+      }
     }
   };
 
@@ -328,7 +409,10 @@ export default function NotesScreen() {
 
       if (!result.canceled && result.assets.length > 0) {
         const persistedUri = await persistImage(result.assets[0].uri);
-        await createNote("", persistedUri);
+        const created = await createNote("", persistedUri);
+        if (created?.id) {
+          runOcrForNote(created.id, persistedUri);
+        }
       }
     } catch (error) {
       const message =
@@ -436,6 +520,23 @@ export default function NotesScreen() {
         note={selectedNote}
         onClose={() => setSelectedNote(null)}
         onShare={shareNote}
+      />
+
+      <ModelDownloadSheet
+        bottomInset={insets.bottom}
+        visible={isModelSheetVisible}
+        isDownloading={isDownloadingModel}
+        progress={modelDownloadProgress}
+        onClose={() => {
+          if (!isDownloadingModel) {
+            setIsModelSheetVisible(false);
+            if (pendingVoicePath) {
+              createNote(VOICE_NOTE_CONTENT, pendingVoicePath);
+              setPendingVoicePath(null);
+            }
+          }
+        }}
+        onDownload={handleDownloadModel}
       />
     </View>
   );
