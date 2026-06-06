@@ -123,19 +123,18 @@ export default function NoteComposerSheet() {
   const editing = noteId != null;
   const [draft, setDraft] = useState("");
   const [draftSelection, setDraftSelection] = useState<TextSelection>({ start: 0, end: 0 });
-  const [loadedNoteId, setLoadedNoteId] = useState<number | null>(null);
+  const loadedNoteIdRef = useRef<number | null>(null);
   const pendingSelectionRef = useRef<TextSelection | null>(null);
 
   useEffect(() => {
-    if (!editingNote || loadedNoteId === editingNote.id) return;
-
+    if (!editingNote || loadedNoteIdRef.current === editingNote.id) return;
+    loadedNoteIdRef.current = editingNote.id;
     setDraft(editingNote.content);
     setDraftSelection({
       start: editingNote.content.length,
       end: editingNote.content.length,
     });
-    setLoadedNoteId(editingNote.id);
-  }, [editingNote, loadedNoteId]);
+  }, [editingNote]);
 
   const handleFormat = (format: TextFormat) => {
     const formatted = getFormattedDraft(draft, draftSelection, format);
