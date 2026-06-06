@@ -12,14 +12,16 @@ import type { IoniconName } from "@/lib/iconNames";
 
 export type StepType =
   | "hook"
+  | "focus-area"
   | "pain"
+  | "pain-amplify"
   | "future"
-  | "identity"
   | "wins"
   | "system"
   | "trust"
   | "goal"
   | "keystone"
+  | "app-tour"
   | "preview"
   | "personalization"
   | "notification"
@@ -32,14 +34,16 @@ export interface StepConfig {
 
 export const STEPS: StepConfig[] = [
   { type: "hook" },
+  { type: "focus-area" },
   { type: "pain" },
+  { type: "pain-amplify" },
   { type: "future" },
-  { type: "identity" },
   { type: "wins" },
   { type: "system" },
   { type: "trust" },
   { type: "goal" },
   { type: "keystone" },
+  { type: "app-tour" },
   { type: "preview" },
   { type: "personalization" },
   { type: "notification" },
@@ -55,6 +59,7 @@ interface OnboardingDraft {
   version: 2;
   currentStep: number;
   coreProblem: string | null;
+  focusAreas: string[];
   painPoints: string[];
   mainGoal: string;
   keystoneHabit: string;
@@ -68,6 +73,7 @@ const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
   version: 2,
   currentStep: 0,
   coreProblem: null,
+  focusAreas: [],
   painPoints: [],
   mainGoal: "",
   keystoneHabit: "",
@@ -91,6 +97,7 @@ function readOnboardingDraft(): OnboardingDraft {
         TOTAL - 1,
       ),
       coreProblem: draft.coreProblem ?? null,
+      focusAreas: Array.isArray(draft.focusAreas) ? draft.focusAreas.slice(0, 3) : [],
       painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 3) : [],
       mainGoal: draft.mainGoal ?? "",
       keystoneHabit: draft.keystoneHabit ?? "",
@@ -383,6 +390,7 @@ export function useOnboarding() {
   const [coreProblem, setCoreProblem] = useState<string | null>(
     initialDraft.coreProblem,
   );
+  const [focusAreas, setFocusAreas] = useState<string[]>(initialDraft.focusAreas);
   const [painPoints, setPainPoints] = useState<string[]>(initialDraft.painPoints);
   const [mainGoal, setMainGoal] = useState(initialDraft.mainGoal);
   const [keystoneHabit, setKeystoneHabit] = useState<string>(
@@ -398,6 +406,7 @@ export function useOnboarding() {
       version: 2,
       currentStep,
       coreProblem,
+      focusAreas,
       painPoints,
       mainGoal,
       keystoneHabit,
@@ -407,7 +416,7 @@ export function useOnboarding() {
       avatar,
     };
     storage.set(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
-  }, [avatar, coreProblem, currentStep, customHabitTitle, keystoneHabit, mainGoal, name, painPoints, referralSource]);
+  }, [avatar, coreProblem, currentStep, customHabitTitle, focusAreas, keystoneHabit, mainGoal, name, painPoints, referralSource]);
 
   useEffect(() => {
     trackOnboardingEvent("onboarding_started");
@@ -508,6 +517,8 @@ export function useOnboarding() {
     fadeAnim,
     coreProblem,
     setCoreProblem,
+    focusAreas,
+    setFocusAreas,
     painPoints,
     setPainPoints,
     mainGoal,

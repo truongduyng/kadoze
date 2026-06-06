@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
+import * as StoreReview from "expo-store-review";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   Animated,
   Easing,
@@ -225,6 +226,58 @@ const TRUST_REVIEWS = [
   },
 ];
 
+const DEFAULT_GOAL_SUGGESTIONS = [
+  "Finish one important task",
+  "Plan tomorrow before bed",
+  "Take a 10-minute walk",
+];
+
+const GOAL_SUGGESTIONS_BY_FOCUS = {
+  mindset: ["Journal for 5 minutes", "Do one quiet reset", "Read 10 pages"],
+  work: ["Finish one important task", "Do one focused sprint", "Plan tomorrow before bed"],
+  health: ["Take a 10-minute walk", "Drink water first", "Stretch for 5 minutes"],
+  relations: ["Send one thoughtful message", "Have one phone-free meal", "Listen without interrupting"],
+  creative: ["Make for 10 minutes", "Capture one idea", "Finish one small draft"],
+  finance: ["Review today's spending", "Save a small amount", "Track one money goal"],
+} satisfies Record<keyof typeof PAIN_FOCUS_META, string[]>;
+
+const GOAL_SUGGESTIONS_BY_PAIN: Record<string, string> = {
+  "My mind won't stop racing": "Journal for 5 minutes",
+  "I start strong, then fall off": "Plan tomorrow before bed",
+  "I lose hours to my phone": "Start phone-free for 1 hour",
+  "I'm exhausted before the day begins": "Take a 10-minute walk",
+  "I have ideas but never execute": "Finish one important task",
+  "I've tried every app and nothing sticks": "Do one tiny habit today",
+  "My body feels stiff and low-energy": "Stretch for 5 minutes",
+  "I keep sleeping later than I want": "Set tonight's lights-out time",
+  "I forget basic self-care": "Drink water first",
+  "I focus on what's wrong all day": "Write 3 good things",
+  "I want to grow but keep scrolling instead": "Read 10 pages",
+  "My workday is reactive": "Do one focused sprint",
+  "I feel disconnected from people": "Send one thoughtful message",
+  "I'm present physically, but not mentally": "Have one phone-free meal",
+  "I listen to reply, not understand": "Listen without interrupting",
+  "My creativity keeps getting postponed": "Make for 10 minutes",
+  "Good ideas disappear before I use them": "Capture one idea",
+  "My money feels vague and stressful": "Review today's spending",
+  "I spend before I think": "Save a small amount",
+  "I avoid looking at my finances": "Track one money goal",
+};
+
+function getGoalSuggestions(focusAreas: string[], painPoints: string[]) {
+  const suggestions = [
+    ...painPoints.map((pain) => GOAL_SUGGESTIONS_BY_PAIN[pain]).filter(Boolean),
+    ...focusAreas.flatMap((focus) =>
+      focus in GOAL_SUGGESTIONS_BY_FOCUS
+        ? GOAL_SUGGESTIONS_BY_FOCUS[focus as keyof typeof GOAL_SUGGESTIONS_BY_FOCUS]
+        : [],
+    ),
+    ...DEFAULT_GOAL_SUGGESTIONS,
+  ];
+
+  return Array.from(new Set(suggestions)).slice(0, 4);
+}
+
 function ScreenShell({
   children,
   cta = "Continue",
@@ -294,8 +347,6 @@ export function HookScreen({ onNext }: { onNext: () => void }) {
     <ScreenShell onNext={onNext}>
       <View style={s.heroVisual}>
         <View style={s.heroGlow} />
-        <View style={s.heroCloudOne} />
-        <View style={s.heroCloudTwo} />
         {["Messages", "Tasks", "Ideas", "Meetings", "To-dos"].map((tag, index) => (
           <FloatingTag key={tag} label={tag} index={index} />
         ))}
@@ -355,25 +406,73 @@ function FloatingTag({ label, index }: { label: string; index: number }) {
   );
 }
 
-export function PainScreen({
+const FOCUS_AREAS = PAIN_FOCUS_ORDER.map((focus) => ({
+  key: focus,
+  ...PAIN_FOCUS_META[focus],
+}));
+
+export function FocusAreaScreen({
   selected,
   onToggle,
   onNext,
 }: {
   selected: string[];
-  onToggle: (pain: string) => void;
+  onToggle: (area: string) => void;
   onNext: () => void;
 }) {
   const C = useTheme();
   const s = makeStyles(C);
-  const [hiddenSections, setHiddenSections] = React.useState<Record<string, boolean>>({});
+  return (
+    <ScreenShell onNext={onNext} disabled={selected.length === 0}>
+      <View style={s.copyBlock}>
+        <Text style={s.headline}>What areas of your life matter most right now?</Text>
+        <Text style={s.body}>Pick up to 3. We&apos;ll tailor your experience around them.</Text>
+      </View>
+      <View style={s.focusGrid}>
+        {FOCUS_AREAS.map(({ key, label, icon }) => {
+          const active = selected.includes(key);
+          const locked = selected.length >= 3 && !active;
+          return (
+            <Pressable
+              key={key}
+              onPress={() => onToggle(key)}
+              disabled={locked}
+              style={[s.focusCard, active && s.focusCardActive, locked && s.dimmed]}
+            >
+              <View style={[s.focusIconWrap, active && s.focusIconWrapActive]}>
+                <Ionicons name={icon} size={26} color={active ? ORANGE : palette.white55} />
+              </View>
+              <Text style={[s.focusLabel, active && s.focusLabelActive]}>{label}</Text>
+              {active && (
+                <View style={s.focusCheck}>
+                  <Ionicons name="checkmark-circle" size={16} color={ORANGE} />
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+    </ScreenShell>
+  );
+}
 
-  const toggleSection = (focus: string) => {
-    setHiddenSections((current) => ({
-      ...current,
-      [focus]: !current[focus],
-    }));
-  };
+export function PainScreen({
+  selected,
+  onToggle,
+  onNext,
+  focusAreas,
+}: {
+  selected: string[];
+  onToggle: (pain: string) => void;
+  onNext: () => void;
+  focusAreas?: string[];
+}) {
+  const C = useTheme();
+  const s = makeStyles(C);
+
+  const visibleSections = focusAreas && focusAreas.length > 0
+    ? PAIN_SECTIONS.filter((section) => focusAreas.includes(section.focus))
+    : PAIN_SECTIONS;
 
   return (
     <ScreenShell onNext={onNext} disabled={selected.length === 0} scroll>
@@ -384,50 +483,169 @@ export function PainScreen({
         </View>
       </View>
       <View style={s.painSectionList}>
-        {PAIN_SECTIONS.map((section) => (
+        {visibleSections.map((section) => (
           <View key={section.focus} style={s.painSection}>
-            <Pressable
-              style={s.painSectionHeader}
-              onPress={() => toggleSection(section.focus)}
-              hitSlop={6}
-            >
+            <View style={s.painSectionHeader}>
               <View style={s.painSectionTitleWrap}>
                 <Ionicons name={section.icon} size={14} color={SOFT_ORANGE} />
                 <Text style={s.painSectionTitle}>{section.label}</Text>
               </View>
-              <View style={s.painSectionToggle}>
-                <Ionicons
-                  name={hiddenSections[section.focus] ? "chevron-down" : "chevron-up"}
-                  size={17}
-                  color={SOFT_ORANGE}
-                />
-              </View>
-            </Pressable>
-            {!hiddenSections[section.focus] && (
-              <View style={s.painChoiceList}>
-                {section.items.map(({ pain }) => {
-                  const active = selected.includes(pain);
-                  const locked = selected.length >= 3 && !active;
-                  return (
-                    <Pressable
-                      key={pain}
-                      onPress={() => onToggle(pain)}
-                      disabled={locked}
-                      style={[s.painChoice, active && s.painChoiceActive, locked && s.dimmed]}
-                    >
-                      <Text style={[s.painChoiceText, active && s.painChoiceTextActive]}>
-                        {pain}
-                      </Text>
-                      <Ionicons
-                        name={active ? "checkmark-circle" : "ellipse-outline"}
-                        size={20}
-                        color={active ? ORANGE : palette.white25}
-                      />
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
+            </View>
+            <View style={s.painChoiceList}>
+              {section.items.map(({ pain }) => {
+                const active = selected.includes(pain);
+                const locked = selected.length >= 3 && !active;
+                return (
+                  <Pressable
+                    key={pain}
+                    onPress={() => onToggle(pain)}
+                    disabled={locked}
+                    style={[s.painChoice, active && s.painChoiceActive, locked && s.dimmed]}
+                  >
+                    <Text style={[s.painChoiceText, active && s.painChoiceTextActive]}>
+                      {pain}
+                    </Text>
+                    <Ionicons
+                      name={active ? "checkmark-circle" : "ellipse-outline"}
+                      size={20}
+                      color={active ? ORANGE : palette.white25}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScreenShell>
+  );
+}
+
+const PAIN_HARM: Record<string, { harm: string; cost: string }> = {
+  "My mind won't stop racing": {
+    harm: "Racing thoughts drain your willpower before the day even starts.",
+    cost: "You end each day exhausted — not from doing too much, but from thinking too much.",
+  },
+  "I start strong, then fall off": {
+    harm: "Every restart costs more motivation than the last one.",
+    cost: "Over time you stop starting at all, because you already know how it ends.",
+  },
+  "I lose hours to my phone": {
+    harm: "Scrolling feels like rest — but it leaves you more depleted than before.",
+    cost: "The hours lost aren't just time. They're the version of you that never showed up.",
+  },
+  "I'm exhausted before the day begins": {
+    harm: "Running on empty means every task takes twice the effort.",
+    cost: "Your best thinking — creative, strategic, clear — never makes it out.",
+  },
+  "I have ideas but never execute": {
+    harm: "Unused potential turns into quiet frustration.",
+    cost: "The longer ideas sit unbuilt, the harder it is to believe you'll ever act on them.",
+  },
+  "I've tried every app and nothing sticks": {
+    harm: "Each failed system chips away at your trust in yourself.",
+    cost: "Eventually you stop trying — and call it 'just how I am'.",
+  },
+  "My body feels stiff and low-energy": {
+    harm: "Physical inertia compounds into mental fog and low mood.",
+    cost: "You tolerate your days instead of feeling alive in them.",
+  },
+  "I keep sleeping later than I want": {
+    harm: "A late start means a reactive day — you're always catching up.",
+    cost: "Mornings are your highest-leverage hours. You're spending them unconscious.",
+  },
+  "I forget basic self-care": {
+    harm: "Neglecting small things signals to your brain that you don't matter.",
+    cost: "When basics slip, everything else gets harder — focus, mood, resilience.",
+  },
+  "I focus on what's wrong all day": {
+    harm: "A negative lens makes every obstacle feel bigger than it is.",
+    cost: "You're solving problems that don't exist while the real ones compound.",
+  },
+  "I want to grow but keep scrolling instead": {
+    harm: "Passive consumption quietly replaces the ambition you used to feel.",
+    cost: "A year from now, the gap between who you are and who you wanted to be will be wider.",
+  },
+  "My workday is reactive": {
+    harm: "Without a plan, everyone else's urgency becomes your priority.",
+    cost: "You're busy all day and can't name a single thing that actually moved forward.",
+  },
+  "I feel disconnected from people": {
+    harm: "Isolation compounds — the less you connect, the harder it gets.",
+    cost: "Relationships atrophy slowly. By the time you notice, distance feels normal.",
+  },
+  "I'm present physically, but not mentally": {
+    harm: "Half-presence is its own kind of absence.",
+    cost: "People notice. And so do you — in the quiet moments after they've gone.",
+  },
+  "I listen to reply, not understand": {
+    harm: "Conversations become transactions instead of connections.",
+    cost: "You stop being someone people feel heard by. Closeness fades.",
+  },
+  "My creativity keeps getting postponed": {
+    harm: "Creative energy doesn't wait — it redirects into anxiety.",
+    cost: "The longer you postpone, the more it feels like something you 'used to do'.",
+  },
+  "Good ideas disappear before I use them": {
+    harm: "Lost ideas aren't just forgotten — they erode your confidence in your own mind.",
+    cost: "You start thinking you're not creative. You are. You're just not capturing.",
+  },
+  "My money feels vague and stressful": {
+    harm: "Financial vagueness is its own kind of drain — always present, never resolved.",
+    cost: "Stress without clarity leads to avoidance. Avoidance makes everything worse.",
+  },
+  "I spend before I think": {
+    harm: "Impulse spending isn't just financial — it's a pattern of self-sabotage.",
+    cost: "Every unplanned purchase is a vote against the future version of you.",
+  },
+  "I avoid looking at my finances": {
+    harm: "What you don't measure, you can't change.",
+    cost: "Avoidance feels safe until it isn't. By then, the problem is twice as big.",
+  },
+};
+
+const DEFAULT_HARM = {
+  harm: "Letting this go unaddressed means the pattern deepens over time.",
+  cost: "Small problems compound. What feels manageable today becomes a ceiling tomorrow.",
+};
+
+export function PainAmplifyScreen({
+  painPoints,
+  onNext,
+}: {
+  painPoints: string[];
+  onNext: () => void;
+}) {
+  const C = useTheme();
+  const s = makeStyles(C);
+
+  const items = painPoints.slice(0, 3).map((pain) => ({
+    pain,
+    ...(PAIN_HARM[pain] ?? DEFAULT_HARM),
+  }));
+
+  const headline = items.length === 1
+    ? "This one thing is costing you more than you think."
+    : "These patterns are costing you more than you think.";
+
+  return (
+    <ScreenShell onNext={onNext} cta="I'm ready to fix this" scroll>
+      <View style={s.copyBlock}>
+        <Text style={s.headline}>{headline}</Text>
+        <Text style={s.body}>Left unaddressed, small friction becomes a permanent ceiling.</Text>
+      </View>
+      <View style={s.amplifyList}>
+        {items.map(({ pain, harm, cost }) => (
+          <View key={pain} style={s.amplifyCard}>
+            <View style={s.amplifyPainRow}>
+              <Ionicons name="alert-circle" size={14} color={SOFT_ORANGE} />
+              <Text style={s.amplifyPainText}>{pain}</Text>
+            </View>
+            <Text style={s.amplifyHarm}>{harm}</Text>
+            <View style={s.amplifyCostRow}>
+              <Ionicons name="trending-down-outline" size={13} color="rgba(255,80,80,0.7)" />
+              <Text style={s.amplifyCost}>{cost}</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -746,15 +964,23 @@ export function GoalInputScreen({
   value,
   onChange,
   onNext,
+  focusAreas = [],
+  painPoints = [],
 }: {
   value: string;
   onChange: (value: string) => void;
   onNext: () => void;
+  focusAreas?: string[];
+  painPoints?: string[];
 }) {
   const C = useTheme();
   const s = makeStyles(C);
   const inputRef = useRef<TextInput>(null);
-  const canContinue = value.trim().length >= 10;
+  const canContinue = value.trim().length > 0;
+  const suggestions = useMemo(
+    () => getGoalSuggestions(focusAreas, painPoints),
+    [focusAreas, painPoints],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 600);
@@ -778,6 +1004,27 @@ export function GoalInputScreen({
           style={s.goalInput}
           selectionColor={ORANGE}
         />
+        <View style={s.goalSuggestionList}>
+          {suggestions.map((suggestion) => {
+            const active = value.trim() === suggestion;
+            return (
+              <Pressable
+                key={suggestion}
+                onPress={() => onChange(suggestion)}
+                style={[s.goalSuggestion, active && s.goalSuggestionActive]}
+              >
+                <Text style={[s.goalSuggestionText, active && s.goalSuggestionTextActive]}>
+                  {suggestion}
+                </Text>
+                <Ionicons
+                  name={active ? "checkmark-circle" : "add-circle-outline"}
+                  size={18}
+                  color={active ? ORANGE : palette.white35}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
       </ScreenShell>
     </View>
   );
@@ -920,6 +1167,56 @@ export function KeystoneScreen({
   );
 }
 
+const APP_TOUR_ITEMS = [
+  {
+    icon: "home-outline" as const,
+    tab: "Home",
+    title: "Set your daily focus",
+    description: "Each morning, pick one goal that makes the day worth it. Everything else is noise.",
+  },
+  {
+    icon: "chatbubble-ellipses-outline" as const,
+    tab: "Notes",
+    title: "Capture ideas instantly",
+    description: "Drop any thought, task, or idea before it disappears. Review and act later.",
+  },
+  {
+    icon: "repeat-outline" as const,
+    tab: "Routines",
+    title: "Track your habit streak",
+    description: "Your keystone habit lives here. One check-in a day builds the chain.",
+  },
+] as const;
+
+export function AppTourScreen({ onNext }: { onNext: () => void }) {
+  const C = useTheme();
+  const s = makeStyles(C);
+  return (
+    <ScreenShell onNext={onNext} cta="Got it — let's go">
+      <View style={s.copyBlock}>
+        <Text style={s.headline}>Here&apos;s how Kadoze works.</Text>
+        <Text style={s.body}>Three tabs. One clear purpose each.</Text>
+      </View>
+      <View style={s.cardList}>
+        {APP_TOUR_ITEMS.map((item) => (
+          <View key={item.tab} style={s.tourCard}>
+            <View style={s.tourIconWrap}>
+              <Ionicons name={item.icon} size={24} color={ORANGE} />
+            </View>
+            <View style={s.flex}>
+              <View style={s.tourTitleRow}>
+                <Text style={s.tourTab}>{item.tab}</Text>
+              </View>
+              <Text style={s.tourTitle}>{item.title}</Text>
+              <Text style={s.tourDescription}>{item.description}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScreenShell>
+  );
+}
+
 export function PreviewScreen({ onNext }: { onNext: () => void }) {
   const C = useTheme();
   const s = makeStyles(C);
@@ -982,6 +1279,7 @@ export function PersonalizationScreen({
     ? "Deep & structured"
     : "Calm & steady";
   const duration = goal.length > 42 ? "25-40 min" : "15-25 min";
+  const requestedReviewRef = useRef(false);
   const summaryRows: {
     icon: React.ComponentProps<typeof Ionicons>["name"];
     label: string;
@@ -992,6 +1290,21 @@ export function PersonalizationScreen({
     { icon: "navigate-circle-outline", label: "Focus style", value: focusStyle },
     { icon: "heart-outline", label: "Recommended habit", value: habit?.title ?? "1-2 active" },
   ];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (requestedReviewRef.current) return;
+      requestedReviewRef.current = true;
+
+      void StoreReview.isAvailableAsync().then((available) => {
+        if (available) {
+          void StoreReview.requestReview();
+        }
+      });
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <ScreenShell onNext={onNext}>
@@ -1664,6 +1977,35 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       borderColor: "rgba(255,255,255,0.06)",
       textAlignVertical: "top",
     },
+    goalSuggestionList: {
+      gap: 8,
+    },
+    goalSuggestion: {
+      minHeight: 46,
+      borderRadius: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: "#141414",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.06)",
+    },
+    goalSuggestionActive: {
+      backgroundColor: "rgba(255,122,26,0.14)",
+      borderColor: "rgba(255,122,26,0.44)",
+    },
+    goalSuggestionText: {
+      flex: 1,
+      color: palette.white80,
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: "700",
+    },
+    goalSuggestionTextActive: {
+      color: "#fff",
+    },
     miniIcon: {
       width: 34,
       height: 34,
@@ -1825,6 +2167,143 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       fontSize: 15,
       fontWeight: "700",
       paddingVertical: 0,
+    },
+    tourCard: {
+      borderRadius: 14,
+      paddingHorizontal: 16,
+      paddingVertical: 18,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 14,
+      backgroundColor: "#141414",
+      borderWidth: 1.5,
+      borderColor: "rgba(255,255,255,0.06)",
+    },
+    tourIconWrap: {
+      width: 46,
+      height: 46,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,122,26,0.12)",
+      borderWidth: 1,
+      borderColor: "rgba(255,122,26,0.25)",
+      marginTop: 2,
+    },
+    tourTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginBottom: 3,
+    },
+    tourTab: {
+      color: SOFT_ORANGE,
+      fontSize: 11,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    tourTitle: {
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: "700",
+      marginBottom: 5,
+    },
+    tourDescription: {
+      color: palette.white55,
+      fontSize: 13,
+      lineHeight: 19,
+      fontWeight: "500",
+    },
+    focusGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 12,
+    },
+    focusCard: {
+      width: "47%",
+      minHeight: 100,
+      borderRadius: 14,
+      paddingVertical: 18,
+      paddingHorizontal: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+      backgroundColor: "#141414",
+      borderWidth: 1.5,
+      borderColor: "rgba(255,255,255,0.06)",
+    },
+    focusCardActive: {
+      backgroundColor: "rgba(255,122,26,0.10)",
+      borderColor: "rgba(255,122,26,0.5)",
+    },
+    focusIconWrap: {
+      width: 50,
+      height: 50,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,255,255,0.06)",
+    },
+    focusIconWrapActive: {
+      backgroundColor: "rgba(255,122,26,0.15)",
+    },
+    focusLabel: {
+      color: palette.white70,
+      fontSize: 14,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    focusLabelActive: {
+      color: "#fff",
+    },
+    focusCheck: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+    },
+    amplifyList: {
+      gap: 14,
+    },
+    amplifyCard: {
+      borderRadius: 14,
+      padding: 16,
+      gap: 10,
+      backgroundColor: "#141414",
+      borderWidth: 1.5,
+      borderColor: "rgba(255,80,80,0.18)",
+    },
+    amplifyPainRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+    },
+    amplifyPainText: {
+      color: SOFT_ORANGE,
+      fontSize: 13,
+      fontWeight: "800",
+      flex: 1,
+    },
+    amplifyHarm: {
+      color: "#fff",
+      fontSize: 14,
+      lineHeight: 21,
+      fontWeight: "600",
+    },
+    amplifyCostRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 6,
+      paddingTop: 4,
+      borderTopWidth: 1,
+      borderTopColor: "rgba(255,255,255,0.06)",
+    },
+    amplifyCost: {
+      color: palette.white55,
+      fontSize: 12,
+      lineHeight: 18,
+      fontWeight: "500",
+      flex: 1,
     },
   });
 }

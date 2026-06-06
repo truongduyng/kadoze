@@ -11,13 +11,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import GradientBackground from "@/components/GradientBackground";
 import {
+  AppTourScreen,
   FastWinsScreen,
+  FocusAreaScreen,
   FutureScreen,
   GoalInputScreen,
   HookScreen,
-  IdentityScreen,
   KeystoneScreen,
   PAIN_POINT_SET,
+  PainAmplifyScreen,
   PainScreen,
   PersonalizationScreen,
   PreviewScreen,
@@ -42,6 +44,8 @@ export default function OnboardingScreen() {
   const {
     currentStep,
     fadeAnim,
+    focusAreas,
+    setFocusAreas,
     painPoints,
     setPainPoints,
     mainGoal,
@@ -70,6 +74,15 @@ export default function OnboardingScreen() {
   const advance = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     goNext();
+  };
+
+  const toggleFocusArea = (area: string) => {
+    setFocusAreas((current) => {
+      const exists = current.includes(area);
+      if (exists) return current.filter((a) => a !== area);
+      if (current.length >= 3) return current;
+      return [...current, area];
+    });
   };
 
   const togglePain = (pain: string) => {
@@ -103,18 +116,27 @@ export default function OnboardingScreen() {
     switch (step.type) {
       case "hook":
         return <HookScreen onNext={advance} />;
+      case "focus-area":
+        return (
+          <FocusAreaScreen
+            selected={focusAreas}
+            onToggle={toggleFocusArea}
+            onNext={advance}
+          />
+        );
       case "pain":
         return (
           <PainScreen
             selected={painPoints}
             onToggle={togglePain}
             onNext={advance}
+            focusAreas={focusAreas}
           />
         );
+      case "pain-amplify":
+        return <PainAmplifyScreen painPoints={painPoints} onNext={advance} />;
       case "future":
         return <FutureScreen onNext={advance} />;
-      case "identity":
-        return <IdentityScreen onNext={advance} />;
       case "wins":
         return <FastWinsScreen onNext={advance} />;
       case "system":
@@ -127,13 +149,17 @@ export default function OnboardingScreen() {
             value={mainGoal}
             onChange={(value) => {
               setMainGoal(value);
-              if (value.trim().length >= 10) {
+              if (value.trim().length > 0) {
                 trackOnboardingEvent("goal_created", { length: value.trim().length });
               }
             }}
             onNext={advance}
+            focusAreas={focusAreas}
+            painPoints={painPoints}
           />
         );
+      case "app-tour":
+        return <AppTourScreen onNext={advance} />;
       case "keystone":
         return (
           <KeystoneScreen
