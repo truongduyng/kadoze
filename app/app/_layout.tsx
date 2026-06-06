@@ -47,10 +47,15 @@ function AppLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
           <ProfileInitializer onInitialized={handleInitialized}>
             <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "" }} />
+              <Stack.Screen
+                name="(tabs)"
+                options={{ headerShown: false, title: "" }}
+              />
               <Stack.Screen
                 name="onboarding"
                 options={{ headerShown: false, gestureEnabled: false }}
@@ -73,10 +78,7 @@ function AppLayout() {
                   sheetGrabberVisible: true,
                 }}
               />
-              <Stack.Screen
-                name="settings"
-                options={{ title: "Settings"}}
-              />
+              <Stack.Screen name="settings" options={{ title: "Settings" }} />
             </Stack>
           </ProfileInitializer>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />

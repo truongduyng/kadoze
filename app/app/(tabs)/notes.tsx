@@ -147,13 +147,14 @@ export default function NotesScreen() {
     const normalizedContent = content.trim();
     if (!normalizedContent && !mediaUrl) return;
 
-    await noteOps.create({
+    const [created] = await noteOps.create({
       content: normalizedContent,
       mediaUrl: mediaUrl ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    return created;
   };
 
   const handleOpenTextComposer = () => {
@@ -274,11 +275,12 @@ export default function NotesScreen() {
 
       const persistedUri = await persistVoiceNote(uri);
 
-      await createNote(VOICE_NOTE_CONTENT, persistedUri);
       await enablePlaybackAudioMode();
       setHasVoiceRecording(false);
       setIsVoiceRecordingPaused(false);
       setIsVoiceComposerVisible(false);
+
+      await createNote(VOICE_NOTE_CONTENT, persistedUri);
     } catch {
       Alert.alert("Save failed", "Unable to save this voice note right now.");
     } finally {

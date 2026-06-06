@@ -191,9 +191,25 @@ export function NoteListItem({
             </View>
           </View>
           {audioNote && note.mediaUrl ? (
-            <AudioNotePlayer uri={note.mediaUrl} compact />
+            <>
+              <AudioNotePlayer uri={note.mediaUrl} compact />
+              {note.transcribedText ? (
+                <View style={s.transcriptBox}>
+                  <Ionicons name="text-outline" size={12} color={C.textTertiary} />
+                  <Text style={s.transcriptText}>{note.transcribedText}</Text>
+                </View>
+              ) : null}
+            </>
           ) : note.mediaUrl ? (
-            <Image source={{ uri: note.mediaUrl }} style={s.noteImage} resizeMode="contain" />
+            <>
+              <Image source={{ uri: note.mediaUrl }} style={s.noteImage} resizeMode="contain" />
+              {note.ocrText ? (
+                <View style={s.transcriptBox}>
+                  <Ionicons name="scan-outline" size={12} color={C.textTertiary} />
+                  <Text style={s.transcriptText}>{note.ocrText}</Text>
+                </View>
+              ) : null}
+            </>
           ) : null}
           {preview && !audioNote ? (
             <View>
@@ -359,7 +375,9 @@ export function ImageViewerModal({
   const C = useTheme();
   const s = styles(C);
   const imageNote = note && !isAudioNote(note) && note.mediaUrl ? note : null;
-  const caption = imageNote ? getPreview(imageNote.content) : "";
+  const caption = imageNote
+    ? (getPreview(imageNote.content) || imageNote.ocrText || "")
+    : "";
 
   return (
     <Modal animationType="fade" transparent visible={imageNote != null} onRequestClose={onClose}>
@@ -814,5 +832,22 @@ function styles(C: ReturnType<typeof useTheme>) {
     },
     imageViewerMeta: { flex: 1, gap: 3 },
     imageViewerCaption: { color: palette.white70, fontSize: 13, lineHeight: 18 },
+    transcriptBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 6,
+      marginTop: 10,
+      padding: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.inputBg,
+    },
+    transcriptText: {
+      flex: 1,
+      color: C.textSecondary,
+      fontSize: 13,
+      lineHeight: 19,
+    },
   });
 }

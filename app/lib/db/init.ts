@@ -48,10 +48,24 @@ export async function initializeDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         content TEXT NOT NULL,
         media_url TEXT,
+        transcribed_text TEXT,
+        ocr_text TEXT,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
       );
     `);
+
+    const notesColumns = expoDb.getAllSync<{ name: string }>(
+      `PRAGMA table_info(notes);`
+    );
+    const hasTranscribedText = notesColumns.some((col) => col.name === 'transcribed_text');
+    if (!hasTranscribedText) {
+      expoDb.execSync(`ALTER TABLE notes ADD COLUMN transcribed_text TEXT;`);
+    }
+    const hasOcrText = notesColumns.some((col) => col.name === 'ocr_text');
+    if (!hasOcrText) {
+      expoDb.execSync(`ALTER TABLE notes ADD COLUMN ocr_text TEXT;`);
+    }
 
     expoDb.execSync(`
       CREATE TABLE IF NOT EXISTS habits (

@@ -243,9 +243,6 @@ export default function NoteComposerSheet() {
         />
       </View>
       <KeyboardStickyView offset={{ opened: 10 }} style={s.footer}>
-        <TouchableOpacity activeOpacity={0.75} onPress={() => router.back()} style={s.cancelButton}>
-          <Text style={s.cancelLabel}>Cancel</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={0.82}
           disabled={!draft.trim()}
@@ -325,24 +322,9 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       paddingTop: 10,
       paddingBottom: 20,
     },
-    cancelButton: {
-      flex: 1,
-      minHeight: 50,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      backgroundColor: C.inputBg,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    cancelLabel: {
-      color: C.textSecondary,
-      fontSize: 15,
-      fontWeight: "700",
-    },
     saveButton: {
       flex: 1,
-      minHeight: 50,
+      minHeight: 52,
       borderRadius: 14,
       backgroundColor: palette.orange,
       alignItems: "center",
