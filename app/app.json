@@ -35,6 +35,14 @@
           }
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
       "expo-router",
       "expo-web-browser",
       [
@@ -62,7 +70,14 @@
       ],
       "expo-sharing",
       "expo-sqlite",
-      "expo-asset"
+      "expo-asset",
+      [
+        "react-native-device-activity",
+        {
+          "appleTeamId": "MVAX6C967A",
+          "appGroup": "group.app.kadoze.yikudo"
+        }
+      ]
     ],
     "extra": {
       "router": {},

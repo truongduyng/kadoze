@@ -7,7 +7,7 @@ import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq, desc } from "drizzle-orm";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   Animated,
   Easing,
@@ -26,6 +26,13 @@ import { palette } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SwipeableRow } from "@/components/todo/SwipeableRow";
 import { resolveIoniconName } from "@/lib/iconNames";
+import {
+  APP_BLOCKER_SELECTION_ID,
+  AppBlockerSelectionSheet,
+  appBlocker,
+  type AppBlockerSelectionMetadata,
+  type AppBlockerSelectionSummary,
+} from "@/lib/appBlocker";
 
 const GOAL_CONFETTI = [
   { x: -34, y: -34, color: "#FF6B22", rotate: "-28deg" },
@@ -108,6 +115,11 @@ export default function HomeScreen() {
   const inputRef = useRef<TextInput>(null);
   const isEveningResetUnlocked = useMemo(() => __DEV__ || new Date().getHours() >= 21, []);
   const [showResetLockMessage, setShowResetLockMessage] = useState(false);
+  const [blockerStatus, setBlockerStatus] = useState("Not configured");
+  const [blockerSelection, setBlockerSelection] = useState<AppBlockerSelectionSummary>({
+    supported: appBlocker.isSupported,
+  });
+  const [showBlockerPicker, setShowBlockerPicker] = useState(false);
 
   const addTodo = async () => {
     const title = inputText.trim();
@@ -133,7 +145,136 @@ export default function HomeScreen() {
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
   const goalText = (todayFocus?.goal ?? "").trim();
   const isGoalComplete = Boolean(todayFocus?.completedAt);
+  const habitsDoneCount = todayHabits.filter((habit) => doneIds.has(habit.id)).length;
+  const hasHabitsDue = todayHabits.length > 0;
+  const habitsComplete = !hasHabitsDue || habitsDoneCount === todayHabits.length;
+  const appLockUnlocked = isGoalComplete && habitsComplete;
+  const hasBlockedAppSelection = Boolean(blockerSelection.hasSelection);
+  const lockBlockers = [
+    {
+      label: goalText ? "Main task" : "Set main task",
+      done: isGoalComplete,
+      detail: goalText || "Choose the one thing that matters first",
+    },
+    {
+      label: hasHabitsDue ? "Habits" : "No habits due",
+      done: habitsComplete,
+      detail: hasHabitsDue
+        ? `${habitsDoneCount}/${todayHabits.length} finished`
+        : "Nothing scheduled today",
+    },
+  ];
+  const lockedApps = ["Instagram", "TikTok", "YouTube", "X"];
   const goalConfettiProgress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBlockerState = async () => {
+      if (!appBlocker.isSupported) {
+        setBlockerStatus("Requires an iOS development build");
+        return;
+      }
+
+      try {
+        const [authorizationStatus, selection] = await Promise.all([
+          appBlocker.getAuthorizationStatus(),
+          appBlocker.getSelectionSummary(),
+        ]);
+
+        if (cancelled) return;
+
+        setBlockerSelection(selection);
+        setBlockerStatus(
+          authorizationStatus === "approved"
+            ? "Screen Time access approved"
+            : "Screen Time access needed",
+        );
+      } catch {
+        if (!cancelled) setBlockerStatus("Screen Time unavailable");
+      }
+    };
+
+    loadBlockerState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!appBlocker.isSupported || !hasBlockedAppSelection) return;
+
+    let cancelled = false;
+
+    const syncShield = async () => {
+      try {
+        if (appLockUnlocked) {
+          await appBlocker.clearShield();
+          if (!cancelled) setBlockerStatus("Shield removed");
+          return;
+        }
+
+        await appBlocker.applyShield();
+        if (!cancelled) setBlockerStatus("Shield active");
+      } catch {
+        if (!cancelled) setBlockerStatus("Open Screen Time setup");
+      }
+    };
+
+    syncShield();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appLockUnlocked, hasBlockedAppSelection]);
+
+  const configureScreenTimeLock = async () => {
+    if (!appBlocker.isSupported) {
+      setBlockerStatus("Use an iOS development build");
+      return;
+    }
+
+    try {
+      setBlockerStatus("Requesting Screen Time access...");
+      await appBlocker.requestAuthorization();
+      setBlockerStatus("Choose apps to block");
+      setShowBlockerPicker(true);
+    } catch {
+      setBlockerStatus("Screen Time permission denied");
+    }
+  };
+
+  const handleBlockerSelectionChange = (metadata: AppBlockerSelectionMetadata) => {
+    const nextSelection = {
+      supported: appBlocker.isSupported,
+      applicationCount: metadata.applicationCount,
+      categoryCount: metadata.categoryCount,
+      webDomainCount: metadata.webDomainCount,
+      hasSelection:
+        metadata.applicationCount + metadata.categoryCount + metadata.webDomainCount > 0,
+    };
+
+    setBlockerSelection(nextSelection);
+    setBlockerStatus(nextSelection.hasSelection ? "Selection saved" : "No apps selected");
+  };
+
+  const handleBlockerPickerDismiss = async () => {
+    setShowBlockerPicker(false);
+
+    try {
+      const selection = await appBlocker.getSelectionSummary();
+      setBlockerSelection(selection);
+      if (selection.hasSelection && !appLockUnlocked) {
+        await appBlocker.applyShield();
+        setBlockerStatus("Shield active");
+      } else {
+        setBlockerStatus(selection.hasSelection ? "Ready" : "No apps selected");
+      }
+    } catch {
+      setBlockerStatus("Screen Time setup failed");
+    }
+  };
 
   const playGoalConfetti = () => {
     goalConfettiProgress.stopAnimation();
@@ -308,6 +449,80 @@ export default function HomeScreen() {
               />
               <Text style={s.focusButtonText}>{editingGoal ? "Save" : "Start Focus"}</Text>
             </Pressable>
+          </View>
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>ANTI-DOOMSCROLL LOCK</Text>
+          <View style={[s.lockCard, appLockUnlocked && s.lockCardUnlocked]}>
+            <View style={s.lockHeader}>
+              <View style={[s.lockIcon, appLockUnlocked && s.lockIconUnlocked]}>
+                <Ionicons
+                  name={appLockUnlocked ? "lock-open" : "lock-closed"}
+                  size={22}
+                  color={appLockUnlocked ? palette.white : palette.orangeStrong}
+                />
+              </View>
+              <View style={s.lockHeaderText}>
+                <Text style={s.lockTitle}>
+                  {appLockUnlocked ? "Scroll apps unlocked" : "Scroll apps stay locked"}
+                </Text>
+                <Text style={s.lockSubtitle}>
+                  {hasBlockedAppSelection
+                    ? blockerStatus
+                    : "Pick distracting apps with Apple's Screen Time picker."}
+                </Text>
+              </View>
+            </View>
+
+            <View style={s.lockAppRow}>
+              {(hasBlockedAppSelection ? ["Selected apps", "Categories", "Websites"] : lockedApps).map((app) => (
+                <View key={app} style={[s.lockAppChip, appLockUnlocked && s.lockAppChipUnlocked]}>
+                  <Text style={[s.lockAppText, appLockUnlocked && s.lockAppTextUnlocked]}>
+                    {app}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={s.lockChecklist}>
+              {lockBlockers.map((item, index) => (
+                <View key={item.label}>
+                  {index > 0 && <View style={s.lockDivider} />}
+                  <View style={s.lockChecklistRow}>
+                    <View style={[s.lockCheck, item.done && s.lockCheckDone]}>
+                      {item.done && <Ionicons name="checkmark" size={13} color={palette.white} />}
+                    </View>
+                    <View style={s.lockChecklistText}>
+                      <Text style={[s.lockChecklistTitle, item.done && s.lockChecklistTitleDone]}>
+                        {item.label}
+                      </Text>
+                      <Text style={s.lockChecklistDetail}>{item.detail}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <Pressable
+              style={s.lockConfigureButton}
+              onPress={configureScreenTimeLock}
+              accessibilityRole="button"
+              accessibilityLabel="Configure Screen Time app blocking"
+            >
+              <Ionicons name="options-outline" size={16} color={palette.white} />
+              <Text style={s.lockConfigureText}>
+                {hasBlockedAppSelection ? "Change Blocked Apps" : "Set Up Screen Time Lock"}
+              </Text>
+            </Pressable>
+            {showBlockerPicker && (
+              <AppBlockerSelectionSheet
+                familyActivitySelectionId={APP_BLOCKER_SELECTION_ID}
+                onDismissRequest={handleBlockerPickerDismiss}
+                onSelectionChange={(event) => handleBlockerSelectionChange(event.nativeEvent)}
+                style={s.lockPickerAnchor}
+              />
+            )}
           </View>
         </View>
 
@@ -633,6 +848,141 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: palette.white,
       fontSize: 16,
       fontWeight: "600",
+    },
+
+    lockCard: {
+      backgroundColor: C.cardBg,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 16,
+      gap: 14,
+    },
+    lockCardUnlocked: {
+      borderColor: C.accentBorder,
+      backgroundColor: C.accentBgSubtle,
+    },
+    lockHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    lockIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: C.accentBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    lockIconUnlocked: {
+      backgroundColor: palette.orangeStrong,
+    },
+    lockHeaderText: {
+      flex: 1,
+      gap: 3,
+    },
+    lockTitle: {
+      fontSize: 17,
+      fontWeight: "800",
+      color: C.textPrimary,
+    },
+    lockSubtitle: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: C.textTertiary,
+    },
+    lockAppRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    lockAppChip: {
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: C.divider,
+      backgroundColor: C.inputBg,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    lockAppChipUnlocked: {
+      borderColor: C.accentBorder,
+      backgroundColor: C.accentBg,
+    },
+    lockAppText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: C.textSecondary,
+    },
+    lockAppTextUnlocked: {
+      color: C.accentText,
+    },
+    lockChecklist: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.divider,
+      overflow: "hidden",
+    },
+    lockChecklistRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
+    },
+    lockDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: C.divider,
+      marginLeft: 44,
+    },
+    lockCheck: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 1.5,
+      borderColor: C.iconTertiary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    lockCheckDone: {
+      backgroundColor: palette.orangeStrong,
+      borderColor: palette.orangeStrong,
+    },
+    lockChecklistText: {
+      flex: 1,
+      gap: 2,
+    },
+    lockChecklistTitle: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: C.textPrimary,
+    },
+    lockChecklistTitleDone: {
+      color: C.textTertiary,
+    },
+    lockChecklistDetail: {
+      fontSize: 12,
+      color: C.textQuaternary,
+    },
+    lockConfigureButton: {
+      height: 42,
+      borderRadius: 12,
+      backgroundColor: palette.orangeStrong,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    lockConfigureText: {
+      color: palette.white,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    lockPickerAnchor: {
+      position: "absolute",
+      width: 1,
+      height: 1,
+      opacity: 0,
     },
 
     card: {
