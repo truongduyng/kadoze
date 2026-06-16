@@ -1,5 +1,6 @@
 import GradientBackground from "@/components/GradientBackground";
 import { HabitHeatmap } from "@/components/HabitHeatmap";
+import ProofOfWorkSheet from "@/components/ProofOfWorkSheet";
 import { Collapsible } from "@/components/ui/collapsible";
 import { useTheme } from "@/hooks/useTheme";
 import {
@@ -314,6 +315,7 @@ export default function RoutinesScreen() {
   const todayName = DAY_NAMES[today.getDay()];
   const [expandedHabitId, setExpandedHabitId] = useState<number | null>(null);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [proofTarget, setProofTarget] = useState<{ habitId: number; habitTitle: string } | null>(null);
 
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
@@ -433,14 +435,21 @@ export default function RoutinesScreen() {
   const progressOffset = PROGRESS_RING_CIRCUMFERENCE * (1 - todayProgress.ratio);
 
 
-  const toggle = async (habitId: number, isDone: boolean) => {
+  const toggle = (habitId: number, isDone: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (isDone) {
-      await completionOps.markUndone(habitId, today);
+      void completionOps.markUndone(habitId, today);
     } else {
-      await completionOps.markDone(habitId, today);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const habit = allHabits?.find((h) => h.id === habitId);
+      setProofTarget({ habitId, habitTitle: habit?.title ?? "Habit" });
     }
+  };
+
+  const confirmProof = async () => {
+    if (!proofTarget) return;
+    await completionOps.markDone(proofTarget.habitId, today);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setProofTarget(null);
   };
 
   const addCustomHabit = async (
@@ -674,6 +683,14 @@ export default function RoutinesScreen() {
         visible={addModalVisible}
         onClose={() => setAddModalVisible(false)}
         onSave={addCustomHabit}
+      />
+
+      <ProofOfWorkSheet
+        visible={proofTarget !== null}
+        habitTitle={proofTarget?.habitTitle ?? ""}
+        onConfirmed={confirmProof}
+        onSkip={confirmProof}
+        onDismiss={() => setProofTarget(null)}
       />
     </View>
   );
