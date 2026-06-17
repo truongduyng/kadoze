@@ -47,3 +47,41 @@ async function postJson(path: string, body: unknown) {
 export async function submitOnboarding(data: OnboardingSubmission) {
   await postJson("/api/onboarding", data);
 }
+
+export interface ProofVerificationResult {
+  verified: boolean;
+  message: string;
+}
+
+export async function verifyProofOfWork(
+  imageBase64: string,
+  habitTitle: string,
+): Promise<ProofVerificationResult> {
+  const url = endpoint("/api/verify-proof");
+  if (!url) {
+    return { verified: true, message: "Verification unavailable offline." };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64, habitTitle }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return { verified: true, message: "Could not verify — marked done." };
+    }
+
+    const data = await response.json() as ProofVerificationResult;
+    return data;
+  } catch {
+    return { verified: true, message: "Could not verify — marked done." };
+  } finally {
+    clearTimeout(timeout);
+  }
+}

@@ -28,6 +28,7 @@ import {
 } from "@/components/onboarding/OnboardingFlowSteps";
 import NotificationStep from "@/components/onboarding/NotificationStep";
 import PaywallStep from "@/components/onboarding/PaywallStep";
+import ScreenTimeStep from "@/components/onboarding/ScreenTimeStep";
 import ProgressBar from "@/components/onboarding/ProgressBar";
 import ReferralSourceStep from "@/components/onboarding/ReferralSourceStep";
 import { palette } from "@/constants/theme";
@@ -184,6 +185,8 @@ export default function OnboardingScreen() {
         );
       case "notification":
         return <NotificationStep onNext={advance} />;
+      case "screen-time":
+        return <ScreenTimeStep onNext={advance} />;
       case "referral":
         return (
           <ReferralSourceStep

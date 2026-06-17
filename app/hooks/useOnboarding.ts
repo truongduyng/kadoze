@@ -25,6 +25,7 @@ export type StepType =
   | "preview"
   | "personalization"
   | "notification"
+  | "screen-time"
   | "referral"
   | "paywall";
 
@@ -47,6 +48,7 @@ export const STEPS: StepConfig[] = [
   { type: "preview" },
   { type: "personalization" },
   { type: "notification" },
+  { type: "screen-time" },
   { type: "referral" },
   { type: "paywall" },
 ];
