@@ -46,6 +46,11 @@ export async function registerForPushNotificationsAsync(): Promise<string | unde
   }
 }
 
+export async function hasNotificationPermissionAsync(): Promise<boolean> {
+  const { status } = await Notifications.getPermissionsAsync();
+  return status === 'granted';
+}
+
 export async function scheduleLocalNotification(
   title: string,
   body: string,

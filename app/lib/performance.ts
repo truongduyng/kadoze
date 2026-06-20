@@ -215,7 +215,7 @@ export function generateUserGrid(_userCreationDate: Date): HeatmapDay[][] {
 
 
 
-// Accepts todo_completions rows — counts only 'done' records per date
+// Accepts todo_completions rows - counts only 'done' records per date
 export function countTodosByDate(completions: DatedCompletion[]): Record<string, number> {
   return buildDoneDateCounts(completions);
 }
@@ -338,7 +338,7 @@ export function computeBouncebackRate(
   for (let i = 0; i < allDates.length; i++) {
     const date = allDates[i];
     if (!doneSet.has(date)) {
-      // This is a fall day — find next done date
+      // This is a fall day - find next done date
       totalFalls++;
       let recoveryDays = -1;
       for (let j = i + 1; j < allDates.length && j <= i + 5; j++) {
@@ -413,7 +413,7 @@ export function computeStreaks(todoCounts: Record<string, number>): {
       currentStreak++;
       cursor.setDate(cursor.getDate() - 1);
     } else {
-      // If today has no data yet, don't break the streak — check yesterday
+      // If today has no data yet, don't break the streak - check yesterday
       if (key === todayKey && currentStreak === 0) {
         cursor.setDate(cursor.getDate() - 1);
         continue;

@@ -19,7 +19,7 @@ const BENEFITS = [
   {
     icon: "lock-closed-outline" as const,
     title: "Block doomscroll apps",
-    subtitle: "Instagram, TikTok, YouTube — locked until your habits are done.",
+    subtitle: "Instagram, TikTok, YouTube - locked until your habits are done.",
   },
   {
     icon: "checkmark-circle-outline" as const,
@@ -74,7 +74,7 @@ export default function ScreenTimeStep({ onNext }: ScreenTimeStepProps) {
     try {
       const summary = await appBlocker.getSelectionSummary();
       setSelection(summary);
-      setStatus(summary.hasSelection ? "Apps selected — locked for now" : "No apps selected");
+      setStatus(summary.hasSelection ? "Apps selected - locked for now" : "No apps selected");
     } catch {
       setStatus("Screen Time setup failed");
     }

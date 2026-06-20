@@ -524,19 +524,19 @@ export function PainScreen({
 const PAIN_HARM: Record<string, { harm: string; cost: string }> = {
   "My mind won't stop racing": {
     harm: "Racing thoughts drain your willpower before the day even starts.",
-    cost: "You end each day exhausted — not from doing too much, but from thinking too much.",
+    cost: "You end each day exhausted - not from doing too much, but from thinking too much.",
   },
   "I start strong, then fall off": {
     harm: "Every restart costs more motivation than the last one.",
     cost: "Over time you stop starting at all, because you already know how it ends.",
   },
   "I lose hours to my phone": {
-    harm: "Scrolling feels like rest — but it leaves you more depleted than before.",
+    harm: "Scrolling feels like rest - but it leaves you more depleted than before.",
     cost: "The hours lost aren't just time. They're the version of you that never showed up.",
   },
   "I'm exhausted before the day begins": {
     harm: "Running on empty means every task takes twice the effort.",
-    cost: "Your best thinking — creative, strategic, clear — never makes it out.",
+    cost: "Your best thinking - creative, strategic, clear - never makes it out.",
   },
   "I have ideas but never execute": {
     harm: "Unused potential turns into quiet frustration.",
@@ -544,19 +544,19 @@ const PAIN_HARM: Record<string, { harm: string; cost: string }> = {
   },
   "I've tried every app and nothing sticks": {
     harm: "Each failed system chips away at your trust in yourself.",
-    cost: "Eventually you stop trying — and call it 'just how I am'.",
+    cost: "Eventually you stop trying - and call it 'just how I am'.",
   },
   "My body feels stiff and low-energy": {
     harm: "Physical inertia compounds into mental fog and low mood.",
     cost: "You tolerate your days instead of feeling alive in them.",
   },
   "I keep sleeping later than I want": {
-    harm: "A late start means a reactive day — you're always catching up.",
+    harm: "A late start means a reactive day - you're always catching up.",
     cost: "Mornings are your highest-leverage hours. You're spending them unconscious.",
   },
   "I forget basic self-care": {
     harm: "Neglecting small things signals to your brain that you don't matter.",
-    cost: "When basics slip, everything else gets harder — focus, mood, resilience.",
+    cost: "When basics slip, everything else gets harder - focus, mood, resilience.",
   },
   "I focus on what's wrong all day": {
     harm: "A negative lens makes every obstacle feel bigger than it is.",
@@ -571,31 +571,31 @@ const PAIN_HARM: Record<string, { harm: string; cost: string }> = {
     cost: "You're busy all day and can't name a single thing that actually moved forward.",
   },
   "I feel disconnected from people": {
-    harm: "Isolation compounds — the less you connect, the harder it gets.",
+    harm: "Isolation compounds - the less you connect, the harder it gets.",
     cost: "Relationships atrophy slowly. By the time you notice, distance feels normal.",
   },
   "I'm present physically, but not mentally": {
     harm: "Half-presence is its own kind of absence.",
-    cost: "People notice. And so do you — in the quiet moments after they've gone.",
+    cost: "People notice. And so do you - in the quiet moments after they've gone.",
   },
   "I listen to reply, not understand": {
     harm: "Conversations become transactions instead of connections.",
     cost: "You stop being someone people feel heard by. Closeness fades.",
   },
   "My creativity keeps getting postponed": {
-    harm: "Creative energy doesn't wait — it redirects into anxiety.",
+    harm: "Creative energy doesn't wait - it redirects into anxiety.",
     cost: "The longer you postpone, the more it feels like something you 'used to do'.",
   },
   "Good ideas disappear before I use them": {
-    harm: "Lost ideas aren't just forgotten — they erode your confidence in your own mind.",
+    harm: "Lost ideas aren't just forgotten - they erode your confidence in your own mind.",
     cost: "You start thinking you're not creative. You are. You're just not capturing.",
   },
   "My money feels vague and stressful": {
-    harm: "Financial vagueness is its own kind of drain — always present, never resolved.",
+    harm: "Financial vagueness is its own kind of drain - always present, never resolved.",
     cost: "Stress without clarity leads to avoidance. Avoidance makes everything worse.",
   },
   "I spend before I think": {
-    harm: "Impulse spending isn't just financial — it's a pattern of self-sabotage.",
+    harm: "Impulse spending isn't just financial - it's a pattern of self-sabotage.",
     cost: "Every unplanned purchase is a vote against the future version of you.",
   },
   "I avoid looking at my finances": {
@@ -1192,7 +1192,7 @@ export function AppTourScreen({ onNext }: { onNext: () => void }) {
   const C = useTheme();
   const s = makeStyles(C);
   return (
-    <ScreenShell onNext={onNext} cta="Got it — let's go">
+    <ScreenShell onNext={onNext} cta="Got it - let's go">
       <View style={s.copyBlock}>
         <Text style={s.headline}>Here&apos;s how Kadoze works.</Text>
         <Text style={s.body}>Three tabs. One clear purpose each.</Text>

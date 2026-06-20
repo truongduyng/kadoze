@@ -33,7 +33,7 @@ There is no test suite configured.
 
 ## Architecture Overview
 
-**Kadoze** is an offline-first iOS/Android app (React Native + Expo SDK 55, React 19) built around the "10k Iteration Protocol" — habit tracking, daily focus, note capture, and routines in one unified workspace.
+**Kadoze** is an offline-first iOS/Android app (React Native + Expo SDK 55, React 19) built around the "10k Iteration Protocol" - habit tracking, daily focus, note capture, and routines in one unified workspace.
 
 ### Directory layout (inside `app/`)
 
@@ -65,10 +65,10 @@ constants/
 
 ### Data layer
 
-- **SQLite via expo-sqlite + Drizzle ORM** — no remote sync; purely local.
+- **SQLite via expo-sqlite + Drizzle ORM** - no remote sync; purely local.
 - Schema tables: `profiles`, `notes`, `habits`, `habit_completions`, `daily_focus`, `todos`.
 - `initializeDatabase()` runs `CREATE TABLE IF NOT EXISTS` on cold start via `ProfileInitializer`.
-- `resetDatabase()` drops all tables and clears MMKV — used in dev/reset flows.
+- `resetDatabase()` drops all tables and clears MMKV - used in dev/reset flows.
 - Dates stored as `TEXT` (`'YYYY-MM-DD'`) for daily keys; timestamps stored as `INTEGER` (unix epoch).
 - All DB operations go through the typed helpers in `lib/db/operations.ts`, never raw SQL in components.
 

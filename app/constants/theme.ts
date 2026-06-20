@@ -83,7 +83,7 @@ export const Colors = {
     iconSecondary: 'rgba(15,23,42,0.68)',
     iconTertiary: 'rgba(15,23,42,0.48)',
 
-    // accent — orange stays the same in both themes
+    // accent - orange stays the same in both themes
     accent: palette.orange,
     accentText: '#C2410C',
     accentBg: 'rgba(251,146,60,0.12)',

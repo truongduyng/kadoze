@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { storage, STORAGE_KEYS, type ReminderState } from '@/lib/storage';
 import {
+  hasNotificationPermissionAsync,
   registerForPushNotificationsAsync,
   scheduleRepeatingNotification,
   cancelNotification,
@@ -23,6 +24,13 @@ function readEveningState(): ReminderState {
     hour:    storage.getNumber(STORAGE_KEYS.EVENING_REMINDER_HOUR)     ?? EVENING_DEFAULTS.hour,
     minute:  storage.getNumber(STORAGE_KEYS.EVENING_REMINDER_MINUTE)   ?? EVENING_DEFAULTS.minute,
   };
+}
+
+function hasSavedReminderPreference(): boolean {
+  return (
+    storage.contains(STORAGE_KEYS.HABIT_REMINDER_ENABLED) ||
+    storage.contains(STORAGE_KEYS.EVENING_REMINDER_ENABLED)
+  );
 }
 
 export function useReminderManager() {
@@ -49,7 +57,7 @@ export function useReminderManager() {
 
         const id = await scheduleRepeatingNotification(
           'Time to check in on your habits',
-          'Keep your streak going — open Kadoze and complete your habits.',
+          'Keep your streak going - open Kadoze and complete your habits.',
           hour,
           minute,
         );
@@ -86,7 +94,7 @@ export function useReminderManager() {
 
         const id = await scheduleRepeatingNotification(
           'Time for your evening reset',
-          'Wind down and prepare for tomorrow — open Kadoze to start your reset routine.',
+          'Wind down and prepare for tomorrow - open Kadoze to start your reset routine.',
           hour,
           minute,
         );
@@ -103,6 +111,28 @@ export function useReminderManager() {
       setIsUpdating(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (hasSavedReminderPreference()) return;
+
+    let cancelled = false;
+
+    const enableGrantedReminders = async () => {
+      const hasPermission = await hasNotificationPermissionAsync();
+      if (!hasPermission || cancelled) return;
+
+      await Promise.all([
+        toggleHabitReminder(true, HABIT_DEFAULTS.hour, HABIT_DEFAULTS.minute),
+        toggleEveningReminder(true, EVENING_DEFAULTS.hour, EVENING_DEFAULTS.minute),
+      ]);
+    };
+
+    enableGrantedReminders();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toggleHabitReminder, toggleEveningReminder]);
 
   return { habitState, eveningState, isUpdating, toggleHabitReminder, toggleEveningReminder };
 }

@@ -130,7 +130,7 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
       id: "walk",
       icon: "walk-outline",
       title: "10-minute walk",
-      subtitle: "Outside, no headphones — just move and reset",
+      subtitle: "Outside, no headphones - just move and reset",
     },
     {
       id: "water",
@@ -156,13 +156,13 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
       id: "journal",
       icon: "journal-outline",
       title: "Brain dump journal",
-      subtitle: "5 min — write until your head is clear",
+      subtitle: "5 min - write until your head is clear",
     },
     {
       id: "quiet",
       icon: "body-outline",
       title: "5 minutes of stillness",
-      subtitle: "No input, no phone — just breathe",
+      subtitle: "No input, no phone - just breathe",
     },
     {
       id: "gratitude",
@@ -200,7 +200,7 @@ export const KEYSTONE_HABITS_BY_FOCUS: Record<string, KeystoneHabit[]> = {
       id: "pomodoro",
       icon: "timer-outline",
       title: "One focused sprint",
-      subtitle: "25 min deep work — phone flipped, timer set",
+      subtitle: "25 min deep work - phone flipped, timer set",
     },
   ],
   relations: [
