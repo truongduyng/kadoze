@@ -149,6 +149,8 @@ export default function SettingsScreen() {
   };
 
   const s = makeStyles(C, insets);
+  const reminderSwitchTrackColor = { false: C.cardBorder, true: palette.orange };
+  const reminderSwitchThumbColor = Platform.OS === "android" ? C.cardBg : undefined;
 
   return (
     <View style={s.container}>
@@ -218,8 +220,8 @@ export default function SettingsScreen() {
                 value={habitState.enabled}
                 onValueChange={(val) => toggleHabitReminder(val, habitState.hour, habitState.minute)}
                 disabled={isUpdating}
-                trackColor={{ false: C.cardBorder, true: C.accentBorder }}
-                thumbColor={habitState.enabled ? palette.orange : C.textTertiary}
+                trackColor={reminderSwitchTrackColor}
+                thumbColor={reminderSwitchThumbColor}
                 ios_backgroundColor={C.cardBorder}
               />
             </View>
@@ -241,8 +243,8 @@ export default function SettingsScreen() {
                 value={eveningState.enabled}
                 onValueChange={(val) => toggleEveningReminder(val, eveningState.hour, eveningState.minute)}
                 disabled={isUpdating}
-                trackColor={{ false: C.cardBorder, true: C.accentBorder }}
-                thumbColor={eveningState.enabled ? palette.orange : C.textTertiary}
+                trackColor={reminderSwitchTrackColor}
+                thumbColor={reminderSwitchThumbColor}
                 ios_backgroundColor={C.cardBorder}
               />
             </View>
