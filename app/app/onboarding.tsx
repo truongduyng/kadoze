@@ -27,6 +27,7 @@ import {
   TrustScreen,
 } from "@/components/onboarding/OnboardingFlowSteps";
 import NotificationStep from "@/components/onboarding/NotificationStep";
+import ScreenTimeStep from "@/components/onboarding/ScreenTimeStep";
 import PaywallStep from "@/components/onboarding/PaywallStep";
 import ProgressBar from "@/components/onboarding/ProgressBar";
 import ReferralSourceStep from "@/components/onboarding/ReferralSourceStep";
@@ -184,6 +185,8 @@ export default function OnboardingScreen() {
         );
       case "notification":
         return <NotificationStep onNext={advance} />;
+      case "screentime":
+        return <ScreenTimeStep onNext={advance} />;
       case "referral":
         return (
           <ReferralSourceStep

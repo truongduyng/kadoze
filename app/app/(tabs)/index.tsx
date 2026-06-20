@@ -453,80 +453,6 @@ export default function HomeScreen() {
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionLabel}>ANTI-DOOMSCROLL LOCK</Text>
-          <View style={[s.lockCard, appLockUnlocked && s.lockCardUnlocked]}>
-            <View style={s.lockHeader}>
-              <View style={[s.lockIcon, appLockUnlocked && s.lockIconUnlocked]}>
-                <Ionicons
-                  name={appLockUnlocked ? "lock-open" : "lock-closed"}
-                  size={22}
-                  color={appLockUnlocked ? palette.white : palette.orangeStrong}
-                />
-              </View>
-              <View style={s.lockHeaderText}>
-                <Text style={s.lockTitle}>
-                  {appLockUnlocked ? "Scroll apps unlocked" : "Scroll apps stay locked"}
-                </Text>
-                <Text style={s.lockSubtitle}>
-                  {hasBlockedAppSelection
-                    ? blockerStatus
-                    : "Pick distracting apps with Apple's Screen Time picker."}
-                </Text>
-              </View>
-            </View>
-
-            <View style={s.lockAppRow}>
-              {(hasBlockedAppSelection ? ["Selected apps", "Categories", "Websites"] : lockedApps).map((app) => (
-                <View key={app} style={[s.lockAppChip, appLockUnlocked && s.lockAppChipUnlocked]}>
-                  <Text style={[s.lockAppText, appLockUnlocked && s.lockAppTextUnlocked]}>
-                    {app}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={s.lockChecklist}>
-              {lockBlockers.map((item, index) => (
-                <View key={item.label}>
-                  {index > 0 && <View style={s.lockDivider} />}
-                  <View style={s.lockChecklistRow}>
-                    <View style={[s.lockCheck, item.done && s.lockCheckDone]}>
-                      {item.done && <Ionicons name="checkmark" size={13} color={palette.white} />}
-                    </View>
-                    <View style={s.lockChecklistText}>
-                      <Text style={[s.lockChecklistTitle, item.done && s.lockChecklistTitleDone]}>
-                        {item.label}
-                      </Text>
-                      <Text style={s.lockChecklistDetail}>{item.detail}</Text>
-                    </View>
-                  </View>
-                </View>
-              ))}
-            </View>
-
-            <Pressable
-              style={s.lockConfigureButton}
-              onPress={configureScreenTimeLock}
-              accessibilityRole="button"
-              accessibilityLabel="Configure Screen Time app blocking"
-            >
-              <Ionicons name="options-outline" size={16} color={palette.white} />
-              <Text style={s.lockConfigureText}>
-                {hasBlockedAppSelection ? "Change Blocked Apps" : "Set Up Screen Time Lock"}
-              </Text>
-            </Pressable>
-            {showBlockerPicker && (
-              <AppBlockerSelectionSheet
-                familyActivitySelectionId={APP_BLOCKER_SELECTION_ID}
-                onDismissRequest={handleBlockerPickerDismiss}
-                onSelectionChange={(event) => handleBlockerSelectionChange(event.nativeEvent)}
-                style={s.lockPickerAnchor}
-              />
-            )}
-          </View>
-        </View>
-
-        <View style={s.section}>
           <Text style={s.sectionLabel}>{"HABITS"}</Text>
           <View style={s.card}>
             {todayHabits.length === 0 ? (
@@ -655,6 +581,80 @@ export default function HomeScreen() {
               </View>
             </View>
           </Pressable>
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>ANTI-DOOMSCROLL LOCK</Text>
+          <View style={[s.lockCard, appLockUnlocked && s.lockCardUnlocked]}>
+            <View style={s.lockHeader}>
+              <View style={[s.lockIcon, appLockUnlocked && s.lockIconUnlocked]}>
+                <Ionicons
+                  name={appLockUnlocked ? "lock-open" : "lock-closed"}
+                  size={22}
+                  color={appLockUnlocked ? palette.white : palette.orangeStrong}
+                />
+              </View>
+              <View style={s.lockHeaderText}>
+                <Text style={s.lockTitle}>
+                  {appLockUnlocked ? "Scroll apps unlocked" : "Scroll apps stay locked"}
+                </Text>
+                <Text style={s.lockSubtitle}>
+                  {hasBlockedAppSelection
+                    ? blockerStatus
+                    : "Pick distracting apps with Apple's Screen Time picker."}
+                </Text>
+              </View>
+            </View>
+
+            <View style={s.lockAppRow}>
+              {(hasBlockedAppSelection ? ["Selected apps", "Categories", "Websites"] : lockedApps).map((app) => (
+                <View key={app} style={[s.lockAppChip, appLockUnlocked && s.lockAppChipUnlocked]}>
+                  <Text style={[s.lockAppText, appLockUnlocked && s.lockAppTextUnlocked]}>
+                    {app}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={s.lockChecklist}>
+              {lockBlockers.map((item, index) => (
+                <View key={item.label}>
+                  {index > 0 && <View style={s.lockDivider} />}
+                  <View style={s.lockChecklistRow}>
+                    <View style={[s.lockCheck, item.done && s.lockCheckDone]}>
+                      {item.done && <Ionicons name="checkmark" size={13} color={palette.white} />}
+                    </View>
+                    <View style={s.lockChecklistText}>
+                      <Text style={[s.lockChecklistTitle, item.done && s.lockChecklistTitleDone]}>
+                        {item.label}
+                      </Text>
+                      <Text style={s.lockChecklistDetail}>{item.detail}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <Pressable
+              style={s.lockConfigureButton}
+              onPress={configureScreenTimeLock}
+              accessibilityRole="button"
+              accessibilityLabel="Configure Screen Time app blocking"
+            >
+              <Ionicons name="options-outline" size={16} color={palette.white} />
+              <Text style={s.lockConfigureText}>
+                {hasBlockedAppSelection ? "Change Blocked Apps" : "Set Up Screen Time Lock"}
+              </Text>
+            </Pressable>
+            {showBlockerPicker && (
+              <AppBlockerSelectionSheet
+                familyActivitySelectionId={APP_BLOCKER_SELECTION_ID}
+                onDismissRequest={handleBlockerPickerDismiss}
+                onSelectionChange={(event) => handleBlockerSelectionChange(event.nativeEvent)}
+                style={s.lockPickerAnchor}
+              />
+            )}
+          </View>
         </View>
       </KeyboardAwareScrollView>
     </View>

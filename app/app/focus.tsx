@@ -6,6 +6,7 @@ import { dailyFocus, dailyFocusOps, db } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq } from "drizzle-orm";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -117,6 +118,14 @@ export default function FocusScreen() {
     setIsRunning((current) => !current);
   };
 
+  const finishFocusSession = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await persistElapsedFocusTime(true);
+    await dailyFocusOps.markComplete();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.back();
+  };
+
   const s = makeStyles(C);
 
   return (
@@ -138,7 +147,15 @@ export default function FocusScreen() {
             <View style={s.liveDot} />
             <Text style={s.title}>Focus Room</Text>
           </View>
-          <View style={s.headerSpacer} />
+          <Pressable
+            onPress={finishFocusSession}
+            hitSlop={10}
+            style={s.doneButton}
+            accessibilityRole="button"
+            accessibilityLabel="Finish focus session"
+          >
+            <Ionicons name="checkmark" size={22} color={palette.orange} />
+          </Pressable>
         </View>
 
         <View style={s.content}>
@@ -274,9 +291,15 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "center",
     },
-    headerSpacer: {
+    doneButton: {
       width: 36,
       height: 36,
+      borderRadius: 999,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.inputBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
     },
   });
 }
