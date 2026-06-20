@@ -17,6 +17,7 @@ import {
   FutureScreen,
   GoalInputScreen,
   HookScreen,
+  IdentityScreen,
   KeystoneScreen,
   PAIN_POINT_SET,
   PainAmplifyScreen,
@@ -57,6 +58,10 @@ export default function OnboardingScreen() {
     setCustomHabitTitle,
     referralSource,
     setReferralSource,
+    name,
+    setName,
+    avatar,
+    setAvatar,
     goNext,
     goBack,
     showBack,
@@ -138,6 +143,16 @@ export default function OnboardingScreen() {
         return <PainAmplifyScreen painPoints={painPoints} onNext={advance} />;
       case "future":
         return <FutureScreen onNext={advance} />;
+      case "identity":
+        return (
+          <IdentityScreen
+            name={name}
+            avatar={avatar}
+            onNameChange={setName}
+            onAvatarChange={setAvatar}
+            onNext={advance}
+          />
+        );
       case "wins":
         return <FastWinsScreen onNext={advance} />;
       case "system":

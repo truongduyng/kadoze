@@ -148,10 +148,8 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
   const isSelectedAnnual = effectiveSelected ? isAnnualPackage(effectiveSelected) : false;
   const isSelectedLifetime = effectiveSelected ? isLifetimePackage(effectiveSelected) : false;
   const ctaLabel = isSelectedLifetime
-    ? "Buy lifetime access"
-    : isSelectedAnnual
-    ? "Start trial"
-    : "Subscribe now";
+    ? "Change my life, forever"
+    : "Start changing my life";
 
   return (
     <ScrollView
@@ -201,7 +199,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
               const isLifetime = isLifetimePackage(pkg);
               const isSelected = effectiveSelected?.identifier === pkg.identifier;
               const weeks = packageWeeks(pkg);
-              const perWeek = !isLifetime && weeks > 1 ? product.price / weeks : null;
+              const perWeek = !isLifetime && weeks > 0 ? product.price / weeks : null;
               const perWeekStr = perWeek
                 ? perWeek.toLocaleString("en-US", {
                     style: "currency",
@@ -223,6 +221,11 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
                   activeOpacity={0.8}
                 >
                   <View style={s.pkgRow}>
+                    <Ionicons
+                      name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                      size={20}
+                      color={isSelected ? palette.orange : C.textQuaternary}
+                    />
                     <View style={s.pkgInfo}>
                       <View style={s.pkgTitleRow}>
                         <Text style={[s.pkgTitle, isSelected && s.pkgTitleSelected]}>
@@ -233,31 +236,28 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
                             <Text style={s.bestValueText}>{isLifetime ? "One-time" : "Best value"}</Text>
                           </View>
                         ) : null}
+                        {isLifetime ? (
+                          <Text style={s.pkgTrial}>Pay once, yours forever</Text>
+                        ) : isAnnual ? (
+                          <Text style={s.pkgTrial}>3-day free trial</Text>
+                        ) : null}
                       </View>
-                      <View style={s.pkgPriceRow}>
-                        <Text style={[s.pkgPrice, isSelected && s.pkgPriceSelected]}>
-                          {product.priceString}
-                        </Text>
+                    </View>
+                    <View style={s.pkgPriceCol}>
+                      <Text style={[s.pkgPrice, isSelected && s.pkgPriceSelected]}>
+                        {product.priceString}
+                      </Text>
+                      <View style={s.pkgPriceSubRow}>
                         {perWeekStr ? (
                           <Text style={s.pkgPerWeek}>{perWeekStr}/wk</Text>
                         ) : null}
                         {savingsPct && savingsPct > 0 ? (
                           <View style={s.savingsBadge}>
-                            <Text style={s.savingsText}>Save {savingsPct}%</Text>
+                            <Text style={s.savingsText}>-{savingsPct}%</Text>
                           </View>
                         ) : null}
                       </View>
-                      {isLifetime ? (
-                        <Text style={s.pkgTrial}>Pay once, yours forever</Text>
-                      ) : isAnnual ? (
-                        <Text style={s.pkgTrial}>3-day free trial</Text>
-                      ) : null}
                     </View>
-                    <Ionicons
-                      name={isSelected ? "checkmark-circle" : "ellipse-outline"}
-                      size={22}
-                      color={isSelected ? palette.orange : C.textQuaternary}
-                    />
                   </View>
                 </TouchableOpacity>
               );
@@ -313,10 +313,10 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
     scroll: { flex: 1 },
     container: {
       paddingHorizontal: 24,
-      paddingBottom: 40,
-      gap: 20,
+      paddingBottom: 32,
+      gap: 14,
     },
-    header: { gap: 10, paddingTop: 8 },
+    header: { gap: 6, paddingTop: 4 },
     proBadge: {
       alignSelf: "flex-start",
       backgroundColor: palette.orange,
@@ -349,15 +349,15 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       color: palette.orange,
     },
     headline: {
-      fontSize: 30,
+      fontSize: 26,
       fontWeight: "800",
       color: C.textPrimary,
-      lineHeight: 36,
+      lineHeight: 31,
     },
     sub: {
-      fontSize: 15,
+      fontSize: 14,
       color: C.textTertiary,
-      lineHeight: 22,
+      lineHeight: 19,
     },
     featureList: {
       backgroundColor: C.cardBg,
@@ -365,7 +365,7 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       borderColor: C.cardBorder,
       borderRadius: 16,
       padding: 16,
-      gap: 12,
+      gap: 13,
     },
     featureRow: {
       flexDirection: "row",
@@ -381,17 +381,18 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       justifyContent: "center",
     },
     featureText: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: "500",
       color: C.text,
     },
-    packages: { gap: 10 },
+    packages: { gap: 8 },
     pkgCard: {
       backgroundColor: C.cardBg,
       borderWidth: 1.5,
       borderColor: C.cardBorder,
-      borderRadius: 16,
-      padding: 18,
+      borderRadius: 14,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
     },
     pkgCardSelected: {
       borderColor: palette.orange,
@@ -400,25 +401,30 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
     pkgRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12,
+      gap: 10,
     },
     pkgInfo: { flex: 1, gap: 4 },
     pkgTitleRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      flexWrap: "wrap",
+      gap: 6,
     },
-    pkgPriceWrap: {
+    pkgPriceCol: {
       alignItems: "flex-end",
-      gap: 4,
+      gap: 2,
+    },
+    pkgPriceSubRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
     },
     pkgTitleSelected: { color: C.textPrimary },
     pkgPriceSelected: { color: palette.orange },
     ctaBtn: {
       backgroundColor: palette.orange,
       borderRadius: 14,
-      paddingVertical: 18,
+      paddingVertical: 15,
       alignItems: "center",
     },
     ctaBtnDisabled: { opacity: 0.6 },
@@ -429,7 +435,6 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       borderRadius: 8,
       paddingHorizontal: 8,
       paddingVertical: 2,
-      marginBottom: 6,
     },
     bestValueText: {
       fontSize: 11,
@@ -437,29 +442,18 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       color: "#fff",
     },
     pkgTitle: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: "700",
       color: C.textSecondary,
     },
-    pkgPriceRow: {
-      flexDirection: "row" as const,
-      alignItems: "baseline" as const,
-      gap: 6,
-    },
     pkgPrice: {
-      fontSize: 20,
+      fontSize: 17,
       fontWeight: "800",
       color: C.textPrimary,
     },
     pkgPerWeek: {
       fontSize: 12,
       color: C.textTertiary,
-    },
-    pkgTrialRow: {
-      flexDirection: "row" as const,
-      alignItems: "center" as const,
-      gap: 8,
-      marginTop: 2,
     },
     savingsBadge: {
       backgroundColor: "rgba(76,175,80,0.15)",

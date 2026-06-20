@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { profileOps, habitOps, dailyFocusOps } from "@/lib/db";
 import { submitOnboarding } from "@/lib/backend";
 import { storage } from "@/lib/storage";
+import { GAME_AVATARS, type GameAvatarId } from "@/lib/avatarCatalog";
 import type { IoniconName } from "@/lib/iconNames";
 
 // ---------------------------------------------------------------------------
@@ -16,6 +17,7 @@ export type StepType =
   | "pain"
   | "pain-amplify"
   | "future"
+  | "identity"
   | "wins"
   | "system"
   | "trust"
@@ -39,6 +41,7 @@ export const STEPS: StepConfig[] = [
   { type: "pain" },
   { type: "pain-amplify" },
   { type: "future" },
+  { type: "identity" },
   { type: "wins" },
   { type: "system" },
   { type: "trust" },
@@ -68,7 +71,7 @@ interface OnboardingDraft {
   customHabitTitle: string;
   referralSource: string;
   name: string;
-  avatar: IoniconName;
+  avatar: GameAvatarId;
 }
 
 const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
@@ -82,7 +85,7 @@ const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
   customHabitTitle: "",
   referralSource: "",
   name: "",
-  avatar: "happy-outline",
+  avatar: GAME_AVATARS[0].id,
 };
 
 function readOnboardingDraft(): OnboardingDraft {
@@ -106,7 +109,9 @@ function readOnboardingDraft(): OnboardingDraft {
       customHabitTitle: draft.customHabitTitle ?? "",
       referralSource: draft.referralSource ?? "",
       name: draft.name ?? "",
-      avatar: draft.avatar ?? DEFAULT_ONBOARDING_DRAFT.avatar,
+      avatar: GAME_AVATARS.some((item) => item.id === draft.avatar)
+        ? (draft.avatar as GameAvatarId)
+        : DEFAULT_ONBOARDING_DRAFT.avatar,
     };
   } catch {
     return DEFAULT_ONBOARDING_DRAFT;
@@ -401,7 +406,7 @@ export function useOnboarding() {
   const [customHabitTitle, setCustomHabitTitle] = useState(initialDraft.customHabitTitle);
   const [referralSource, setReferralSource] = useState(initialDraft.referralSource);
   const [name, setName] = useState(initialDraft.name);
-  const [avatar, setAvatar] = useState<IoniconName>(initialDraft.avatar);
+  const [avatar, setAvatar] = useState<GameAvatarId>(initialDraft.avatar);
 
   useEffect(() => {
     const draft: OnboardingDraft = {

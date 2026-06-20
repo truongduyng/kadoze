@@ -15,9 +15,10 @@ import {
   View,
 } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
-import Svg, { Circle, Defs, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { palette } from "@/constants/theme";
+import { GAME_AVATARS, type GameAvatarId } from "@/lib/avatarCatalog";
 import {
   DEFAULT_KEYSTONE_HABITS,
   KEYSTONE_HABITS_BY_FOCUS,
@@ -667,42 +668,73 @@ export function FutureScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-export function IdentityScreen({ onNext }: { onNext: () => void }) {
+export function IdentityScreen({
+  name,
+  avatar,
+  onNameChange,
+  onAvatarChange,
+  onNext,
+}: {
+  name: string;
+  avatar: GameAvatarId;
+  onNameChange: (name: string) => void;
+  onAvatarChange: (avatar: GameAvatarId) => void;
+  onNext: () => void;
+}) {
   const C = useTheme();
   const s = makeStyles(C);
+  const canContinue = name.trim().length > 0 && Boolean(avatar);
   return (
-    <ScreenShell onNext={onNext}>
-      <View style={s.identityTop}>
-        <View style={s.copyBlock}>
-          <Text style={s.headline}>Kadoze is designed for quiet achievers.</Text>
-          <Text style={s.body}>
-            People who want clarity, discipline, and deep focus - without burnout.
-          </Text>
-        </View>
+    <ScreenShell
+      onNext={onNext}
+      disabled={!canContinue}
+      scroll
+      stickyFooter
+      dismissesKeyboard
+    >
+      <View style={s.copyBlock}>
+        <Text style={s.headline}>Make Kadoze yours</Text>
+        <Text style={s.body}>Choose the character that will show up with you each day</Text>
       </View>
-      <View style={s.identityScene}>
-        <Svg width="100%" height="100%" viewBox="0 0 360 250" style={s.identitySceneSvg}>
-          <Defs>
-            <RadialGradient
-              id="identityGlow"
-              cx="180"
-              cy="102"
-              r="122"
-              gradientUnits="userSpaceOnUse"
+
+      <View style={s.nameFieldWrap}>
+        <Text style={s.fieldLabel}>Your name</Text>
+        <TextInput
+          value={name}
+          onChangeText={onNameChange}
+          placeholder="What should we call you?"
+          placeholderTextColor={palette.white35}
+          style={s.nameInput}
+          selectionColor={ORANGE}
+          maxLength={32}
+          returnKeyType="done"
+          onSubmitEditing={() => Keyboard.dismiss()}
+        />
+      </View>
+
+      <View style={s.avatarGrid}>
+        {GAME_AVATARS.map((item) => {
+          const active = avatar === item.id;
+          return (
+            <Pressable
+              key={item.id}
+              onPress={() => onAvatarChange(item.id)}
+              style={[s.avatarChoice, active && s.avatarChoiceActive]}
             >
-              <Stop offset="0" stopColor={ORANGE} stopOpacity="0.38" />
-              <Stop offset="0.42" stopColor={ORANGE} stopOpacity="0.16" />
-              <Stop offset="0.78" stopColor={ORANGE} stopOpacity="0.03" />
-              <Stop offset="1" stopColor={ORANGE} stopOpacity="0" />
-            </RadialGradient>
-          </Defs>
-          <Rect x="0" y="0" width="360" height="250" fill="url(#identityGlow)" />
-          <Circle cx="180" cy="102" r="52" fill={ORANGE} />
-          <Path
-            d="M0 142 C46 128 88 132 132 143 C176 154 218 166 262 164 C303 162 333 151 360 139 L360 250 L0 250 Z"
-            fill="#050505"
-          />
-        </Svg>
+              <View style={s.characterAvatarFrame}>
+                <Image source={item.source} style={s.characterAvatarImage} />
+                {active ? (
+                  <View style={s.avatarCheckBadge}>
+                    <Ionicons name="checkmark" size={13} color="#050505" />
+                  </View>
+                ) : null}
+              </View>
+              <Text style={[s.avatarChoiceText, active && s.avatarChoiceTextActive]}>
+                {item.name}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
     </ScreenShell>
   );
@@ -1757,19 +1789,82 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       fontSize: 11,
       fontWeight: "700",
     },
-    identityTop: {
-      gap: 0,
-      paddingTop: 20,
+    nameFieldWrap: {
+      gap: 8,
     },
-    identityScene: {
-      height: 320,
+    fieldLabel: {
+      color: palette.white70,
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 1,
+    },
+    nameInput: {
+      minHeight: 58,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.10)",
+      backgroundColor: "rgba(255,255,255,0.06)",
+      paddingHorizontal: 16,
+      color: "#fff",
+      fontSize: 17,
+      fontWeight: "700",
+    },
+    avatarGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      columnGap: 8,
+      rowGap: 10,
+      paddingBottom: 12,
+    },
+    avatarChoice: {
+      flexBasis: "31.8%",
+      flexGrow: 1,
+      maxWidth: "31.8%",
+      borderRadius: 8,
+      backgroundColor: "#141414",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.07)",
+      padding: 6,
+      gap: 6,
+    },
+    avatarChoiceActive: {
+      borderColor: "rgba(255,122,26,0.72)",
+      backgroundColor: "rgba(255,122,26,0.12)",
+    },
+    characterAvatarFrame: {
+      width: "100%",
+      aspectRatio: 1,
+      borderRadius: 7,
       overflow: "hidden",
-      marginTop: -12,
-      marginBottom: "auto",
-      marginHorizontal: -22,
+      backgroundColor: "rgba(255,255,255,0.05)",
     },
-    identitySceneSvg: {
-      ...StyleSheet.absoluteFillObject,
+    characterAvatarImage: {
+      width: "100%",
+      height: "100%",
+    },
+    avatarCheckBadge: {
+      position: "absolute",
+      top: 7,
+      right: 7,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: ORANGE,
+      borderWidth: 2,
+      borderColor: "#141414",
+    },
+    avatarChoiceText: {
+      color: palette.white70,
+      fontSize: 10,
+      fontWeight: "800",
+      lineHeight: 13,
+      textAlign: "center",
+    },
+    avatarChoiceTextActive: {
+      color: "#fff",
     },
     timelineCard: {
       minHeight: 94,

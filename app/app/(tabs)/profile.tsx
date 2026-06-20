@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { router } from "expo-router";
@@ -25,6 +25,7 @@ import { getTodayInLocalTimezone } from "@/lib/timezone";
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { resolveIoniconName } from "@/lib/iconNames";
+import { getGameAvatar } from "@/lib/avatarCatalog";
 
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 const CONSISTENCY_DAYS = 28;
@@ -100,6 +101,7 @@ export default function ProfileScreen() {
   const profile = profileData?.[0];
   const displayName = profile?.name?.trim() || "User";
   const savedAvatar = profile?.avatar?.trim();
+  const gameAvatar = getGameAvatar(savedAvatar);
 
   const analytics = useMemo(() => {
     const completions = allCompletions ?? [];
@@ -328,11 +330,15 @@ export default function ProfileScreen() {
           <View style={s.identityTop}>
             <View style={s.identityPrimary}>
               <View style={s.avatar}>
-                <Ionicons
-                  name={displayAvatarIcon}
-                  size={30}
-                  color={palette.orange}
-                />
+                {gameAvatar ? (
+                  <Image source={gameAvatar.source} style={s.avatarImage} />
+                ) : (
+                  <Ionicons
+                    name={displayAvatarIcon}
+                    size={30}
+                    color={palette.orange}
+                  />
+                )}
               </View>
               <View style={s.identityMeta}>
                 <Text selectable style={s.name}>
@@ -609,6 +615,11 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderColor: C.accentBorder,
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%",
+      height: "100%",
     },
     identityMeta: { flex: 1, gap: 3 },
     name: {
