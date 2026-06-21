@@ -1,9 +1,19 @@
-import React, { useMemo } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useMemo, useRef } from "react";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { router } from "expo-router";
+import * as Sharing from "expo-sharing";
 import { Ionicons } from "@expo/vector-icons";
+import ViewShot, { captureRef, type ViewShotRef } from "react-native-view-shot";
 import Svg, {
   Circle,
   Defs,
@@ -85,6 +95,7 @@ function buildLinePath(
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const C = useTheme();
+  const shareCardRef = useRef<ViewShotRef>(null);
   const today = useMemo(() => getTodayInLocalTimezone(), []);
 
   const { data: profileData } = useLiveQuery(
@@ -307,6 +318,53 @@ export default function ProfileScreen() {
     return `${trendChart.path} L ${lastPoint.x.toFixed(2)} 128 L ${firstPoint.x.toFixed(2)} 128 Z`;
   }, [trendChart]);
 
+  const shareMessage = useMemo(
+    () =>
+      `${displayName}'s Discipline Score is ${analytics.momentumScore}/100 (${analytics.identityTitle}). ${analytics.currentStreak} day streak, ${analytics.completionRate}% completion. Built with Kadoze.`,
+    [
+      analytics.completionRate,
+      analytics.currentStreak,
+      analytics.identityTitle,
+      analytics.momentumScore,
+      displayName,
+    ],
+  );
+
+  const handleShareDisciplineScore = useCallback(async () => {
+    try {
+      if (!shareCardRef.current) return;
+
+      const canShareFile = await Sharing.isAvailableAsync();
+      if (!canShareFile) {
+        await Share.share({
+          title: "My Kadoze Discipline Score",
+          message: shareMessage,
+        });
+        return;
+      }
+
+      const uri = await captureRef(shareCardRef, {
+        format: "png",
+        quality: 1,
+        result: "tmpfile",
+      });
+
+      await Sharing.shareAsync(uri, {
+        mimeType: "image/png",
+        dialogTitle: "Share Discipline Score",
+        UTI: "public.png",
+      });
+    } catch (error) {
+      console.error("Error sharing discipline score:", error);
+      Share.share({
+        title: "My Kadoze Discipline Score",
+        message: shareMessage,
+      }).catch((shareError) => {
+        console.error("Error sharing fallback text:", shareError);
+      });
+    }
+  }, [shareMessage]);
+
   const s = makeStyles(C);
 
   return (
@@ -340,40 +398,80 @@ export default function ProfileScreen() {
                 <Text selectable style={s.name}>
                   {displayName}
                 </Text>
-                <Text selectable style={s.identityTitle}>
-                  {analytics.identityTitle}
-                </Text>
               </View>
             </View>
-            <Pressable
-              style={s.settingsButton}
-              onPress={() => router.push("/settings")}
-              hitSlop={10}
-            >
-              <Ionicons
-                name="settings-outline"
-                size={18}
-                color={C.iconSecondary}
-              />
-            </Pressable>
+            <View style={s.headerActions}>
+              <Pressable
+                style={s.headerActionButton}
+                onPress={handleShareDisciplineScore}
+                hitSlop={10}
+              >
+                <Ionicons
+                  name="share-social-outline"
+                  size={18}
+                  color={C.iconSecondary}
+                />
+              </Pressable>
+              <Pressable
+                style={s.headerActionButton}
+                onPress={() => router.push("/settings")}
+                hitSlop={10}
+              >
+                <Ionicons
+                  name="settings-outline"
+                  size={18}
+                  color={C.iconSecondary}
+                />
+              </Pressable>
+            </View>
           </View>
+        </View>
 
-          <View style={s.identityStats}>
-            <View style={s.identityMetricLarge}>
-              <Text selectable style={s.metricEyebrow}>
-                Momentum Score
+        <View style={s.section}>
+          <View style={s.shareCard}>
+            <View style={s.shareCardHeader}>
+              <Text selectable style={s.shareBrandText}>
+                Discipline Score
               </Text>
-              <Text selectable style={s.identityMetricValue}>
+            </View>
+
+            <View style={s.shareScoreBlock}>
+              <Text selectable style={s.shareScoreValue}>
                 {analytics.momentumScore}
               </Text>
             </View>
-            <View style={s.identityMetricSmall}>
-              <Text selectable style={s.metricEyebrow}>
-                Streaks
+
+            <View style={s.shareTitleRow}>
+              <Text selectable style={s.shareTitle} numberOfLines={1}>
+                {analytics.identityTitle}
               </Text>
-              <Text selectable style={s.identityMetricValue}>
-                {analytics.currentStreak}
-              </Text>
+            </View>
+
+            <View style={s.shareStatsRow}>
+              <View style={s.shareStatPill}>
+                <Text selectable style={s.shareStatValue}>
+                  {analytics.currentStreak}d
+                </Text>
+                <Text selectable style={s.shareStatLabel}>
+                  streak
+                </Text>
+              </View>
+              <View style={s.shareStatPill}>
+                <Text selectable style={s.shareStatValue}>
+                  {analytics.completionRate}%
+                </Text>
+                <Text selectable style={s.shareStatLabel}>
+                  done
+                </Text>
+              </View>
+              <View style={s.shareStatPill}>
+                <Text selectable style={s.shareStatValue}>
+                  {analytics.consistentDays}
+                </Text>
+                <Text selectable style={s.shareStatLabel}>
+                  active days
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -569,6 +667,74 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      <ViewShot
+        ref={shareCardRef}
+        options={{ format: "png", quality: 1, result: "tmpfile" }}
+        pointerEvents="none"
+        style={s.hiddenShareCapture}
+      >
+        <View style={s.shareImageWrap}>
+          <View style={s.shareCard}>
+            <View style={s.shareProfileRow}>
+              <View style={s.shareAvatar}>
+                {gameAvatar ? (
+                  <Image source={gameAvatar.source} style={s.shareAvatarImage} />
+                ) : (
+                  <Ionicons
+                    name={displayAvatarIcon}
+                    size={24}
+                    color={palette.orange}
+                  />
+                )}
+              </View>
+              <View style={s.shareProfileMeta}>
+                <Text selectable style={s.shareName} numberOfLines={1}>
+                  {displayName}
+                </Text>
+              </View>
+            </View>
+
+            <View style={s.shareScoreBlock}>
+              <Text selectable style={s.shareScoreValue}>
+                {analytics.momentumScore}
+              </Text>
+            </View>
+
+            <View style={s.shareTitleRow}>
+              <Text selectable style={s.shareTitle} numberOfLines={1}>
+                {analytics.identityTitle}
+              </Text>
+            </View>
+
+            <View style={s.shareStatsRow}>
+              <View style={s.shareStatPill}>
+                <Text selectable style={s.shareStatValue}>
+                  {analytics.currentStreak}d
+                </Text>
+                <Text selectable style={s.shareStatLabel}>
+                  streak
+                </Text>
+              </View>
+              <View style={s.shareStatPill}>
+                <Text selectable style={s.shareStatValue}>
+                  {analytics.completionRate}%
+                </Text>
+                <Text selectable style={s.shareStatLabel}>
+                  done
+                </Text>
+              </View>
+              <View style={s.shareStatPill}>
+                <Text selectable style={s.shareStatValue}>
+                  {analytics.consistentDays}
+                </Text>
+                <Text selectable style={s.shareStatLabel}>
+                  active days
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </ViewShot>
     </View>
   );
 }
@@ -576,7 +742,13 @@ export default function ProfileScreen() {
 function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
   return StyleSheet.create({
     container: { flex: 1 },
-    settingsButton: {
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginTop: -46,
+    },
+    headerActionButton: {
       width: 44,
       height: 44,
       borderRadius: 22,
@@ -585,7 +757,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       borderColor: C.cardBorder,
       alignItems: "center",
       justifyContent: "center",
-      marginTop: -46,
     },
     section: { gap: 14 },
     identityTop: {
@@ -623,29 +794,10 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       fontSize: 28,
       fontWeight: "800",
     },
-    identityTitle: {
-      color: palette.orange,
+    identitySubtitle: {
+      color: C.textTertiary,
       fontSize: 15,
       fontWeight: "700",
-    },
-    identityStats: { flexDirection: "row", gap: 12 },
-    identityMetricLarge: {
-      flex: 1.1,
-      borderRadius: 24,
-      backgroundColor: C.cardBg,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 16,
-      gap: 10,
-    },
-    identityMetricSmall: {
-      flex: 0.9,
-      borderRadius: 24,
-      backgroundColor: C.cardBg,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 16,
-      justifyContent: "space-between",
     },
     metricEyebrow: {
       color: C.textTertiary,
@@ -654,12 +806,129 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       letterSpacing: 1.3,
       textTransform: "uppercase",
     },
-    identityMetricValue: {
+    hiddenShareCapture: {
+      position: "absolute",
+      left: -10000,
+      top: 0,
+      width: 390,
+    },
+    shareImageWrap: {
+      borderRadius: 28,
+      borderCurve: "continuous",
+      backgroundColor: C.inputBg,
+      padding: 14,
+      overflow: "hidden",
+      width: 390,
+    },
+    shareCard: {
+      borderRadius: 26,
+      borderCurve: "continuous",
+      backgroundColor: C.cardBg,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 20,
+      gap: 14,
+      overflow: "hidden",
+    },
+    shareCardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    shareBrandText: {
+      flex: 1,
+      color: C.textTertiary,
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 1.1,
+      textTransform: "uppercase",
+    },
+    shareProfileRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    shareAvatar: {
+      width: 58,
+      height: 58,
+      borderRadius: 20,
+      borderCurve: "continuous",
+      backgroundColor: C.accentBg,
+      borderWidth: 1,
+      borderColor: C.accentBorder,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    shareAvatarImage: {
+      width: "100%",
+      height: "100%",
+    },
+    shareProfileMeta: {
+      flex: 1,
+      gap: 3,
+    },
+    shareName: {
       color: C.textPrimary,
-      fontSize: 52,
-      lineHeight: 56,
-      fontWeight: "800",
+      fontSize: 22,
+      lineHeight: 26,
+      fontWeight: "900",
+    },
+    shareScoreBlock: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      paddingTop: 4,
+    },
+    shareScoreValue: {
+      color: C.textPrimary,
+      fontSize: 96,
+      lineHeight: 100,
+      fontWeight: "900",
       fontVariant: ["tabular-nums"],
+    },
+    shareTitleRow: {
+      alignItems: "center",
+      gap: 4,
+    },
+    shareTitle: {
+      color: palette.orange,
+      fontSize: 28,
+      lineHeight: 32,
+      fontWeight: "900",
+      textAlign: "center",
+    },
+    shareStatsRow: {
+      flexDirection: "row",
+      gap: 8,
+      paddingTop: 4,
+    },
+    shareStatPill: {
+      flex: 1,
+      borderRadius: 16,
+      borderCurve: "continuous",
+      backgroundColor: C.inputBg,
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      paddingHorizontal: 10,
+      paddingVertical: 10,
+      gap: 3,
+    },
+    shareStatValue: {
+      color: C.textPrimary,
+      fontSize: 17,
+      fontWeight: "900",
+      fontVariant: ["tabular-nums"],
+      textAlign: "center",
+    },
+    shareStatLabel: {
+      color: C.textTertiary,
+      fontSize: 9,
+      fontWeight: "800",
+      letterSpacing: 0.5,
+      textTransform: "uppercase",
+      textAlign: "center",
     },
     heroCard: {
       borderRadius: 28,
