@@ -33,6 +33,10 @@ const RESET_STEPS = [
     hint: "Put obvious things back, clear one surface, and remove visual noise.",
   },
   {
+    title: "Clean your mind",
+    hint: "Drop unfinished thoughts, worries, or reminders before you go to sleep.",
+  },
+  {
     title: "Plan for tomorrow",
     hint: "Set one main goal and one first to-do so tomorrow starts with direction.",
   },
@@ -181,7 +185,7 @@ export default function EveningResetScreen() {
       return;
     }
 
-    if (index === 1) {
+    if (index === 2) {
       const saved = await saveTomorrowPlan();
       if (!saved) return;
     }
@@ -317,7 +321,7 @@ export default function EveningResetScreen() {
                             </View>
                           </Pressable>
 
-                          {index === 1 && isCurrent && !isCompleted ? (
+                          {index === 2 && isCurrent && !isCompleted ? (
                             <View style={s.planCard}>
                               <Text style={s.planSectionLabel}>MAIN GOAL</Text>
                               <TextInput
@@ -384,7 +388,7 @@ export default function EveningResetScreen() {
                     <View style={s.doneInlineCard}>
                       <Text style={s.doneInlineTitle}>Great job.</Text>
                       <Text style={s.doneInlineBody}>
-                        You&apos;ve reset your space and lined up tomorrow&apos;s first move.
+                        You&apos;ve reset your space and mind, and lined up tomorrow&apos;s first move.
                       </Text>
                       <Pressable
                         style={s.doneInlineButton}
