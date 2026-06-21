@@ -5,7 +5,7 @@ let initializationPromise: Promise<void> | null = null;
 
 export async function resetDatabase() {
   try {
-    const tables = ['habit_completions', 'habits', 'daily_focus', 'notes', 'profiles', 'todos'];
+    const tables = ['habit_completions', 'habits', 'daily_focus', 'profiles', 'todos'];
     for (const table of tables) {
       await expoDb.execAsync(`DROP TABLE IF EXISTS ${table};`);
     }
@@ -41,30 +41,6 @@ export async function initializeDatabase() {
         ALTER TABLE profiles
         ADD COLUMN avatar TEXT;
       `);
-    }
-
-    expoDb.execSync(`
-      CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        content TEXT NOT NULL,
-        media_url TEXT,
-        transcribed_text TEXT,
-        ocr_text TEXT,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-      );
-    `);
-
-    const notesColumns = expoDb.getAllSync<{ name: string }>(
-      `PRAGMA table_info(notes);`
-    );
-    const hasTranscribedText = notesColumns.some((col) => col.name === 'transcribed_text');
-    if (!hasTranscribedText) {
-      expoDb.execSync(`ALTER TABLE notes ADD COLUMN transcribed_text TEXT;`);
-    }
-    const hasOcrText = notesColumns.some((col) => col.name === 'ocr_text');
-    if (!hasOcrText) {
-      expoDb.execSync(`ALTER TABLE notes ADD COLUMN ocr_text TEXT;`);
     }
 
     expoDb.execSync(`

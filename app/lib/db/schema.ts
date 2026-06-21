@@ -12,18 +12,6 @@ export const profiles = sqliteTable('profiles', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// ── notes ─────────────────────────────────────────────────────────────────────
-// Free-form notes.
-export const notes = sqliteTable('notes', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  content: text('content').notNull(),
-  mediaUrl: text('media_url'),
-  transcribedText: text('transcribed_text'),
-  ocrText: text('ocr_text'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-});
-
 // ── habits ────────────────────────────────────────────────────────────────────
 // Recurring daily habits (keystone + future unlocked ones)
 export const habits = sqliteTable('habits', {
@@ -73,9 +61,6 @@ export const todos = sqliteTable('todos', {
 // ── TypeScript types ──────────────────────────────────────────────────────────
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
-
-export type Note = typeof notes.$inferSelect;
-export type NewNote = typeof notes.$inferInsert;
 
 export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;

@@ -3,7 +3,6 @@ import {
   dailyFocus,
   habitCompletions,
   habits,
-  notes,
   profiles,
   todos,
 } from "@/lib/db";
@@ -28,43 +27,6 @@ function atToday(hour: number, minute = 0) {
 function dateKey(count: number) {
   return getLocalDateString(daysAgo(count));
 }
-
-export const insertSampleMessages = async () => {
-  const sampleNotes = [
-    {
-      content:
-        "Morning check-in: slept 7h 40m, phone stayed outside the bedroom, and the first hour was calm. Keep protecting the early window.",
-      createdAt: atToday(7, 42),
-      updatedAt: atToday(7, 42),
-    },
-    {
-      content:
-        "Focus reflection: deep work felt easiest after a short walk. Use the same warm-up tomorrow before opening messages.",
-      createdAt: daysAgo(1),
-      updatedAt: daysAgo(1),
-    },
-    {
-      content:
-        "Evening reset list: clear desk, prep gym clothes, write tomorrow's one-line goal, and stop caffeine before 2 PM.",
-      createdAt: daysAgo(2),
-      updatedAt: daysAgo(2),
-    },
-    {
-      content:
-        "Tiny win: chose the 10-minute version instead of skipping. The streak matters more than making it impressive.",
-      createdAt: daysAgo(4),
-      updatedAt: daysAgo(4),
-    },
-    {
-      content:
-        "Idea bank: build a lightweight weekly review around energy, attention, and one relationship touchpoint.",
-      createdAt: daysAgo(6),
-      updatedAt: daysAgo(6),
-    },
-  ];
-
-  await db.insert(notes).values(sampleNotes);
-};
 
 export const insertSampleTodos = async () => {
   await db.insert(todos).values([
@@ -186,5 +148,4 @@ export const insertAllScreenshotData = async () => {
   await db.insert(dailyFocus).values(focusRows);
 
   await insertSampleTodos();
-  await insertSampleMessages();
 };

@@ -32,16 +32,6 @@ export default function TabLayout() {
           />
           <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="notes">
-          <NativeTabs.Trigger.Icon
-            sf={{
-              default: "note.text",
-              selected: "note.text",
-            }}
-            md="edit_note"
-          />
-          <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
         <NativeTabs.Trigger name="routines">
           <NativeTabs.Trigger.Icon
             sf={{

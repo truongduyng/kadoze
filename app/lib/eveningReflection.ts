@@ -1,4 +1,4 @@
-import type { DailyFocus, Habit, HabitCompletion, Note, Todo } from "@/lib/db";
+import type { DailyFocus, Habit, HabitCompletion, Todo } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 
 type EveningReflectionInput = {
@@ -7,7 +7,6 @@ type EveningReflectionInput = {
   todayTodos: Todo[];
   habits: Habit[];
   completions: HabitCompletion[];
-  notes: Note[];
 };
 
 export type EveningReflection = {
@@ -57,7 +56,6 @@ export function buildEveningReflection({
   todayTodos,
   habits,
   completions,
-  notes,
 }: EveningReflectionInput): EveningReflection {
   const todayFocus = focusRows.find((row) => row.date === todayKey);
   const focusMinutes = todayFocus?.focusMinutes ?? 0;
@@ -65,7 +63,6 @@ export function buildEveningReflection({
   const todayCompletions = completions.filter(
     (completion) => completion.date === todayKey && completion.status === "done"
   );
-  const todayNotes = notes.filter((note) => getLocalDateString(note.createdAt) === todayKey);
 
   const habitNames = todayCompletions
     .map((completion) => habits.find((habit) => habit.id === completion.habitId)?.title)
@@ -83,10 +80,6 @@ export function buildEveningReflection({
 
     if (todayCompletions.length > 0) {
       return `You kept ${todayCompletions.length} habit${todayCompletions.length === 1 ? "" : "s"} alive today.`;
-    }
-
-    if (todayNotes.length > 0) {
-      return "You captured what was on your mind instead of carrying it to bed.";
     }
 
     return "You still showed up for the reset tonight. That counts.";

@@ -68,16 +68,6 @@ function AppLayout() {
                 name="evening-reset"
                 options={{ headerShown: false, presentation: "card" }}
               />
-              <Stack.Screen
-                name="note-composer"
-                options={{
-                  contentStyle: { backgroundColor: "transparent" },
-                  headerShown: false,
-                  presentation: "formSheet",
-                  sheetAllowedDetents: [0.65, 0.92],
-                  sheetGrabberVisible: true,
-                }}
-              />
               <Stack.Screen name="settings" options={{ title: "Settings" }} />
             </Stack>
           </ProfileInitializer>

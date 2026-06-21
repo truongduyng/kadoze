@@ -69,7 +69,7 @@ export default function SettingsScreen() {
   const handleReset = () => {
     Alert.alert(
       "Reset all data",
-      "This will permanently delete your profile, habits, and notes.",
+      "This will permanently delete your profile and habits.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -351,7 +351,7 @@ export default function SettingsScreen() {
                       Generate screenshot data
                     </Text>
                     <Text selectable style={s.rowCopy}>
-                      Fill Kadoze with sample habits, notes, tasks, and progress.
+                      Fill Kadoze with sample habits, tasks, and progress.
                     </Text>
                   </View>
                   <Text selectable style={s.chevron}>

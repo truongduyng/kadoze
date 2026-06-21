@@ -1,8 +1,8 @@
 import { eq, desc, asc, count, and } from 'drizzle-orm';
 import {
   db,
-  profiles, notes, habits, habitCompletions, dailyFocus, todos,
-  type NewProfile, type NewNote, type NewHabit, type NewHabitCompletion, type NewDailyFocus,
+  profiles, habits, habitCompletions, dailyFocus, todos,
+  type NewProfile, type NewHabit, type NewHabitCompletion, type NewDailyFocus,
 } from './database';
 import { ensureDatabaseInitialized } from './init';
 import { getLocalDateString } from '../timezone';
@@ -28,44 +28,6 @@ export const profileOps = {
   },
   async deleteAll() {
     return await withInitializedDb(() => db.delete(profiles));
-  },
-};
-
-// ── noteOps ───────────────────────────────────────────────────────────────────
-export const noteOps = {
-  async create(data: NewNote) {
-    return await withInitializedDb(() => db.insert(notes).values(data).returning());
-  },
-  async getAll() {
-    return await withInitializedDb(() => db.select().from(notes).orderBy(asc(notes.createdAt)));
-  },
-  async getFirst() {
-    const result = await withInitializedDb(() => db.select().from(notes).limit(1));
-    return result[0] ?? null;
-  },
-  async countAll(): Promise<number> {
-    const result = await withInitializedDb(() =>
-      db.select({ count: count() }).from(notes)
-    );
-    return result[0]?.count ?? 0;
-  },
-  async existsByContent(content: string): Promise<boolean> {
-    const result = await withInitializedDb(() =>
-      db.select({ count: count() }).from(notes)
-        .where(eq(notes.content, content)).limit(1)
-    );
-    return (result[0]?.count ?? 0) > 0;
-  },
-  async update(id: number, data: Partial<NewNote>) {
-    return await withInitializedDb(() =>
-      db.update(notes).set({ ...data, updatedAt: new Date() }).where(eq(notes.id, id)).returning()
-    );
-  },
-  async delete(id: number) {
-    return await withInitializedDb(() => db.delete(notes).where(eq(notes.id, id)));
-  },
-  async deleteAll() {
-    return await withInitializedDb(() => db.delete(notes));
   },
 };
 

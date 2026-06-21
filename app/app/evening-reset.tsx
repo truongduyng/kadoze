@@ -3,7 +3,7 @@ import { palette } from "@/constants/theme";
 import { usePreventScreenSleep } from "@/hooks/usePreventScreenSleep";
 import { useTheme } from "@/hooks/useTheme";
 import { buildEveningReflection } from "@/lib/eveningReflection";
-import { dailyFocus, db, habitCompletions, habits, noteOps, notes, todoOps, todos } from "@/lib/db";
+import { dailyFocus, db, habitCompletions, habits, todoOps, todos } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,10 +33,6 @@ const RESET_STEPS = [
     hint: "Put obvious things back, clear one surface, and remove visual noise.",
   },
   {
-    title: "Clean your mind",
-    hint: "Drop unfinished thoughts, worries, or reminders before you go to sleep.",
-  },
-  {
     title: "Plan for tomorrow",
     hint: "Set one main goal and one first to-do so tomorrow starts with direction.",
   },
@@ -61,8 +57,6 @@ export default function EveningResetScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState(RESET_DURATION_SECONDS);
   const [isRunning, setIsRunning] = useState(true);
   const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
-  const [mindNoteDraft, setMindNoteDraft] = useState("");
-  const [isSavingMindNote, setIsSavingMindNote] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
   const [todoDraft, setTodoDraft] = useState("");
   const [plannedTodos, setPlannedTodos] = useState<string[]>([]);
@@ -76,9 +70,6 @@ export default function EveningResetScreen() {
   );
   const { data: habitRows } = useLiveQuery(db.select().from(habits));
   const { data: completionRows } = useLiveQuery(db.select().from(habitCompletions));
-  const { data: noteRows } = useLiveQuery(
-    db.select().from(notes).orderBy(desc(notes.createdAt)).limit(40)
-  );
   usePreventScreenSleep(isRunning && remainingSeconds > 0, "kadoze-evening-reset");
 
   useEffect(() => {
@@ -139,9 +130,8 @@ export default function EveningResetScreen() {
         todayTodos: todayTodoRows ?? [],
         habits: habitRows ?? [],
         completions: completionRows ?? [],
-        notes: noteRows ?? [],
       }),
-    [completionRows, focusRows, habitRows, noteRows, todayKey, todayTodoRows]
+    [completionRows, focusRows, habitRows, todayKey, todayTodoRows]
   );
 
   const saveTomorrowPlan = async () => {
@@ -176,25 +166,6 @@ export default function EveningResetScreen() {
     }
   };
 
-  const saveMindNote = async () => {
-    const content = mindNoteDraft.trim();
-    if (!content) return true;
-
-    setIsSavingMindNote(true);
-    try {
-      await noteOps.create({
-        content,
-        mediaUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      setMindNoteDraft("");
-      return true;
-    } finally {
-      setIsSavingMindNote(false);
-    }
-  };
-
   const handleStepPress = async (index: number) => {
     if (index > currentStepIndex) return;
 
@@ -211,11 +182,6 @@ export default function EveningResetScreen() {
     }
 
     if (index === 1) {
-      const saved = await saveMindNote();
-      if (!saved) return;
-    }
-
-    if (index === 2) {
       const saved = await saveTomorrowPlan();
       if (!saved) return;
     }
@@ -330,7 +296,7 @@ export default function EveningResetScreen() {
                               isCurrent && s.stepRowCurrent,
                               isLocked && s.stepRowLocked,
                             ]}
-                            disabled={isSavingMindNote || isSavingPlan}
+                            disabled={isSavingPlan}
                             onPress={() => handleStepPress(index)}
                           >
                             <View style={s.stepCopy}>
@@ -352,22 +318,6 @@ export default function EveningResetScreen() {
                           </Pressable>
 
                           {index === 1 && isCurrent && !isCompleted ? (
-                            <View style={s.mindNoteCard}>
-                              <Text style={s.planSectionLabel}>MIND NOTE</Text>
-                              <TextInput
-                                style={s.mindNoteInput}
-                                value={mindNoteDraft}
-                                onChangeText={setMindNoteDraft}
-                                placeholder="Write down what is still looping..."
-                                placeholderTextColor={C.textPlaceholder}
-                                multiline
-                                textAlignVertical="top"
-                              />
-                              {isSavingMindNote ? <Text style={s.planSaving}>Saving note...</Text> : null}
-                            </View>
-                          ) : null}
-
-                          {index === 2 && isCurrent && !isCompleted ? (
                             <View style={s.planCard}>
                               <Text style={s.planSectionLabel}>MAIN GOAL</Text>
                               <TextInput
@@ -627,11 +577,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       marginLeft: 32,
       paddingBottom: 2,
     },
-    mindNoteCard: {
-      gap: 10,
-      marginLeft: 32,
-      paddingBottom: 2,
-    },
     planSectionLabel: {
       color: C.textTertiary,
       fontSize: 11,
@@ -649,18 +594,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       paddingVertical: 13,
       fontSize: 15,
       textAlignVertical: "center",
-    },
-    mindNoteInput: {
-      minHeight: 118,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: C.inputBorder,
-      backgroundColor: C.inputBg,
-      color: C.textPrimary,
-      paddingHorizontal: 14,
-      paddingVertical: 13,
-      fontSize: 15,
-      lineHeight: 21,
     },
     todoCard: {
       borderRadius: 14,

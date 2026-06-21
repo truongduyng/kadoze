@@ -17,7 +17,6 @@ import {
   dailyFocus,
   habitCompletions,
   habits,
-  notes,
   profiles,
 } from "@/lib/db";
 import { DAY_NAMES } from "@/lib/performance";
@@ -95,7 +94,6 @@ export default function ProfileScreen() {
     db.select().from(habitCompletions),
   );
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
-  const { data: allNotes } = useLiveQuery(db.select().from(notes));
   const { data: allFocusRows } = useLiveQuery(db.select().from(dailyFocus));
 
   const profile = profileData?.[0];
@@ -106,7 +104,6 @@ export default function ProfileScreen() {
   const analytics = useMemo(() => {
     const completions = allCompletions ?? [];
     const habitsData = allHabits ?? [];
-    const notesData = allNotes ?? [];
     const focusData = allFocusRows ?? [];
 
     const doneCompletions = completions.filter(
@@ -274,7 +271,6 @@ export default function ProfileScreen() {
       totalDone: doneCompletions.length,
       activeToday,
       completionRate,
-      notesCount: notesData.length,
       habitsCount: habitsData.length,
       weekActivity,
       bestDayCount,
@@ -290,7 +286,7 @@ export default function ProfileScreen() {
       topHabits: perHabit.slice(0, 3),
       longestHabitStreak,
     };
-  }, [allCompletions, allFocusRows, allHabits, allNotes, today]);
+  }, [allCompletions, allFocusRows, allHabits, today]);
 
   const displayAvatarIcon = resolveIoniconName(savedAvatar, "person-outline");
 
