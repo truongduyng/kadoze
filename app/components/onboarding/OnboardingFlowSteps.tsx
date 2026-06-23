@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as StoreReview from "expo-store-review";
 import React, { useEffect, useMemo, useRef } from "react";
 import {
   Animated,
@@ -1202,19 +1201,19 @@ const APP_TOUR_ITEMS = [
     icon: "home-outline" as const,
     tab: "Home",
     title: "Set your daily focus",
-    description: "Each morning, pick one goal that makes the day worth it. Everything else is noise.",
-  },
-  {
-    icon: "chatbubble-ellipses-outline" as const,
-    tab: "Notes",
-    title: "Capture ideas instantly",
-    description: "Drop any thought, task, or idea before it disappears. Review and act later.",
+    description: "Each morning, pick one goal that makes the day worth it, then capture any quick task or idea before it disappears.",
   },
   {
     icon: "repeat-outline" as const,
     tab: "Routines",
     title: "Track your habit streak",
     description: "Your keystone habit lives here. One check-in a day builds the chain.",
+  },
+  {
+    icon: "person-outline" as const,
+    tab: "Profile",
+    title: "See your progress",
+    description: "Review your stats, manage blocked apps, and tune your settings.",
   },
 ] as const;
 
@@ -1279,81 +1278,6 @@ export function PreviewScreen({ onNext }: { onNext: () => void }) {
             </View>
           ))}
         </View>
-      </View>
-    </ScreenShell>
-  );
-}
-
-export function PersonalizationScreen({
-  goal,
-  habitId,
-  painPoints,
-  onNext,
-}: {
-  goal: string;
-  habitId: string;
-  painPoints: string[];
-  onNext: () => void;
-}) {
-  const C = useTheme();
-  const s = makeStyles(C);
-  const allHabits = [...Object.values(KEYSTONE_HABITS_BY_FOCUS).flat(), ...DEFAULT_KEYSTONE_HABITS];
-  const habit = allHabits.find((item) => item.id === habitId);
-  const focusStyle = painPoints.some((pain) =>
-    [
-      "I lose hours to my phone",
-      "My workday is reactive",
-      "I have ideas but never execute",
-    ].includes(pain),
-  )
-    ? "Deep & structured"
-    : "Calm & steady";
-  const duration = goal.length > 42 ? "25-40 min" : "15-25 min";
-  const requestedReviewRef = useRef(false);
-  const summaryRows: {
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    label: string;
-    value: string;
-  }[] = [
-    { icon: "time-outline", label: "Ideal focus duration", value: duration },
-    { icon: "sunny-outline", label: "Best time to focus", value: "Morning" },
-    { icon: "navigate-circle-outline", label: "Focus style", value: focusStyle },
-    { icon: "heart-outline", label: "Recommended habit", value: habit?.title ?? "1-2 active" },
-  ];
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (requestedReviewRef.current) return;
-      requestedReviewRef.current = true;
-
-      void StoreReview.isAvailableAsync().then((available) => {
-        if (available) {
-          void StoreReview.requestReview();
-        }
-      });
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <ScreenShell onNext={onNext}>
-      <View style={s.copyBlock}>
-        <Text style={s.headline}>Your focus system is ready.</Text>
-        <Text style={s.body}>We&apos;ve personalized 1Per for you.</Text>
-      </View>
-      <View style={s.cardList}>
-        {summaryRows.map(({ icon, label, value }) => (
-          <View key={label} style={s.summaryCard}>
-            <View style={s.miniIcon}>
-              <Ionicons name={icon} size={18} color={SOFT_ORANGE} />
-            </View>
-            <View style={s.flex}>
-              <Text style={s.summaryLabel}>{label}</Text>
-              <Text style={s.summaryValue}>{value}</Text>
-            </View>
-          </View>
-        ))}
       </View>
     </ScreenShell>
   );
@@ -2099,14 +2023,6 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
     goalSuggestionTextActive: {
       color: "#fff",
     },
-    miniIcon: {
-      width: 34,
-      height: 34,
-      borderRadius: 8,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(255,255,255,0.06)",
-    },
     previewCard: {
       borderRadius: 8,
       padding: 18,
@@ -2164,28 +2080,6 @@ function makeStyles(C: ReturnType<typeof useTheme>) {
       color: palette.white55,
       fontSize: 10,
       fontWeight: "700",
-    },
-    summaryCard: {
-      minHeight: 70,
-      borderRadius: 8,
-      padding: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      backgroundColor: "#141414",
-      borderWidth: 1,
-      borderColor: "rgba(255,255,255,0.06)",
-    },
-    summaryLabel: {
-      color: palette.white55,
-      fontSize: 12,
-      fontWeight: "700",
-      marginBottom: 3,
-    },
-    summaryValue: {
-      color: "#fff",
-      fontSize: 14,
-      fontWeight: "800",
     },
     choiceReason: {
       color: palette.white45,

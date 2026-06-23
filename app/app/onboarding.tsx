@@ -22,7 +22,6 @@ import {
   PAIN_POINT_SET,
   PainAmplifyScreen,
   PainScreen,
-  PersonalizationScreen,
   PreviewScreen,
   SystemScreen,
   TrustScreen,
@@ -187,15 +186,6 @@ export default function OnboardingScreen() {
         );
       case "preview":
         return <PreviewScreen onNext={advance} />;
-      case "personalization":
-        return (
-          <PersonalizationScreen
-            goal={mainGoal}
-            habitId={keystoneHabit}
-            painPoints={painPoints}
-            onNext={advance}
-          />
-        );
       case "notification":
         return <NotificationStep onNext={advance} />;
       case "screentime":

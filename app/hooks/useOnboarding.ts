@@ -25,7 +25,6 @@ export type StepType =
   | "keystone"
   | "app-tour"
   | "preview"
-  | "personalization"
   | "notification"
   | "screentime"
   | "referral"
@@ -49,7 +48,6 @@ export const STEPS: StepConfig[] = [
   { type: "keystone" },
   { type: "app-tour" },
   { type: "preview" },
-  { type: "personalization" },
   { type: "notification" },
   { type: "screentime" },
   { type: "referral" },
