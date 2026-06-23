@@ -606,16 +606,6 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <View style={s.lockAppRow}>
-              {(hasBlockedAppSelection ? ["Selected apps", "Categories", "Websites"] : lockedApps).map((app) => (
-                <View key={app} style={[s.lockAppChip, appLockUnlocked && s.lockAppChipUnlocked]}>
-                  <Text style={[s.lockAppText, appLockUnlocked && s.lockAppTextUnlocked]}>
-                    {app}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
             <View style={s.lockChecklist}>
               {lockBlockers.map((item, index) => (
                 <View key={item.label}>

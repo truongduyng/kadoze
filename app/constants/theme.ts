@@ -101,18 +101,18 @@ export const Colors = {
   dark: {
     // nav / tab bar
     text: '#ECEDEE',
-    background: '#151718',
+    background: '#1C1E1F',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
 
     // semantic surfaces
-    screenBg: '#0D0D0D',
-    heroBg: '#0D0D0D',
+    screenBg: '#1A1A1A',
+    heroBg: '#1A1A1A',
     cardBg: palette.white06,
     cardBorder: palette.white08,
-    sheetBg: '#141414',
+    sheetBg: '#1E1E1E',
     sheetHandle: 'rgba(255,255,255,0.2)',
     inputBg: palette.white04,
     inputBorder: palette.white10,
