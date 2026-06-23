@@ -6,8 +6,8 @@
     {
       "layers" : [
         {
-          "image-name" : "logo_dark.png",
-          "name" : "logo_dark",
+          "image-name" : "new_logo.png",
+          "name" : "new_logo",
           "position" : {
             "scale" : 1,
             "translation-in-points" : [

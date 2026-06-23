@@ -357,7 +357,7 @@ export function HookScreen({ onNext }: { onNext: () => void }) {
       </View>
       <View style={s.copyBlock}>
         <Text style={s.headline}>Your mind was never meant to manage everything at once.</Text>
-        <Text style={s.body}>Kadoze helps you focus on fewer things - consistently.</Text>
+        <Text style={s.body}>1Per helps you focus on fewer things - consistently.</Text>
       </View>
     </ScreenShell>
   );
@@ -693,7 +693,7 @@ export function IdentityScreen({
       dismissesKeyboard
     >
       <View style={s.copyBlock}>
-        <Text style={s.headline}>Make Kadoze yours</Text>
+        <Text style={s.headline}>Make 1Per yours</Text>
         <Text style={s.body}>Choose the character that will show up with you each day</Text>
       </View>
 
@@ -1226,7 +1226,7 @@ export function AppTourScreen({ onNext }: { onNext: () => void }) {
   return (
     <ScreenShell onNext={onNext} cta="Got it - let's go">
       <View style={s.copyBlock}>
-        <Text style={s.headline}>Here&apos;s how Kadoze works.</Text>
+        <Text style={s.headline}>Here&apos;s how 1Per works.</Text>
         <Text style={s.body}>Three tabs. One clear purpose each.</Text>
       </View>
       <View style={s.cardList}>
@@ -1342,7 +1342,7 @@ export function PersonalizationScreen({
     <ScreenShell onNext={onNext}>
       <View style={s.copyBlock}>
         <Text style={s.headline}>Your focus system is ready.</Text>
-        <Text style={s.body}>We&apos;ve personalized Kadoze for you.</Text>
+        <Text style={s.body}>We&apos;ve personalized 1Per for you.</Text>
       </View>
       <View style={s.cardList}>
         {summaryRows.map(({ icon, label, value }) => (

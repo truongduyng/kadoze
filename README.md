@@ -1,6 +1,6 @@
 # Product Requirements Document (PRD)
 
-**Product Name:** Kadoze
+**Product Name:** 1Per
 
 ## 1. Product Vision & Objective
 

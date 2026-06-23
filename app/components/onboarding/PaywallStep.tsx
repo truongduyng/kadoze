@@ -160,7 +160,7 @@ export default function PaywallStep({ onComplete }: PaywallStepProps) {
       <View style={s.header}>
         <Text style={s.headline}>Protect your momentum</Text>
         <Text style={s.sub}>
-          Go further with Kadoze Pro.
+          Go further with 1Per Pro.
         </Text>
       </View>
 

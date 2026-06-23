@@ -35,7 +35,7 @@ function getSelectionInput(): DeviceActivity.ActivitySelectionInput {
 function updateDefaultShield() {
   DeviceActivity.updateShield(
     {
-      title: "Kadoze locked",
+      title: "1Per locked",
       subtitle: "Finish your main task and daily habits before opening this.",
       primaryButtonLabel: "OK",
       iconSystemName: "lock.fill",

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Kadoze",
+    "name": "1Per",
     "slug": "kadoze",
     "platforms": [
       "ios"
@@ -24,12 +24,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-screen.png",
+          "image": "./assets/images/new_logo.png",
           "imageWidth": 320,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "image": "./assets/images/splash-screen-dark.png",
+            "image": "./assets/images/new_logo.png",
             "imageWidth": 320,
             "backgroundColor": "#000000"
           }
@@ -48,7 +48,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/logo_light.png",
+          "icon": "./assets/images/new_logo.png",
           "color": "#000000"
         }
       ],

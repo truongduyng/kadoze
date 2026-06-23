@@ -57,7 +57,7 @@ export function useReminderManager() {
 
         const id = await scheduleRepeatingNotification(
           'Time to check in on your habits',
-          'Keep your streak going - open Kadoze and complete your habits.',
+          'Keep your streak going - open 1Per and complete your habits.',
           hour,
           minute,
         );
@@ -94,7 +94,7 @@ export function useReminderManager() {
 
         const id = await scheduleRepeatingNotification(
           'Time for your evening reset',
-          'Wind down and prepare for tomorrow - open Kadoze to start your reset routine.',
+          'Wind down and prepare for tomorrow - open 1Per to start your reset routine.',
           hour,
           minute,
         );

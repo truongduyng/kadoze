@@ -320,7 +320,7 @@ export default function ProfileScreen() {
 
   const shareMessage = useMemo(
     () =>
-      `${displayName}'s Discipline Score is ${analytics.momentumScore}/100 (${analytics.identityTitle}). ${analytics.currentStreak} day streak, ${analytics.completionRate}% completion. Built with Kadoze.`,
+      `${displayName}'s Discipline Score is ${analytics.momentumScore}/100 (${analytics.identityTitle}). ${analytics.currentStreak} day streak, ${analytics.completionRate}% completion. Built with 1Per.`,
     [
       analytics.completionRate,
       analytics.currentStreak,
@@ -337,7 +337,7 @@ export default function ProfileScreen() {
       const canShareFile = await Sharing.isAvailableAsync();
       if (!canShareFile) {
         await Share.share({
-          title: "My Kadoze Discipline Score",
+          title: "My 1Per Discipline Score",
           message: shareMessage,
         });
         return;
@@ -357,7 +357,7 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error("Error sharing discipline score:", error);
       Share.share({
-        title: "My Kadoze Discipline Score",
+        title: "My 1Per Discipline Score",
         message: shareMessage,
       }).catch((shareError) => {
         console.error("Error sharing fallback text:", shareError);
@@ -670,7 +670,6 @@ export default function ProfileScreen() {
       <ViewShot
         ref={shareCardRef}
         options={{ format: "png", quality: 1, result: "tmpfile" }}
-        pointerEvents="none"
         style={s.hiddenShareCapture}
       >
         <View style={s.shareImageWrap}>

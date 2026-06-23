@@ -184,7 +184,7 @@ export default function SettingsScreen() {
               Theme
             </Text>
             <Text selectable style={s.cardCopy}>
-              Choose whether Kadoze follows the system or stays fixed.
+              Choose whether 1Per follows the system or stays fixed.
             </Text>
 
             <View style={s.segmentRow}>
@@ -305,7 +305,7 @@ export default function SettingsScreen() {
             <View style={s.divider} />
             <Pressable style={s.actionRow} onPress={handleRate}>
               <Text selectable style={s.rowLabel}>
-                Rate Kadoze
+                Rate 1Per
               </Text>
               <Text selectable style={s.chevron}>
                 ›
@@ -351,7 +351,7 @@ export default function SettingsScreen() {
                       Generate screenshot data
                     </Text>
                     <Text selectable style={s.rowCopy}>
-                      Fill Kadoze with sample habits, tasks, and progress.
+                      Fill 1Per with sample habits, tasks, and progress.
                     </Text>
                   </View>
                   <Text selectable style={s.chevron}>

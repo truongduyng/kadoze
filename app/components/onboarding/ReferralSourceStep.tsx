@@ -75,7 +75,7 @@ export default function ReferralSourceStep({
 
         <View style={s.header}>
           <Text style={s.headline}>
-            Where did you{"\n"}hear about <Text style={s.highlight}>Kadoze</Text>?
+            Where did you{"\n"}hear about <Text style={s.highlight}>1Per</Text>?
           </Text>
         </View>
 
