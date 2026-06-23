@@ -16,15 +16,13 @@ export type StepType =
   | "focus-area"
   | "pain"
   | "pain-amplify"
+  | "trust"
   | "future"
   | "identity"
   | "wins"
-  | "system"
-  | "trust"
   | "goal"
   | "keystone"
   | "app-tour"
-  | "preview"
   | "notification"
   | "screentime"
   | "referral"
@@ -39,15 +37,13 @@ export const STEPS: StepConfig[] = [
   { type: "focus-area" },
   { type: "pain" },
   { type: "pain-amplify" },
+  { type: "trust" },
   { type: "future" },
   { type: "identity" },
   { type: "wins" },
-  { type: "system" },
-  { type: "trust" },
   { type: "goal" },
   { type: "keystone" },
   { type: "app-tour" },
-  { type: "preview" },
   { type: "notification" },
   { type: "screentime" },
   { type: "referral" },

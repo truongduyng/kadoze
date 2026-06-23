@@ -22,10 +22,8 @@ import {
   PAIN_POINT_SET,
   PainAmplifyScreen,
   PainScreen,
-  PreviewScreen,
-  SystemScreen,
   TrustScreen,
-} from "@/components/onboarding/OnboardingFlowSteps";
+} from "@/components/onboarding/steps";
 import NotificationStep from "@/components/onboarding/NotificationStep";
 import ScreenTimeStep from "@/components/onboarding/ScreenTimeStep";
 import PaywallStep from "@/components/onboarding/PaywallStep";
@@ -138,6 +136,8 @@ export default function OnboardingScreen() {
         );
       case "pain-amplify":
         return <PainAmplifyScreen painPoints={painPoints} onNext={advance} />;
+      case "trust":
+        return <TrustScreen onNext={advance} />;
       case "future":
         return <FutureScreen onNext={advance} />;
       case "identity":
@@ -152,10 +152,6 @@ export default function OnboardingScreen() {
         );
       case "wins":
         return <FastWinsScreen onNext={advance} />;
-      case "system":
-        return <SystemScreen onNext={advance} />;
-      case "trust":
-        return <TrustScreen onNext={advance} />;
       case "goal":
         return (
           <GoalInputScreen
@@ -184,8 +180,6 @@ export default function OnboardingScreen() {
             onCustomHabitTitleChange={setCustomHabitTitle}
           />
         );
-      case "preview":
-        return <PreviewScreen onNext={advance} />;
       case "notification":
         return <NotificationStep onNext={advance} />;
       case "screentime":
