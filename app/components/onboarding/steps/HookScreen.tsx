@@ -20,8 +20,8 @@ export function HookScreen({ onNext }: { onNext: () => void }) {
         <View style={s.sun} />
       </View>
       <View style={s.copyBlock}>
-        <Text style={s.headline}>Finish your focus and habits before distractions get the day.</Text>
-        <Text style={s.body}>1Per gives you one daily target, simple routines, streak tracking, and optional app locks.</Text>
+        <Text style={s.headline}>Become someone who keeps promises to yourself.</Text>
+        <Text style={s.body}>Start with one hard thing. End with a reset. Let small wins compound.</Text>
       </View>
     </ScreenShell>
   );

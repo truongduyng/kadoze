@@ -6,6 +6,7 @@ import {
   db,
   habits,
   habitCompletions,
+  dailyFocus,
   completionOps,
   habitOps,
 } from "@/lib/db";
@@ -306,6 +307,10 @@ function habitKey(title: string, subtitle?: string | null) {
   return `${title}::${subtitle ?? ""}`;
 }
 
+const MAIN_GOAL_HABIT_ID = -1;
+const EVENING_RESET_HABIT_ID = -2;
+const ALL_DAYS_LIST = [...ALL_DAYS];
+
 export default function RoutinesScreen() {
   const insets = useSafeAreaInsets();
   const C = useTheme();
@@ -317,6 +322,63 @@ export default function RoutinesScreen() {
 
   const { data: allHabits } = useLiveQuery(db.select().from(habits));
   const { data: allCompletions } = useLiveQuery(db.select().from(habitCompletions));
+  const { data: allFocusRows } = useLiveQuery(db.select().from(dailyFocus));
+
+  const specialHabits = useMemo(() => {
+    const rows = allFocusRows ?? [];
+    const earliestCreatedAt = rows.reduce<Date | null>((earliest, row) => {
+      const createdAt = new Date(row.createdAt);
+      return !earliest || createdAt < earliest ? createdAt : earliest;
+    }, null);
+    const createdAt = earliestCreatedAt ?? today;
+
+    return [
+      {
+        id: MAIN_GOAL_HABIT_ID,
+        title: "Main Goal",
+        subtitle: "Daily focus",
+        icon: "flag-outline" as IoniconName,
+        daysOfWeek: ALL_DAYS_LIST,
+        isLocked: true,
+        sortOrder: -2,
+        createdAt,
+      },
+      {
+        id: EVENING_RESET_HABIT_ID,
+        title: "Evening Reset",
+        subtitle: "Wind down",
+        icon: "moon-outline" as IoniconName,
+        daysOfWeek: ALL_DAYS_LIST,
+        isLocked: true,
+        sortOrder: -1,
+        createdAt,
+      },
+    ];
+  }, [allFocusRows, today]);
+
+  const specialCompletions = useMemo(() => {
+    const rows = allFocusRows ?? [];
+    const list: { habitId: number; date: string; status: string }[] = [];
+    for (const row of rows) {
+      if (row.completedAt) {
+        list.push({ habitId: MAIN_GOAL_HABIT_ID, date: row.date, status: "done" });
+      }
+      if (row.eveningResetCompletedAt) {
+        list.push({ habitId: EVENING_RESET_HABIT_ID, date: row.date, status: "done" });
+      }
+    }
+    return list;
+  }, [allFocusRows]);
+
+  const allHabitsWithSpecial = useMemo(
+    () => [...specialHabits, ...(allHabits ?? [])],
+    [specialHabits, allHabits],
+  );
+  const allCompletionsWithSpecial = useMemo(
+    () => [...specialCompletions, ...(allCompletions ?? [])],
+    [specialCompletions, allCompletions],
+  );
+
   const focusEntries = useMemo(
     () => Object.entries(KEYSTONE_HABITS_BY_FOCUS),
     [],
@@ -336,11 +398,11 @@ export default function RoutinesScreen() {
 
   const doneIds = useMemo(() => {
     const set = new Set<number>();
-    for (const c of allCompletions ?? []) {
+    for (const c of allCompletionsWithSpecial) {
       if (c.date === todayKey && c.status === "done") set.add(c.habitId);
     }
     return set;
-  }, [allCompletions, todayKey]);
+  }, [allCompletionsWithSpecial, todayKey]);
 
   const skippedIds = useMemo(() => {
     const set = new Set<number>();
@@ -352,8 +414,8 @@ export default function RoutinesScreen() {
 
   const streakMap = useMemo(() => {
     const map: Record<number, number> = {};
-    for (const h of allHabits ?? []) {
-      const dates = (allCompletions ?? [])
+    for (const h of allHabitsWithSpecial) {
+      const dates = allCompletionsWithSpecial
         .filter((c) => c.habitId === h.id && c.status === "done")
         .map((c) => c.date)
         .sort()
@@ -374,12 +436,12 @@ export default function RoutinesScreen() {
       map[h.id] = streak;
     }
     return map;
-  }, [allHabits, allCompletions, doneIds, today]);
+  }, [allHabitsWithSpecial, allCompletionsWithSpecial, doneIds, today]);
 
   const bestStreakMap = useMemo(() => {
     const map: Record<number, number> = {};
-    for (const h of allHabits ?? []) {
-      const dates = (allCompletions ?? [])
+    for (const h of allHabitsWithSpecial) {
+      const dates = allCompletionsWithSpecial
         .filter((c) => c.habitId === h.id && c.status === "done")
         .map((c) => c.date)
         .sort();
@@ -399,15 +461,15 @@ export default function RoutinesScreen() {
       map[h.id] = Math.max(best, streakMap[h.id] ?? 0);
     }
     return map;
-  }, [allHabits, allCompletions, streakMap]);
+  }, [allHabitsWithSpecial, allCompletionsWithSpecial, streakMap]);
 
   const totalDoneMap = useMemo(() => {
     const map: Record<number, number> = {};
-    for (const c of allCompletions ?? []) {
+    for (const c of allCompletionsWithSpecial) {
       if (c.status === "done") map[c.habitId] = (map[c.habitId] ?? 0) + 1;
     }
     return map;
-  }, [allCompletions]);
+  }, [allCompletionsWithSpecial]);
 
   const todayProgress = useMemo(() => {
     const completed = todayHabits.filter((habit) => doneIds.has(habit.id)).length;
@@ -431,7 +493,6 @@ export default function RoutinesScreen() {
   }, [allCompletions, doneIds, skippedIds, today, todayHabits]);
 
   const progressOffset = PROGRESS_RING_CIRCUMFERENCE * (1 - todayProgress.ratio);
-
 
   const toggle = async (habitId: number, isDone: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -539,6 +600,68 @@ export default function RoutinesScreen() {
                 </View>
               </View>
             </View>
+          </View>
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>DAILY</Text>
+          <View style={s.habitList}>
+            {specialHabits.map((habit) => {
+              const streak = streakMap[habit.id] ?? 0;
+              const streakDots = Math.min(streak, 10);
+              const isDone = doneIds.has(habit.id);
+              return (
+                <View key={habit.id} style={s.habitCard}>
+                  <View style={s.habitCardRow}>
+                    <View style={s.habitIconWrap}>
+                      <Ionicons
+                        name={resolveIoniconName(habit.icon, "star-outline")}
+                        size={22}
+                        color={C.iconSecondary}
+                      />
+                    </View>
+                    <View style={s.habitInfo}>
+                      <Text style={s.habitTitle} numberOfLines={1}>
+                        {habit.title}
+                      </Text>
+                      <Text style={s.habitDuration} numberOfLines={1}>
+                        {habit.subtitle}
+                      </Text>
+                      <View style={s.streakDotsRow}>
+                        {Array.from({ length: 10 }).map((_, index) => (
+                          <View
+                            key={`${habit.id}-dot-${index}`}
+                            style={[
+                              s.streakDot,
+                              index < streakDots && s.streakDotActive,
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                    <View style={s.streakBadge}>
+                      <View style={s.streakValueRow}>
+                        <Ionicons name="flame" size={14} color={C.accentText} />
+                        <Text style={s.streakText}>{streak}</Text>
+                      </View>
+                      <Text style={s.streakLabel}>day streak</Text>
+                    </View>
+                    {isDone && (
+                      <Ionicons name="checkmark-circle" size={18} color={C.accentText} />
+                    )}
+                  </View>
+                  <HabitHeatmap
+                    habitId={habit.id}
+                    daysOfWeek={habit.daysOfWeek}
+                    completions={specialCompletions}
+                    today={today}
+                    createdAt={habit.createdAt}
+                    bestStreak={bestStreakMap[habit.id] ?? 0}
+                    totalDone={totalDoneMap[habit.id] ?? 0}
+                  />
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -677,8 +800,6 @@ export default function RoutinesScreen() {
             ))}
           </View>
         </View>
-
-
       </ScrollView>
 
       <AddCustomHabitModal
@@ -693,13 +814,15 @@ export default function RoutinesScreen() {
 function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
   return StyleSheet.create({
     container: { flex: 1 },
-    content: { paddingHorizontal: 20 },
-    section: { marginBottom: 24 },
+    content: {
+      paddingHorizontal: 20,
+      gap: 24,
+    },
+    section: { gap: 12 },
     sectionLabelRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: 10,
     },
     sectionLabel: {
       fontSize: 11,
@@ -741,7 +864,6 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: 18,
-      marginTop: 12,
     },
     progressRingWrap: {
       width: PROGRESS_RING_SIZE,
@@ -958,7 +1080,7 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       color: C.textTertiary,
       marginTop: 4,
     },
-    focusGroupsList: { gap: 10, marginTop: 12 },
+    focusGroupsList: { gap: 10 },
     focusGroupCard: {
       backgroundColor: C.cardBg,
       borderRadius: 16,

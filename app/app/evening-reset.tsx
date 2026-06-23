@@ -3,7 +3,7 @@ import { palette } from "@/constants/theme";
 import { usePreventScreenSleep } from "@/hooks/usePreventScreenSleep";
 import { useTheme } from "@/hooks/useTheme";
 import { buildEveningReflection } from "@/lib/eveningReflection";
-import { dailyFocus, db, habitCompletions, habits, todoOps, todos } from "@/lib/db";
+import { dailyFocus, dailyFocusOps, db, habitCompletions, habits, todoOps, todos } from "@/lib/db";
 import { getLocalDateString } from "@/lib/timezone";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
@@ -174,6 +174,9 @@ export default function EveningResetScreen() {
     if (index > currentStepIndex) return;
 
     if (completedSteps[index]) {
+      if (index === RESET_STEPS.length - 1) {
+        void dailyFocusOps.markEveningResetIncomplete();
+      }
       setCompletedSteps((current) => {
         const next = { ...current };
         delete next[index];
@@ -194,6 +197,7 @@ export default function EveningResetScreen() {
       const next = { ...current, [index]: true };
       if (index === RESET_STEPS.length - 1) {
         setIsRunning(false);
+        void dailyFocusOps.markEveningResetComplete();
       }
       return next;
     });

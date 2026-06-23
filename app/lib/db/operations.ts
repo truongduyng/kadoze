@@ -199,6 +199,33 @@ export const dailyFocusOps = {
         .returning()
     );
   },
+
+  async markEveningResetComplete() {
+    const key = getLocalDateString(new Date());
+    return await withInitializedDb(() =>
+      db.insert(dailyFocus)
+        .values({
+          date: key,
+          eveningResetCompletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [dailyFocus.date],
+          set: { eveningResetCompletedAt: new Date(), updatedAt: new Date() },
+        })
+        .returning()
+    );
+  },
+
+  async markEveningResetIncomplete() {
+    const key = getLocalDateString(new Date());
+    return await withInitializedDb(() =>
+      db.update(dailyFocus)
+        .set({ eveningResetCompletedAt: null, updatedAt: new Date() })
+        .where(eq(dailyFocus.date, key))
+        .returning()
+    );
+  },
 };
 
 // ── todoOps ───────────────────────────────────────────────────────────────────

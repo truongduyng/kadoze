@@ -43,6 +43,7 @@ export const dailyFocus = sqliteTable('daily_focus', {
   goal: text('goal').notNull().default(''),
   focusMinutes: integer('focus_minutes').notNull().default(0),
   completedAt: integer('completed_at', { mode: 'timestamp' }),
+  eveningResetCompletedAt: integer('evening_reset_completed_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });

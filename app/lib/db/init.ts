@@ -92,6 +92,16 @@ export async function initializeDatabase() {
       `);
     }
 
+    const hasEveningResetCompletedAt = dailyFocusColumns.some(
+      (column) => column.name === 'evening_reset_completed_at'
+    );
+    if (!hasEveningResetCompletedAt) {
+      expoDb.execSync(`
+        ALTER TABLE daily_focus
+        ADD COLUMN evening_reset_completed_at INTEGER;
+      `);
+    }
+
     expoDb.execSync(`
       CREATE TABLE IF NOT EXISTS todos (
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
