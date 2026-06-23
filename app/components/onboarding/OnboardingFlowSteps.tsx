@@ -348,7 +348,7 @@ export function HookScreen({ onNext }: { onNext: () => void }) {
     <ScreenShell onNext={onNext}>
       <View style={s.heroVisual}>
         <View style={s.heroGlow} />
-        {["Messages", "Tasks", "Ideas", "Meetings", "To-dos"].map((tag, index) => (
+        {["Daily focus", "Habits", "Routines", "Streaks", "App lock"].map((tag, index) => (
           <FloatingTag key={tag} label={tag} index={index} />
         ))}
         <View style={s.hillBack} />
@@ -356,8 +356,8 @@ export function HookScreen({ onNext }: { onNext: () => void }) {
         <View style={s.sun} />
       </View>
       <View style={s.copyBlock}>
-        <Text style={s.headline}>Your mind was never meant to manage everything at once.</Text>
-        <Text style={s.body}>1Per helps you focus on fewer things - consistently.</Text>
+        <Text style={s.headline}>Finish your focus and habits before distractions get the day.</Text>
+        <Text style={s.body}>1Per gives you one daily target, simple routines, streak tracking, and optional app locks.</Text>
       </View>
     </ScreenShell>
   );

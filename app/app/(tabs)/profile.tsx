@@ -37,7 +37,8 @@ import { resolveIoniconName } from "@/lib/iconNames";
 import { getGameAvatar } from "@/lib/avatarCatalog";
 
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
-const CONSISTENCY_DAYS = 28;
+const CONSISTENCY_CELL = 10;
+const CONSISTENCY_GAP = 3;
 const TREND_DAYS = 14;
 
 function formatDateKey(date: Date) {
@@ -161,11 +162,29 @@ export default function ProfileScreen() {
 
     const bestDayCount = Math.max(...weekActivity.map((item) => item.count), 1);
 
+    const earliestCreatedAt = habitsData.length
+      ? new Date(Math.min(...habitsData.map((h) => h.createdAt.getTime())))
+      : new Date(today);
+
+    const consistencyFirstDate = new Date(earliestCreatedAt);
+    consistencyFirstDate.setDate(
+      consistencyFirstDate.getDate() - consistencyFirstDate.getDay(),
+    );
+    const consistencyLastDate = new Date(today.getFullYear(), 11, 31);
+    consistencyLastDate.setDate(
+      consistencyLastDate.getDate() + (6 - consistencyLastDate.getDay()),
+    );
+    const consistencyDaysSpan =
+      Math.floor(
+        (consistencyLastDate.getTime() - consistencyFirstDate.getTime()) /
+          86400000,
+      ) + 1;
+
     const consistencyGrid = Array.from(
-      { length: CONSISTENCY_DAYS },
+      { length: consistencyDaysSpan },
       (_, index) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() - (CONSISTENCY_DAYS - 1 - index));
+        const date = new Date(consistencyFirstDate);
+        date.setDate(consistencyFirstDate.getDate() + index);
         const dateKey = formatDateKey(date);
         const doneCount = doneByDate.get(dateKey) ?? 0;
         const trackedCount = trackedByDate.get(dateKey) ?? 0;
@@ -300,6 +319,16 @@ export default function ProfileScreen() {
   }, [allCompletions, allFocusRows, allHabits, today]);
 
   const displayAvatarIcon = resolveIoniconName(savedAvatar, "person-outline");
+
+  const consistencyScrollRef = useRef<ScrollView>(null);
+  const consistencyColumns = useMemo(() => {
+    const columns: (typeof analytics.consistencyGrid)[] = [];
+    for (let i = 0; i < analytics.consistencyGrid.length; i += 7) {
+      columns.push(analytics.consistencyGrid.slice(i, i + 7));
+    }
+    return columns;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analytics.consistencyGrid]);
 
   const trendChart = useMemo(
     () =>
@@ -482,25 +511,40 @@ export default function ProfileScreen() {
               Consistency
             </Text>
 
-            <View style={s.gridWrap}>
-              {analytics.consistencyGrid.map((item) => (
-                <View key={item.dateKey} style={s.gridCellWrap}>
-                  <View
-                    style={[
-                      s.gridCell,
-                      item.intensity === 0 && s.gridCellIdle,
-                      item.intensity > 0 &&
-                        item.intensity < 0.5 &&
-                        s.gridCellLow,
-                      item.intensity >= 0.5 &&
-                        item.intensity < 1 &&
-                        s.gridCellMid,
-                      item.intensity === 1 && s.gridCellHigh,
-                    ]}
-                  />
+            <ScrollView
+              ref={consistencyScrollRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.gridWrap}
+              onContentSizeChange={() =>
+                consistencyScrollRef.current?.scrollToEnd({ animated: false })
+              }
+            >
+              {consistencyColumns.map((col, wi) => (
+                <View
+                  key={wi}
+                  style={[s.gridCol, wi > 0 && { marginLeft: CONSISTENCY_GAP }]}
+                >
+                  {col.map((item, di) => (
+                    <View
+                      key={item.dateKey}
+                      style={[
+                        s.gridCell,
+                        di > 0 && { marginTop: CONSISTENCY_GAP },
+                        item.intensity === 0 && s.gridCellIdle,
+                        item.intensity > 0 &&
+                          item.intensity < 0.5 &&
+                          s.gridCellLow,
+                        item.intensity >= 0.5 &&
+                          item.intensity < 1 &&
+                          s.gridCellMid,
+                        item.intensity === 1 && s.gridCellHigh,
+                      ]}
+                    />
+                  ))}
                 </View>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </View>
 
@@ -940,18 +984,14 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     },
     gridWrap: {
       flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 4,
     },
-    gridCellWrap: {
-      width: "12.5%",
-      alignItems: "center",
-      gap: 2,
+    gridCol: {
+      flexDirection: "column",
     },
     gridCell: {
-      width: 24,
-      height: 24,
-      borderRadius: 8,
+      width: CONSISTENCY_CELL,
+      height: CONSISTENCY_CELL,
+      borderRadius: 2,
       borderWidth: 1,
       borderColor: C.heatIdleBorder,
     },
