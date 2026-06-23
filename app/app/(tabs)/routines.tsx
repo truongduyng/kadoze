@@ -535,7 +535,7 @@ export default function RoutinesScreen() {
                 </View>
                 <View>
                   <Text style={s.progressStatValue}>{todayProgress.dayStreak}</Text>
-                  <Text style={s.progressStatLabel}>Day Streak</Text>
+                  <Text style={s.progressStatLabel}>Streaks</Text>
                 </View>
               </View>
             </View>
@@ -592,15 +592,25 @@ export default function RoutinesScreen() {
                         </View>
                       </View>
                       <View style={s.streakBadge}>
-                        <Text style={s.streakText}>{streak}</Text>
+                        <View style={s.streakValueRow}>
+                          <Ionicons name="flame" size={14} color={C.accentText} />
+                          <Text style={s.streakText}>{streak}</Text>
+                        </View>
                         <Text style={s.streakLabel}>day streak</Text>
+                      </View>
+                      <Pressable
+                        style={s.expandBtn}
+                        onPress={() => setExpandedHabitId(isExpanded ? null : habit.id)}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={isExpanded ? "Hide habit details" : "Show habit details"}
+                      >
                         <Ionicons
                           name={isExpanded ? "chevron-up" : "chevron-down"}
-                          size={12}
+                          size={14}
                           color={C.textQuaternary}
-                          style={{ marginTop: 4 }}
                         />
-                      </View>
+                      </Pressable>
                     </Pressable>
                     {isExpanded && (
                       <HabitHeatmap
@@ -608,6 +618,7 @@ export default function RoutinesScreen() {
                         daysOfWeek={habit.daysOfWeek as string[]}
                         completions={allCompletions ?? []}
                         today={today}
+                        createdAt={habit.createdAt}
                         bestStreak={bestStreakMap[habit.id] ?? 0}
                         totalDone={totalDoneMap[habit.id] ?? 0}
                       />
@@ -835,8 +846,20 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
       backgroundColor: C.accentText,
     },
     streakBadge: { alignItems: "flex-end" },
+    streakValueRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
     streakText: { fontSize: 19, fontWeight: "800", color: C.accentText, lineHeight: 20 },
-    streakLabel: { fontSize: 11, color: C.textTertiary, marginTop: 6 },
+    streakLabel: { fontSize: 11, color: C.textTertiary, marginTop: 4 },
+    expandBtn: {
+      width: 24,
+      height: 24,
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: 4,
+    },
     focusHeader: {
       flexDirection: "row",
       alignItems: "center",
