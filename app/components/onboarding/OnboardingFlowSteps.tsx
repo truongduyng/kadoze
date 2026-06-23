@@ -426,19 +426,17 @@ export function FocusAreaScreen({
   return (
     <ScreenShell onNext={onNext} disabled={selected.length === 0}>
       <View style={s.copyBlock}>
-        <Text style={s.headline}>What areas of your life matter most right now?</Text>
-        <Text style={s.body}>Pick up to 3. We&apos;ll tailor your experience around them.</Text>
+        <Text style={s.headline}>What area of your life matters most right now?</Text>
+        <Text style={s.body}>Pick one. We&apos;ll tailor your starting system around it.</Text>
       </View>
       <View style={s.focusGrid}>
         {FOCUS_AREAS.map(({ key, label, icon }) => {
           const active = selected.includes(key);
-          const locked = selected.length >= 3 && !active;
           return (
             <Pressable
               key={key}
               onPress={() => onToggle(key)}
-              disabled={locked}
-              style={[s.focusCard, active && s.focusCardActive, locked && s.dimmed]}
+              style={[s.focusCard, active && s.focusCardActive]}
             >
               <View style={[s.focusIconWrap, active && s.focusIconWrapActive]}>
                 <Ionicons name={icon} size={26} color={active ? ORANGE : palette.white55} />

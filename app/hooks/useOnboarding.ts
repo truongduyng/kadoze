@@ -102,7 +102,7 @@ function readOnboardingDraft(): OnboardingDraft {
         TOTAL - 1,
       ),
       coreProblem: draft.coreProblem ?? null,
-      focusAreas: Array.isArray(draft.focusAreas) ? draft.focusAreas.slice(0, 3) : [],
+      focusAreas: Array.isArray(draft.focusAreas) ? draft.focusAreas.slice(0, 1) : [],
       painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 3) : [],
       mainGoal: draft.mainGoal ?? "",
       keystoneHabit: draft.keystoneHabit ?? "",

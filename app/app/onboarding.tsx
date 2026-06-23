@@ -85,9 +85,7 @@ export default function OnboardingScreen() {
   const toggleFocusArea = (area: string) => {
     setFocusAreas((current) => {
       const exists = current.includes(area);
-      if (exists) return current.filter((a) => a !== area);
-      if (current.length >= 3) return current;
-      return [...current, area];
+      return exists ? [] : [area];
     });
   };
 
