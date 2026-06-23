@@ -33,7 +33,7 @@ There is no test suite configured.
 
 ## Architecture Overview
 
-**1Per** is an offline-first iOS/Android app (React Native + Expo SDK 55, React 19) built around the "10k Iteration Protocol" - habit tracking, daily focus, note capture, and routines in one unified workspace.
+**1Per** is an offline-first iOS/Android app (React Native + Expo SDK 55, React 19) built around the "10k Iteration Protocol" - habit tracking, daily focus, and routines in one unified workspace.
 
 ### Directory layout (inside `app/`)
 
@@ -41,8 +41,7 @@ There is no test suite configured.
 app/           Expo Router file-based routes
   _layout.tsx  Root layout: ThemePreferenceProvider → ProfileInitializer → Stack
   (tabs)/      Bottom-tab shell using expo-router unstable-native-tabs (NativeTabs)
-    index.tsx  Home / unified dashboard
-    chat.tsx   Notes / quick capture (AI thread)
+    index.tsx     Home / unified dashboard
     routines.tsx  Habit tracker
     profile.tsx   Account & settings
   onboarding.tsx  First-run flow (gates app until complete)
@@ -55,7 +54,7 @@ lib/
   db/
     schema.ts      Drizzle-ORM table definitions (single source of truth for types)
     database.ts    expo-sqlite connection + drizzle instance
-    operations.ts  Typed CRUD helpers: profileOps, noteOps, habitOps, completionOps, focusOps, todoOps
+    operations.ts  Typed CRUD helpers: profileOps, habitOps, completionOps, dailyFocusOps, todoOps
     index.ts       Re-exports + initializeDatabase() + resetDatabase()
   storage.ts     MMKV instance (used for theme prefs and lightweight key-value state)
   notifications.ts, timezone.ts, timeCapsule.ts, performance.ts
@@ -66,7 +65,7 @@ constants/
 ### Data layer
 
 - **SQLite via expo-sqlite + Drizzle ORM** - no remote sync; purely local.
-- Schema tables: `profiles`, `notes`, `habits`, `habit_completions`, `daily_focus`, `todos`.
+- Schema tables: `profiles`, `habits`, `habit_completions`, `daily_focus`, `todos`.
 - `initializeDatabase()` runs `CREATE TABLE IF NOT EXISTS` on cold start via `ProfileInitializer`.
 - `resetDatabase()` drops all tables and clears MMKV - used in dev/reset flows.
 - Dates stored as `TEXT` (`'YYYY-MM-DD'`) for daily keys; timestamps stored as `INTEGER` (unix epoch).
