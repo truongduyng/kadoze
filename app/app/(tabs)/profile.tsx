@@ -134,6 +134,27 @@ export default function ProfileScreen() {
       trackedByDate.set(item.date, (trackedByDate.get(item.date) ?? 0) + 1);
     }
 
+    let focusDoneCount = 0;
+    let focusTrackedCount = 0;
+    for (const item of focusData) {
+      // Daily focus contributes the locked "Main Goal" and "Evening Reset"
+      // routines shown on the Routines tab, so include both in profile-level
+      // consistency instead of only counting custom habits.
+      const trackedForDate = 2;
+      const doneForDate =
+        (item.completedAt ? 1 : 0) + (item.eveningResetCompletedAt ? 1 : 0);
+
+      trackedByDate.set(
+        item.date,
+        (trackedByDate.get(item.date) ?? 0) + trackedForDate,
+      );
+      if (doneForDate > 0) {
+        doneByDate.set(item.date, (doneByDate.get(item.date) ?? 0) + doneForDate);
+      }
+      focusTrackedCount += trackedForDate;
+      focusDoneCount += doneForDate;
+    }
+
     let currentStreak = 0;
     const streakCursor = new Date(today);
     while ((doneByDate.get(formatDateKey(streakCursor)) ?? 0) > 0) {
@@ -142,12 +163,15 @@ export default function ProfileScreen() {
     }
 
     const todayName = DAY_NAMES[today.getDay()];
-    const activeToday = habitsData.filter((habit) =>
-      (habit.daysOfWeek as string[]).includes(todayName),
-    ).length;
+    const activeToday =
+      habitsData.filter((habit) =>
+        (habit.daysOfWeek as string[]).includes(todayName),
+      ).length + 2;
 
-    const completionRate = trackedCompletions.length
-      ? Math.round((doneCompletions.length / trackedCompletions.length) * 100)
+    const totalTracked = trackedCompletions.length + focusTrackedCount;
+    const totalDone = doneCompletions.length + focusDoneCount;
+    const completionRate = totalTracked
+      ? Math.round((totalDone / totalTracked) * 100)
       : 0;
 
     const weekActivity = Array.from({ length: 7 }, (_, index) => {
@@ -162,8 +186,12 @@ export default function ProfileScreen() {
 
     const bestDayCount = Math.max(...weekActivity.map((item) => item.count), 1);
 
-    const earliestCreatedAt = habitsData.length
-      ? new Date(Math.min(...habitsData.map((h) => h.createdAt.getTime())))
+    const earliestDates = [
+      ...habitsData.map((h) => h.createdAt.getTime()),
+      ...focusData.map((item) => item.createdAt.getTime()),
+    ];
+    const earliestCreatedAt = earliestDates.length
+      ? new Date(Math.min(...earliestDates))
       : new Date(today);
 
     const consistencyFirstDate = new Date(earliestCreatedAt);
@@ -298,10 +326,10 @@ export default function ProfileScreen() {
 
     return {
       currentStreak,
-      totalDone: doneCompletions.length,
+      totalDone,
       activeToday,
       completionRate,
-      habitsCount: habitsData.length,
+      habitsCount: habitsData.length + 2,
       weekActivity,
       bestDayCount,
       consistencyGrid,
@@ -321,6 +349,7 @@ export default function ProfileScreen() {
   const displayAvatarIcon = resolveIoniconName(savedAvatar, "person-outline");
 
   const consistencyScrollRef = useRef<ScrollView>(null);
+  const consistencyViewportWidthRef = useRef(0);
   const consistencyColumns = useMemo(() => {
     const columns: (typeof analytics.consistencyGrid)[] = [];
     for (let i = 0; i < analytics.consistencyGrid.length; i += 7) {
@@ -329,6 +358,29 @@ export default function ProfileScreen() {
     return columns;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analytics.consistencyGrid]);
+  const todayConsistencyWeekIndex = useMemo(() => {
+    const todayKey = formatDateKey(today);
+    const dayIndex = analytics.consistencyGrid.findIndex(
+      (item) => item.dateKey === todayKey,
+    );
+    return dayIndex >= 0 ? Math.floor(dayIndex / 7) : consistencyColumns.length - 1;
+  }, [analytics.consistencyGrid, consistencyColumns.length, today]);
+
+  const scrollConsistencyToToday = useCallback(() => {
+    const viewportWidth = consistencyViewportWidthRef.current;
+    if (!viewportWidth) return;
+
+    consistencyScrollRef.current?.scrollTo({
+      x: Math.max(
+        0,
+        todayConsistencyWeekIndex * (CONSISTENCY_CELL + CONSISTENCY_GAP) -
+          viewportWidth +
+          CONSISTENCY_CELL +
+          60,
+      ),
+      animated: false,
+    });
+  }, [todayConsistencyWeekIndex]);
 
   const trendChart = useMemo(
     () =>
@@ -516,9 +568,11 @@ export default function ProfileScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.gridWrap}
-              onContentSizeChange={() =>
-                consistencyScrollRef.current?.scrollToEnd({ animated: false })
-              }
+              onLayout={(event) => {
+                consistencyViewportWidthRef.current = event.nativeEvent.layout.width;
+                scrollConsistencyToToday();
+              }}
+              onContentSizeChange={scrollConsistencyToToday}
             >
               {consistencyColumns.map((col, wi) => (
                 <View

@@ -624,9 +624,6 @@ export default function RoutinesScreen() {
                       <Text style={s.habitTitle} numberOfLines={1}>
                         {habit.title}
                       </Text>
-                      <Text style={s.habitDuration} numberOfLines={1}>
-                        {habit.subtitle}
-                      </Text>
                       <View style={s.streakDotsRow}>
                         {Array.from({ length: 10 }).map((_, index) => (
                           <View

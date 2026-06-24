@@ -141,31 +141,47 @@ export const insertAllScreenshotData = async () => {
   });
   await db.insert(habitCompletions).values(completionRows);
 
-  // Daily focus: a full month of history with a gentle upward trend,
-  // landing on a strong, completed "today" goal.
+  // Daily focus powers the built-in "Main Goal" and "Evening Reset"
+  // heatmaps. Give them distinct, human-looking histories: the main goal
+  // is steady and high-performing, while the evening reset has a rougher
+  // adoption curve before settling into a strong recent streak.
   const focusGoals = [
     "Protect one meaningful deep work block",
     "Ship the thing before checking messages",
     "Single-task the hardest item first",
     "Close every open loop before evening",
+    "Make one visible pass on the launch story",
+    "Finish the screenshot flow without context switching",
   ];
-  const focusRows = Array.from({ length: 30 }, (_, index) => {
-    const offset = 29 - index;
-    const base = 28 + index * 1.1;
-    const wobble = [0, 6, -4, 9, -3, 5, 2][index % 7];
+  const missedMainGoalOffsets = new Set([82, 73, 65, 51, 44, 32, 23, 18]);
+  const missedEveningResetOffsets = new Set([
+    88, 86, 83, 79, 76, 72, 68, 65, 61, 57, 54, 49, 45, 41, 36, 31, 25, 19,
+  ]);
+  const focusRows = Array.from({ length: 92 }, (_, index) => {
+    const offset = 91 - index;
+    const base = 22 + index * 0.42;
+    const wobble = [0, 7, -3, 5, -5, 8, 2, -1][index % 8];
     const minutes = Math.max(15, Math.round(base + wobble));
     const goal =
       offset === 0
         ? "Finish the launch review and capture clean App Store screenshots"
         : focusGoals[index % focusGoals.length];
+    const rowDate = daysAgo(offset);
+    const completedAt = missedMainGoalOffsets.has(offset)
+      ? null
+      : new Date(rowDate.getFullYear(), rowDate.getMonth(), rowDate.getDate(), 11, 15);
+    const eveningResetCompletedAt = missedEveningResetOffsets.has(offset)
+      ? null
+      : new Date(rowDate.getFullYear(), rowDate.getMonth(), rowDate.getDate(), 20, 45);
 
     return {
       date: dateKey(offset),
       goal,
       focusMinutes: minutes,
-      completedAt: daysAgo(offset),
-      createdAt: daysAgo(offset),
-      updatedAt: daysAgo(offset),
+      completedAt,
+      eveningResetCompletedAt,
+      createdAt: rowDate,
+      updatedAt: rowDate,
     };
   });
   await db.insert(dailyFocus).values(focusRows);
