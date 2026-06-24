@@ -23,8 +23,9 @@ const DOW_MAP: Record<string, number> = {
 export function HabitHeatmap({ habitId, daysOfWeek, completions, today, createdAt, bestStreak, totalDone }: Props) {
   const C = useTheme();
   const scrollRef = useRef<ScrollView>(null);
+  const viewportWidthRef = useRef(0);
 
-  const { grid, completionRate } = useMemo(() => {
+  const { grid, completionRate, todayWeekIndex } = useMemo(() => {
     const scheduledDowSet = new Set(daysOfWeek.map((d) => DOW_MAP[d] ?? -1));
     const doneSet = new Set(
       completions
@@ -50,6 +51,7 @@ export function HabitHeatmap({ habitId, daysOfWeek, completions, today, createdA
     const columns: { date: string; dow: number; status: "done" | "skipped" | "missed" | "future" | "not_scheduled" | "before_start" }[][] = [];
     let scheduledCount = 0;
     let doneCount = 0;
+    let todayWeekIndex = 0;
     const todayStr = getLocalDateString(today);
     const createdAtStr = getLocalDateString(createdAt);
 
@@ -60,6 +62,9 @@ export function HabitHeatmap({ habitId, daysOfWeek, completions, today, createdA
         d.setDate(d.getDate() + week * 7 + dow);
         const dateStr = getLocalDateString(d);
         const isFuture = dateStr > todayStr;
+        if (dateStr === todayStr) {
+          todayWeekIndex = week;
+        }
         const isBeforeStart = dateStr < createdAtStr;
         const isScheduled = scheduledDowSet.has(d.getDay());
 
@@ -88,10 +93,11 @@ export function HabitHeatmap({ habitId, daysOfWeek, completions, today, createdA
     }
 
     const rate = scheduledCount > 0 ? Math.round((doneCount / scheduledCount) * 100) : 0;
-    return { grid: columns, completionRate: rate };
+    return { grid: columns, completionRate: rate, todayWeekIndex };
   }, [habitId, daysOfWeek, completions, today, createdAt]);
 
   const s = makeStyles(C);
+  const todayStr = getLocalDateString(today);
 
   const cellColor = (status: string) => {
     if (status === "done") return C.accent;
@@ -106,25 +112,40 @@ export function HabitHeatmap({ habitId, daysOfWeek, completions, today, createdA
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s.heatmap}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+        onLayout={(e) => {
+          viewportWidthRef.current = e.nativeEvent.layout.width;
+        }}
+        onContentSizeChange={() =>
+          scrollRef.current?.scrollTo({
+            x: Math.max(
+              0,
+              todayWeekIndex * (CELL + GAP) - viewportWidthRef.current + CELL + 60,
+            ),
+            animated: false,
+          })
+        }
       >
         {grid.map((col, wi) => (
           <View key={wi} style={[s.col, wi > 0 && { marginLeft: GAP }]}>
-            {col.map((cell, di) => (
-              <View
-                key={di}
-                style={[
-                  s.cell,
-                  {
-                    width: CELL,
-                    height: CELL,
-                    marginTop: di > 0 ? GAP : 0,
-                    backgroundColor: cellColor(cell.status),
-                    borderColor: C.cardBorder,
-                  },
-                ]}
-              />
-            ))}
+            {col.map((cell, di) => {
+              const isToday = cell.date === todayStr;
+              return (
+                <View
+                  key={di}
+                  style={[
+                    s.cell,
+                    {
+                      width: CELL,
+                      height: CELL,
+                      marginTop: di > 0 ? GAP : 0,
+                      backgroundColor: cellColor(cell.status),
+                      borderColor: isToday ? C.accentText : C.cardBorder,
+                      borderWidth: isToday ? 1.5 : 1,
+                    },
+                  ]}
+                />
+              );
+            })}
           </View>
         ))}
       </ScrollView>

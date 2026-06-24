@@ -719,12 +719,11 @@ export default function RoutinesScreen() {
                           <Ionicons name="flame" size={14} color={C.accentText} />
                           <Text style={s.streakText}>{streak}</Text>
                         </View>
-                        <Text style={s.streakLabel}>day streak</Text>
                       </View>
                       <Pressable
                         style={s.expandBtn}
                         onPress={() => setExpandedHabitId(isExpanded ? null : habit.id)}
-                        hitSlop={10}
+                        hitSlop={12}
                         accessibilityRole="button"
                         accessibilityLabel={isExpanded ? "Hide habit details" : "Show habit details"}
                       >
@@ -976,11 +975,12 @@ function makeStyles(C: ReturnType<typeof import("@/hooks/useTheme").useTheme>) {
     streakText: { fontSize: 19, fontWeight: "800", color: C.accentText, lineHeight: 20 },
     streakLabel: { fontSize: 11, color: C.textTertiary, marginTop: 4 },
     expandBtn: {
-      width: 24,
-      height: 24,
+      width: 36,
+      height: 36,
       alignItems: "center",
       justifyContent: "center",
       marginLeft: 4,
+      marginRight: -6,
     },
     focusHeader: {
       flexDirection: "row",
