@@ -754,7 +754,7 @@ export default function RoutinesScreen() {
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionLabel}>ALL PATHS</Text>
+          <Text style={s.sectionLabel}>SUGGESTIONS</Text>
           <View style={s.focusGroupsList}>
             {focusEntries.map(([focusKey, focusHabits]) => (
               <View key={focusKey} style={s.focusGroupCard}>

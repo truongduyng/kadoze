@@ -153,6 +153,109 @@ export const PAIN_TO_HABIT = PAIN_MAPPINGS.reduce<Record<string, { id: string; r
   {},
 );
 
+export const GOAL_COPY_BY_PAIN: Record<string, { headline: string; body: string; suggestionLabel: string }> = {
+  "My mind won't stop racing": {
+    headline: "Give your mind one place to land.",
+    body: "Pick a focus small enough to quiet the noise today.",
+    suggestionLabel: "For racing thoughts",
+  },
+  "I start strong, then fall off": {
+    headline: "Make follow-through easier than restarting.",
+    body: "Choose one steady action you can actually repeat today.",
+    suggestionLabel: "For staying consistent",
+  },
+  "I lose hours to my phone": {
+    headline: "Take one hour back from your phone.",
+    body: "Choose a focus that gives your attention somewhere better to go.",
+    suggestionLabel: "For phone drift",
+  },
+  "I'm exhausted before the day begins": {
+    headline: "Start with energy, not pressure.",
+    body: "Pick one gentle reset that helps your body wake up.",
+    suggestionLabel: "For low energy",
+  },
+  "I have ideas but never execute": {
+    headline: "Turn one idea into motion.",
+    body: "Choose a focus that moves something out of your head and into the day.",
+    suggestionLabel: "For execution",
+  },
+  "I've tried every app and nothing sticks": {
+    headline: "Keep this almost too simple.",
+    body: "Pick one tiny action that does not need a perfect system.",
+    suggestionLabel: "For making it stick",
+  },
+  "My body feels stiff and low-energy": {
+    headline: "Help your body feel online again.",
+    body: "Choose a small physical reset you can feel today.",
+    suggestionLabel: "For stiffness",
+  },
+  "I keep sleeping later than I want": {
+    headline: "Protect tomorrow before tonight gets away.",
+    body: "Pick one focus that makes bedtime easier to honor.",
+    suggestionLabel: "For better sleep",
+  },
+  "I forget basic self-care": {
+    headline: "Make care obvious and easy.",
+    body: "Choose one basic win your future self will notice.",
+    suggestionLabel: "For self-care",
+  },
+  "I focus on what's wrong all day": {
+    headline: "Train your attention toward what is working.",
+    body: "Pick one focus that interrupts the negativity loop.",
+    suggestionLabel: "For negative focus",
+  },
+  "I want to grow but keep scrolling instead": {
+    headline: "Trade scrolling for one growth rep.",
+    body: "Choose a focus that makes growth feel immediate today.",
+    suggestionLabel: "For growth",
+  },
+  "My workday is reactive": {
+    headline: "Claim one proactive block.",
+    body: "Pick a focus that puts you back in charge of the day.",
+    suggestionLabel: "For reactive workdays",
+  },
+  "I feel disconnected from people": {
+    headline: "Create one real point of connection.",
+    body: "Choose a focus that makes reaching out feel light.",
+    suggestionLabel: "For connection",
+  },
+  "I'm present physically, but not mentally": {
+    headline: "Come back to the moment you are already in.",
+    body: "Pick one focus that makes presence easier today.",
+    suggestionLabel: "For presence",
+  },
+  "I listen to reply, not understand": {
+    headline: "Make one conversation calmer.",
+    body: "Choose a focus that helps you slow down and really hear someone.",
+    suggestionLabel: "For better listening",
+  },
+  "My creativity keeps getting postponed": {
+    headline: "Give creativity a real slot today.",
+    body: "Pick one small act of making before the day fills up.",
+    suggestionLabel: "For creativity",
+  },
+  "Good ideas disappear before I use them": {
+    headline: "Catch the idea before it fades.",
+    body: "Choose a focus that builds trust with your creative sparks.",
+    suggestionLabel: "For capturing ideas",
+  },
+  "My money feels vague and stressful": {
+    headline: "Turn money stress into something visible.",
+    body: "Pick one focus that makes your finances feel less foggy.",
+    suggestionLabel: "For money clarity",
+  },
+  "I spend before I think": {
+    headline: "Put one thoughtful pause before spending.",
+    body: "Choose a focus that makes the better money move automatic.",
+    suggestionLabel: "For spending habits",
+  },
+  "I avoid looking at my finances": {
+    headline: "Make one money detail easier to face.",
+    body: "Pick a focus that gives your finances a clear next step.",
+    suggestionLabel: "For financial avoidance",
+  },
+};
+
 export const PAIN_HARM: Record<string, { harm: string; cost: string }> = {
   "My mind won't stop racing": {
     harm: "Racing thoughts drain your willpower before the day even starts.",

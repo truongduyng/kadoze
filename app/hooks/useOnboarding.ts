@@ -20,7 +20,6 @@ export type StepType =
   | "future"
   | "identity"
   | "wins"
-  | "goal"
   | "keystone"
   | "app-tour"
   | "notification"
@@ -41,7 +40,6 @@ export const STEPS: StepConfig[] = [
   { type: "future" },
   { type: "identity" },
   { type: "wins" },
-  { type: "goal" },
   { type: "keystone" },
   { type: "app-tour" },
   { type: "notification" },
@@ -97,7 +95,7 @@ function readOnboardingDraft(): OnboardingDraft {
       ),
       coreProblem: draft.coreProblem ?? null,
       focusAreas: Array.isArray(draft.focusAreas) ? draft.focusAreas.slice(0, 1) : [],
-      painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 3) : [],
+      painPoints: Array.isArray(draft.painPoints) ? draft.painPoints.slice(0, 1) : [],
       mainGoal: draft.mainGoal ?? "",
       keystoneHabit: draft.keystoneHabit ?? "",
       customHabitTitle: draft.customHabitTitle ?? "",

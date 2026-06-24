@@ -555,6 +555,14 @@ export function makeStyles(C: ReturnType<typeof useTheme>) {
     goalSuggestionList: {
       gap: 8,
     },
+    goalSuggestionLabel: {
+      color: palette.white45,
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+    },
     goalSuggestion: {
       minHeight: 46,
       borderRadius: 8,

@@ -164,7 +164,6 @@ export default function HomeScreen() {
         : "Nothing scheduled today",
     },
   ];
-  const lockedApps = ["Instagram", "TikTok", "YouTube", "X"];
   const goalConfettiProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { palette } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
-import { getGoalSuggestions } from "./data";
+import { GOAL_COPY_BY_PAIN, getGoalSuggestions } from "./data";
 import { ScreenShell } from "./shared";
 import { ORANGE, makeStyles } from "./theme";
 
@@ -29,6 +29,11 @@ export function GoalInputScreen({
     () => getGoalSuggestions(focusAreas, painPoints),
     [focusAreas, painPoints],
   );
+  const painPoint = painPoints[0];
+  const painCopy = painPoint ? GOAL_COPY_BY_PAIN[painPoint] : undefined;
+  const headline = painCopy?.headline ?? "What would make today feel meaningful?";
+  const body = painCopy?.body ?? "Your answer becomes your first focus.";
+  const suggestionLabel = painCopy?.suggestionLabel ?? "Suggestions";
 
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 600);
@@ -39,8 +44,8 @@ export function GoalInputScreen({
     <View style={s.keyboard}>
       <ScreenShell onNext={onNext} disabled={!canContinue} stickyFooter dismissesKeyboard>
         <View style={s.copyBlock}>
-          <Text style={s.headline}>What would make today feel meaningful?</Text>
-          <Text style={s.body}>Your answer becomes your first focus.</Text>
+          <Text style={s.headline}>{headline}</Text>
+          <Text style={s.body}>{body}</Text>
         </View>
         <TextInput
           ref={inputRef}
@@ -53,6 +58,7 @@ export function GoalInputScreen({
           selectionColor={ORANGE}
         />
         <View style={s.goalSuggestionList}>
+          <Text style={s.goalSuggestionLabel}>{suggestionLabel}</Text>
           {suggestions.map((suggestion) => {
             const active = value.trim() === suggestion;
             return (
@@ -65,7 +71,7 @@ export function GoalInputScreen({
                   {suggestion}
                 </Text>
                 <Ionicons
-                  name={active ? "checkmark-circle" : "add-circle-outline"}
+                  name={active ? "checkmark-circle" : "ellipse-outline"}
                   size={18}
                   color={active ? ORANGE : palette.white35}
                 />

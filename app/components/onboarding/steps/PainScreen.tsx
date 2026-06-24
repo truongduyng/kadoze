@@ -31,7 +31,7 @@ export function PainScreen({
       <View style={s.painIntro}>
         <View style={s.painIntroCopy}>
           <Text style={s.headline}>What feels hardest right now?</Text>
-          <Text style={s.body}>Choose up to three. We&apos;ll turn them into a small starting system.</Text>
+          <Text style={s.body}>Choose one. We&apos;ll turn it into a small starting system.</Text>
         </View>
       </View>
       <View style={s.painSectionList}>
@@ -46,13 +46,12 @@ export function PainScreen({
             <View style={s.painChoiceList}>
               {section.items.map(({ pain }) => {
                 const active = selected.includes(pain);
-                const locked = selected.length >= 3 && !active;
+                const dimmed = selected.length > 0 && !active;
                 return (
                   <Pressable
                     key={pain}
                     onPress={() => onToggle(pain)}
-                    disabled={locked}
-                    style={[s.painChoice, active && s.painChoiceActive, locked && s.dimmed]}
+                    style={[s.painChoice, active && s.painChoiceActive, dimmed && s.dimmed]}
                   >
                     <Text style={[s.painChoiceText, active && s.painChoiceTextActive]}>
                       {pain}

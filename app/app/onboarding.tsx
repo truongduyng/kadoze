@@ -15,7 +15,6 @@ import {
   FastWinsScreen,
   FocusAreaScreen,
   FutureScreen,
-  GoalInputScreen,
   HookScreen,
   IdentityScreen,
   KeystoneScreen,
@@ -47,8 +46,6 @@ export default function OnboardingScreen() {
     setFocusAreas,
     painPoints,
     setPainPoints,
-    mainGoal,
-    setMainGoal,
     keystoneHabit,
     setKeystoneHabit,
     customHabitTitle,
@@ -90,11 +87,7 @@ export default function OnboardingScreen() {
     setPainPoints((current) => {
       const validCurrent = current.filter((item) => PAIN_POINT_SET.has(item));
       const exists = validCurrent.includes(pain);
-      const next = exists
-        ? validCurrent.filter((item) => item !== pain)
-        : validCurrent.length < 3
-          ? [...validCurrent, pain]
-          : validCurrent;
+      const next = exists ? [] : [pain];
       if (!exists && next.includes(pain)) {
         trackOnboardingEvent("pain_selected", { pain, count: next.length });
       }
@@ -152,21 +145,6 @@ export default function OnboardingScreen() {
         );
       case "wins":
         return <FastWinsScreen onNext={advance} />;
-      case "goal":
-        return (
-          <GoalInputScreen
-            value={mainGoal}
-            onChange={(value) => {
-              setMainGoal(value);
-              if (value.trim().length > 0) {
-                trackOnboardingEvent("goal_created", { length: value.trim().length });
-              }
-            }}
-            onNext={advance}
-            focusAreas={focusAreas}
-            painPoints={painPoints}
-          />
-        );
       case "app-tour":
         return <AppTourScreen onNext={advance} />;
       case "keystone":
