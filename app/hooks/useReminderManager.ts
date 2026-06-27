@@ -56,8 +56,8 @@ export function useReminderManager() {
         if (!token) return;
 
         const id = await scheduleRepeatingNotification(
-          'Time to check in on your habits',
-          'Keep your streak going - open 1Per and complete your habits.',
+          "Don't break the streak",
+          "A couple minutes is all it takes - knock out today's habits.",
           hour,
           minute,
         );
@@ -93,8 +93,8 @@ export function useReminderManager() {
         if (!token) return;
 
         const id = await scheduleRepeatingNotification(
-          'Time for your evening reset',
-          'Wind down and prepare for tomorrow - open 1Per to start your reset routine.',
+          "Day's done - reset time",
+          'Wrap up today and set tomorrow up right. Open 1Per for your evening reset.',
           hour,
           minute,
         );
