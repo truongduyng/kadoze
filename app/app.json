@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.kadoze.yikudo",
-      "icon": "./assets/images/kadoze.icon",
+      "icon": "./assets/images/new_logo.png",
       "appleTeamId": "MVAX6C967A",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
